@@ -4,7 +4,6 @@ const config = require('./constants');
 module.exports = function(req, res, next) {
     var ath;
     var token = req.headers['authorization'];
-    //console.log(token);
     if (token) {
 
         jwt.verify(token, config.SECRET, async function (err, decoded) {
@@ -27,6 +26,7 @@ module.exports = function(req, res, next) {
                 req.decoded.status = true;
                 req.decoded.success = true;
                 ath = decoded;
+                next();
                 // console.log(ath);
 
 

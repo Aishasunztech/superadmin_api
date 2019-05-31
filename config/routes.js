@@ -10,17 +10,15 @@ var mobileRoutes = require('../routes/mobile');
 
 
 module.exports = function (app) {
+    app.get('/', function(req, res){
+        res.send("Express Js");
+    });
     app.group('/api/v1', function (router){
         router.use('/auth', authRoutes);
         router.use('/mobile', mobileRoutes);
-        router.use('/users', userRoutes);
+        router.use('/users', authMiddleware, userRoutes);
         // router.use('/', indexRouter);
 
-    })
-    // test APIS
-    // app.use('/api/v1', router.use('/', indexRouter));
-    
-    // login API
-    // app.user('/api/v1', router.use('/',))
+    });
 
 }
