@@ -95,10 +95,7 @@ module.exports = {
     PING: "ping",
     PONG: "pong",
 
-    // apk
-    APK: "apk",
-    LOGO: "logo",
-
-    APK_ON: 'On',
-    APK_OFF: 'Off'
+    PRE_DEFINED_SERIAL_NUMBER: "0123456789ABCDEF",
+    PRE_DEFINED_MAC_ADDRESS: "02:00:00:00:00:00",
+    
 }

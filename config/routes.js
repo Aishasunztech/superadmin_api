@@ -3,6 +3,8 @@
 var authMiddleware = require('../config/auth');
 var multipart = require('connect-multiparty');
 var multipartMiddleware = multipart();
+var crypto = require("crypto");
+var md5 = require('md5');
 
 // routes
 var indexRouter = require('../routes/index');
@@ -26,7 +28,7 @@ module.exports = function (app) {
         //     ]
         //     , userRoutes
         // );
-        
+
         router.use('/users',
             [
                 // authMiddleware,
@@ -36,6 +38,9 @@ module.exports = function (app) {
         );
 
         // router.use('/', indexRouter);
+        router.get('/', function (req, res) {
+
+        });
 
     });
 
