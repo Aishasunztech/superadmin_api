@@ -26,7 +26,6 @@ exports.getWhiteLabelInfo = async function (req, res) {
     let whiteLabelQ = "SELECT id, name, model_id, apk_file, route_uri FROM white_labels WHERE id =" + req.params.labelId + " limit 1";
     let whiteLabel = await sql.query(whiteLabelQ);
     if (Object.keys(whiteLabel).length) {
-        console.log(whiteLabel);
         res.send({
             status: true,
             whiteLabel: whiteLabel[0],
