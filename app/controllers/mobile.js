@@ -97,3 +97,11 @@ exports.getApk = async (req, res) => {
     }
 
 }
+
+exports.checkExpiry = async (req, res) => {
+    console.log(req.body);
+    res.send({
+        status: true,
+        
+    })
+}
