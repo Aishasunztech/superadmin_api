@@ -21,13 +21,14 @@ swaggerDocument = require('./swagger.json');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
-// require('./config/passport')(passport); // pass passport for configuration
-
 //set up our express application
 app.use(morgan('dev')); // log every request to the console
 app.use(cookieParser()); // read cookies (needed for auth)
-//app.use(bodyParser()); // get information from html forms
+// app.use(bodyParser()); // get information from html forms
 
+
+app.use(express.json({ limit: "1000gb" }));
+app.use(express.urlencoded({ limit: "1000gb", extended: false, parameterLimit: 100000000 }));
 
 
 //view engine setup

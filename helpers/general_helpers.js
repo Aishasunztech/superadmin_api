@@ -548,7 +548,6 @@ module.exports = {
 				values = values + " '" + user.id + "', " + commonValues + " ) ";
 			}
 		}
-		console.log(insertQ + values);
 		await sql.query(insertQ + values)
 	},
 	getLoginByToken: async function (token) {

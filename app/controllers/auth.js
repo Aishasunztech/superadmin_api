@@ -13,8 +13,6 @@ exports.login = async function (req, res) {
 	var email = req.body.email;
 	var pwd = req.body.pwd;
 	var enc_pwd = md5(pwd);
-	console.log("email", email);
-	console.log("pwd", pwd);
 	//check for if email is already registered
 	var userQ = "SELECT * FROM admins WHERE email = '" + email + "' limit 1";
 	var users = await sql.query(userQ);

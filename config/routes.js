@@ -16,7 +16,8 @@ module.exports = function (app) {
     app.group('/api/v1', function (router){
         router.use('/auth', authRoutes);
         router.use('/mobile', mobileRoutes);
-        router.use('/users', authMiddleware, userRoutes);
+        // router.use('/users', authMiddleware, userRoutes);
+        router.use('/users',  userRoutes);
         // router.use('/', indexRouter);
 
     });

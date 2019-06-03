@@ -48,112 +48,120 @@ exports.uploadFile = async function (req, res) {
     let filename = "";
     let mimeType = "";
     let fieldName = "";
+    console.log(req.files);
 
+    // var storage = multer.diskStorage({
+    //     destination: function (req, file, callback) {
+    //         callback(null, '../../uploads');
+    //     },
 
-    var storage = multer.diskStorage({
-        destination: function (req, file, callback) {
-            callback(null, '../../uploads');
-        },
+    //     filename: function (req, file, callback) {
+    //         mimeType = file.mimetype;
+    //         fieldName = file.fieldname;
+    //         var filetypes = /jpeg|jpg|apk|png/;
+    //         // let type = mime.getExtension(file.)
+    //         // console.log('files', file.path);
 
-        filename: function (req, file, callback) {
-            mimeType = file.mimetype;
-            fieldName = file.fieldname;
-            var filetypes = /jpeg|jpg|apk|png/;
-            // let type = mime.getExtension(file.)
-            // console.log('files', file.path);
+    //         // let data = fs.readFile(file.path, function () {
 
-            // let data = fs.readFile(file.path, function () {
+    //         // });
+    //         // console.log("file", data);
 
-            // });
-            // console.log("file", data);
+    //         // if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
+    //         //     fileUploaded = true;
+    //         //     filename = fieldName + '-' + Date.now() + '.jpg';
 
-            // if (fieldName === Constants.LOGO && filetypes.test(mimeType)) {
-            //     fileUploaded = true;
-            //     filename = fieldName + '-' + Date.now() + '.jpg';
+    //         //     callback(null, filename);
+    //         // } else if (fieldName === Constants.APK && mimeType === "application/vnd.android.package-archive") {
+    //         //     fileUploaded = true;
+    //         //     filename = fieldName + '-' + Date.now() + '.apk';
+    //         //     // apk manifest should be check here
+    //         //     // helpers.getAPKVersionCode(req.files.apk);
+    //         //     callback(null, filename);
+    //         // } else {
+    //         //     callback("file not supported");
+    //         // }
+    //     }
+    // });
 
-            //     callback(null, filename);
-            // } else if (fieldName === Constants.APK && mimeType === "application/vnd.android.package-archive") {
-            //     fileUploaded = true;
-            //     filename = fieldName + '-' + Date.now() + '.apk';
-            //     // apk manifest should be check here
-            //     // helpers.getAPKVersionCode(req.files.apk);
-            //     callback(null, filename);
-            // } else {
-            //     callback("file not supported");
-            // }
-        }
-    });
+    // var upload = multer({
+    //     storage: storage,
+    //     limits: { fileSize: "100mb" }
+    // }).fields(
+    //     [
+    //         {
+    //             name: 'logo',
+    //             maxCount: 1
+    //         }, 
+    //         {
+    //             name: 'apk',
+    //             maxCount: 1
+    //         },
+    //         // {
+    //         //     name: ""
+    //         // }
+    //     ]
+    // );
 
-    var upload = multer({
-        storage: storage,
-        limits: { fileSize: "100mb" }
-    }).fields([{
-        name: 'logo',
-        maxCount: 1
-    }, {
-        name: 'apk',
-        maxCount: 1
-    }]);
+    // upload(req, res, async function (err) {
+    //     if (err) {
+    //         return res.send({
+    //             status: false,
+    //             msg: "Error while Uploading"
+    //         });
+    //     }
 
-    upload(req, res, async function (err) {
-        if (err) {
-            return res.send({
-                status: false,
-                msg: "Error while Uploading"
-            });
-        }
+    //     if (fileUploaded) {
 
-        if (fileUploaded) {
+    //         if (fieldName === Constants.APK) {
+    //             let file = path.join(__dirname, "../uploads/" + filename);
+    //             let versionCode = await helpers.getAPKVersionCode(file);
+    //             console.log("version code", versionCode);
+    //             let apk_stats = fs.statSync(file);
 
-            if (fieldName === Constants.APK) {
-                let file = path.join(__dirname, "../uploads/" + filename);
-                let versionCode = await helpers.getAPKVersionCode(file);
-                console.log("version code", versionCode);
-                let apk_stats = fs.statSync(file);
+    //             let formatByte = helpers.formatBytes(apk_stats.size);
+    //             if (versionCode) {
 
-                let formatByte = helpers.formatBytes(apk_stats.size);
-                if (versionCode) {
+    //                 data = {
+    //                     status: true,
+    //                     msg: 'Uploaded Successfully',
+    //                     fileName: filename,
+    //                     size: formatByte
 
-                    data = {
-                        status: true,
-                        msg: 'Uploaded Successfully',
-                        fileName: filename,
-                        size: formatByte
-
-                    };
-                    res.send(data);
-                    return;
-                } else {
-                    data = {
-                        status: false,
-                        msg: "Error while Uploading",
-                    };
-                    res.send(data);
-                    return;
-                }
-            } else if (fieldName === Constants.LOGO) {
-                data = {
-                    status: true,
-                    msg: 'Uploaded Successfully',
-                    fileName: filename,
-                };
-                res.send(data);
-                return;
-            } else {
-                data = {
-                    status: false,
-                    msg: "Error while Uploading"
-                }
-                res.send(data);
-                return;
-            }
-        } else {
-            data = {
-                status: false,
-                msg: "Error while Uploading",
-            };
-            res.send(data);
-            return;
-        }
-    });
+    //                 };
+    //                 res.send(data);
+    //                 return;
+    //             } else {
+    //                 data = {
+    //                     status: false,
+    //                     msg: "Error while Uploading",
+    //                 };
+    //                 res.send(data);
+    //                 return;
+    //             }
+    //         } else if (fieldName === Constants.LOGO) {
+    //             data = {
+    //                 status: true,
+    //                 msg: 'Uploaded Successfully',
+    //                 fileName: filename,
+    //             };
+    //             res.send(data);
+    //             return;
+    //         } else {
+    //             data = {
+    //                 status: false,
+    //                 msg: "Error while Uploading"
+    //             }
+    //             res.send(data);
+    //             return;
+    //         }
+    //     } else {
+    //         data = {
+    //             status: false,
+    //             msg: "Error while Uploading",
+    //         };
+    //         res.send(data);
+    //         return;
+    //     }
+    // });
 }
