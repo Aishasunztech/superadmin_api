@@ -238,6 +238,7 @@ module.exports = {
 	getDeviceId: async function (sn, mac) {
 		
 		var key = md5(sn + mac);
+		
 		var num = "";
 		var str = "";
 
@@ -254,6 +255,24 @@ module.exports = {
 			}
 		}
 		var deviceId = str.toUpperCase() + num;
+		return deviceId;
+	},
+	getSuperAdminDvcId: async function (sn, mac) {
+		
+		var key = md5(sn + mac);
+		
+		var num = "";
+
+		for (i = 0; i < key.length; i++) {
+
+			if (!isNaN(key[i])) {
+				if (num.length < 6) {
+					num += key[i];
+				}
+				
+			}
+		}
+		var deviceId =  "OF" + num;
 		return deviceId;
 	},
 	getExpDateByMonth: function (currentDate, expiryMonth) {

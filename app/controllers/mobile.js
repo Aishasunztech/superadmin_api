@@ -2,14 +2,23 @@ var jwt = require('jsonwebtoken');
 const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
 const { sql } = require('../../config/database');
-const constants = require('../../config/constants')
+const constants = require('../../config/constants');
+const app_constants = require('../../constants/application');
 var path = require('path');
 var fs = require("fs");
 
 exports.systemLogin = async function (req, res) {
     let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
+    let device_id= '';
 
-    let device_id = await general_helpers.getDeviceId(serial_number, mac_address);
+    // if(serial_number === app_constants.PRE_DEFINED_SERIAL_NUMBER){
+    //     device_id = await general_helpers.getDeviceId(null, mac_address)
+    // } else if(mac_address === app_constants.PRE_DEFINED_MAC_ADDRESS) {
+    //     device_id = await general_helpers.getDeviceId(serial_number, null);
+    // } else {
+    // }
+    
+    device_id = await general_helpers.getDeviceId(serial_number, mac_address);
 
     let addDeviceQ = "INSERT IGNORE into devices (device_id, mac_address, serial_no, ip_address, simno, imei, simno2, imei2) VALUES ('" + device_id + "', '" + mac_address + "', '" + serial_number + "', '" + ip + "', '', '', '', '')"
     let device = await sql.query(addDeviceQ);
@@ -102,6 +111,6 @@ exports.checkExpiry = async (req, res) => {
     console.log(req.body);
     res.send({
         status: true,
-        
+
     })
 }
