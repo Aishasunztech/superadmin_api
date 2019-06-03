@@ -221,6 +221,17 @@ module.exports = {
 		}
 	},
 
+	getAdminStatus: (admin) => {
+		if ((admin.account_status === '' || admin.account_status === null) && (admin.unlink_status === 0)) {
+			return app_constants.ADMIN_ACTIVE;
+		} else if (admin.unlink_status === 1) {
+			return app_constants.ADMIN_UNLINKED;
+		} else if (admin.account_status === 'suspended') {
+			return app_constants.ADMIN_SUSPENDED;
+		} else {
+			return 'N/A';
+		}
+	},
 	
 
 	//Helper function to get unique device_id in format like "ASGH457862" 
