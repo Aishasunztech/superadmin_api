@@ -48,8 +48,9 @@ exports.uploadFile = async function (req, res) {
     let filename = "";
     let mimeType = "";
     let fieldName = "";
-    console.log(req.files);
-
+    // console.log(req.files.apk);
+    let packagename = await general_helpers.getAPKPackageName(req.files.apk.path);
+    console.log(packagename);
     // var storage = multer.diskStorage({
     //     destination: function (req, file, callback) {
     //         callback(null, '../../uploads');
