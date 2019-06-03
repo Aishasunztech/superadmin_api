@@ -21,17 +21,9 @@ module.exports = function (app) {
         router.use('/auth', authRoutes);
         router.use('/mobile', mobileRoutes);
 
-        // router.use('/users',
-        //     [
-        //         authMiddleware,
-        //         multipartMiddleware
-        //     ]
-        //     , userRoutes
-        // );
-
         router.use('/users',
             [
-                // authMiddleware,
+                authMiddleware,
                 multipartMiddleware
             ]
             , userRoutes
