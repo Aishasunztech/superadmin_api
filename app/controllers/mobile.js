@@ -17,7 +17,7 @@ exports.systemLogin = async function (req, res) {
     //     device_id = await general_helpers.getDeviceId(serial_number, null);
     // } else {
     // }
-    
+
     device_id = await general_helpers.getDeviceId(serial_number, mac_address);
 
     let addDeviceQ = "INSERT IGNORE into devices (device_id, mac_address, serial_no, ip_address, simno, imei, simno2, imei2) VALUES ('" + device_id + "', '" + mac_address + "', '" + serial_number + "', '" + ip + "', '', '', '', '')"
@@ -67,7 +67,7 @@ exports.systemLogin = async function (req, res) {
 
 exports.getWhiteLabel = async function (req, res) {
     if (req.decoded && req.decoded.device_id) {
-        let whiteLabelQ = "SELECT * FROM white_labels WHERE model_id='" + req.body.model_id + "'";
+        let whiteLabelQ = "SELECT * FROM white_labels WHERE command_name='" + req.body.model_id + "'";
         let whiteLabel = await sql.query(whiteLabelQ);
         if (Object.keys(whiteLabel).length) {
 
