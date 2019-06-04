@@ -8,6 +8,8 @@ router.get('/white-labels', user.getWhiteLabels);
 
 router.get('/white-labels/:labelId', user.getWhiteLabelInfo);
 
+router.put('/white-labels/:labelId', user.updateWhiteLabelInfo);
+
 router.post('/upload', user.uploadFile);
 
 module.exports = router;
