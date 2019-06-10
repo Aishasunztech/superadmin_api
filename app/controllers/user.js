@@ -4,6 +4,7 @@ const { sql } = require('../../config/database');
 const multer = require('multer');
 var path = require('path');
 var fs = require("fs");
+var empty = require('is-empty');
 
 exports.getWhiteLabels = async function (req, res) {
 
@@ -72,7 +73,7 @@ exports.uploadFile = async function (req, res) {
 
             res.send({
                 status: true,
-                fileName: fieldName
+                fileName: fileName
             })
         });
 
@@ -86,30 +87,39 @@ exports.uploadFile = async function (req, res) {
 
 exports.updateWhiteLabelInfo = async function (req, res) {
     try {
-        let logo = req.body.logo;
+        console.log('data is', req.body)
+        let model_id = req.body.model_id;
+        let command_name = req.body.command_name;
         let apk = req.body.apk;
-        let apk_name = req.body.name;
-        if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
+        console.log(model_id, 'id is', apk);
 
-            let file = path.join(__dirname, "../uploads/" + apk);
+        if (!empty(apk) && !empty(model_id)) {
+
+            console.log('test 1')
+
+            let file = path.join(__dirname, "../../uploads/" + apk);
+
             if (fs.existsSync(file)) {
                 let versionCode = '';
                 let versionName = '';
                 let packageName = '';
                 let label = '';
                 let details = '';
+                console.log(versionCode, 'test 3');
 
-                versionCode = await helpers.getAPKVersionCode(file);
+                versionCode = await general_helpers.getAPKVersionCode(file);
+                
+                
                 if (versionCode) {
-                    versionName = await helpers.getAPKVersionName(file);
+                    versionName = await general_helpers.getAPKVersionName(file);
                     if (!versionName) {
                         versionName = ''
                     }
-                    packageName = await helpers.getAPKPackageName(file);
+                    packageName = await general_helpers.getAPKPackageName(file);
                     if (!packageName) {
                         packageName = '';
                     }
-                    label = await helpers.getAPKLabel(file);
+                    label = await general_helpers.getAPKLabel(file);
                     if (!label) {
                         label = ''
                     }
@@ -132,16 +142,15 @@ exports.updateWhiteLabelInfo = async function (req, res) {
 
                 let apk_stats = fs.statSync(file);
 
-                let formatByte = helpers.formatBytes(apk_stats.size);
+                let formatByte = general_helpers.formatBytes(apk_stats.size);
                 // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
 
-                sql.query("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_bytes='" + apk_stats.size + "',  apk_size='" + formatByte + "'  where id = '" + req.body.apk_id + "'", function (err, rslts) {
+                sql.query("update white_labels set model_id = '" + model_id + "', command_name = '" + command_name + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "'  where id = '" + req.body.id + "'", function (err, rslts) {
 
                     if (err) throw err;
                     data = {
                         status: true,
                         msg: "Record Updated"
-
                     };
                     res.send(data);
                     return;
