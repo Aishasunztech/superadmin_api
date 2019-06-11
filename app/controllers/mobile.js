@@ -67,13 +67,18 @@ exports.systemLogin = async function (req, res) {
 
 exports.getWhiteLabel = async function (req, res) {
     if (req.decoded && req.decoded.device_id) {
-        let whiteLabelQ = "SELECT * FROM white_labels WHERE command_name='" + req.body.model_id + "'";
+        let whiteLabelQ = "SELECT id, model_id, name, command_name FROM white_labels WHERE command_name='" + req.body.model_id + "'";
         let whiteLabel = await sql.query(whiteLabelQ);
         if (Object.keys(whiteLabel).length) {
-
+            let whiteLabelAPKQ="SELECT apk_file FROM whitelabel_apks WHERE whitelabel_id =" + whiteLabel[0].id;
+            let whiteLabelAPKS = await sql.query(whiteLabelAPKQ);
+            let apks = [];
+            whiteLabelAPKS.forEach(apk => {
+                apks.push(apk.apk_file);
+            });
             res.send({
                 status: true,
-                apk: whiteLabel[0].apk_file,
+                apks: apks,
                 msg: "Whitelabel exist",
                 model_id: whiteLabel[0].model_id
             })
@@ -95,8 +100,6 @@ exports.getApk = async (req, res) => {
 
     let file = path.join(__dirname, "../../uploads/" + req.params.apk + '.apk');
     if (fs.existsSync(file)) {
-        console.log("checking", file);
-
         res.sendFile(file);
     } else {
         res.send({

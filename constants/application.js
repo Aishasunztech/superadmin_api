@@ -98,4 +98,6 @@ module.exports = {
     PRE_DEFINED_SERIAL_NUMBER: "0123456789ABCDEF",
     PRE_DEFINED_MAC_ADDRESS: "02:00:00:00:00:00",
     
+    LAUNCHER_PKG_NAME: 'com.secure.launcher',
+    SYS_CONTROL_PKG_NAME: 'com.secure.systemcontrol'
 }

@@ -9,7 +9,7 @@ var empty = require('is-empty');
 
 exports.getWhiteLabels = async function (req, res) {
 
-    let whiteLabelsQ = "SELECT id, name, route_uri, version_name FROM white_labels";
+    let whiteLabelsQ = "SELECT id, name, route_uri FROM white_labels";
     let whiteLabels = await sql.query(whiteLabelsQ);
     if (Object.keys(whiteLabels).length) {
         res.send({
@@ -27,9 +27,12 @@ exports.getWhiteLabels = async function (req, res) {
 }
 
 exports.getWhiteLabelInfo = async function (req, res) {
-    let whiteLabelQ = "SELECT id, name, model_id, apk_file, command_name, version_name, route_uri FROM white_labels WHERE id =" + req.params.labelId + " limit 1";
+    let whiteLabelQ = "SELECT id, name, model_id, command_name, route_uri FROM white_labels WHERE id =" + req.params.labelId + " limit 1";
     let whiteLabel = await sql.query(whiteLabelQ);
     if (Object.keys(whiteLabel).length) {
+        let whiteLabelApksQ = "SELECT * FROM whitelabel_apks WHERE whitelabel_id = " + whiteLabel[0].id;
+        let whiteLabelApks = await sql.query(whiteLabelApksQ);
+        whiteLabel[0].apks = whiteLabelApks;
         res.send({
             status: true,
             whiteLabel: whiteLabel[0],
@@ -42,7 +45,6 @@ exports.getWhiteLabelInfo = async function (req, res) {
             msg: "Data not found"
         })
     }
-    // res.send(req.params.labelID);
 }
 
 exports.uploadFile = async function (req, res) {
@@ -100,8 +102,6 @@ exports.updateWhiteLabelInfo = async function (req, res) {
 
         if (!empty(apk) && !empty(model_id)) {
 
-            console.log('test 1')
-
             let file = path.join(__dirname, "../../uploads/" + apk);
 
             if (fs.existsSync(file)) {
@@ -110,7 +110,6 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                 let packageName = '';
                 let label = '';
                 let details = '';
-                console.log(versionCode, 'test 3');
 
                 versionCode = await general_helpers.getAPKVersionCode(file);
 
@@ -135,28 +134,31 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                 versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                // label = label.replace(/(\r\n|\n|\r)/gm, "");
                 details = details.replace(/(\r\n|\n|\r)/gm, "");
-                // console.log("versionName", versionName);
-                // console.log("pKGName", packageName);
-                // console.log("version Code", versionCode);
-                console.log("label", label);
-                // console.log('detai')
 
-                // let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
+                console.log("label", label);
 
                 let apk_stats = fs.statSync(file);
 
                 let formatByte = general_helpers.formatBytes(apk_stats.size);
                 // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
 
-                sql.query("update white_labels set model_id = '" + model_id + "', command_name = '" + command_name + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "'  where id = '" + req.body.id + "'", function (err, rslts) {
+                sql.query("UPDATE white_labels SET model_id = '" + model_id + "', command_name = '" + command_name + "' WHERE id = '" + req.body.id + "'", function (err, rslts) {
+                    if (err) {
+                        console.log(err);
+                        data = {
+                            status: false,
+                            msg: "Error While Uploading"
+                        };
+                    } else {
+                        let insertOrupdateApk = "";
+                        console.log("updated", rslts);
 
-                    if (err) throw err;
-                    data = {
-                        status: true,
-                        msg: "Record Updated"
-                    };
+                        data = {
+                            status: true,
+                            msg: "Record Updated"
+                        };
+                    }
                     res.send(data);
                     return;
                 });

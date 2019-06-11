@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 10/06/2019 15:54:41
+ Date: 11/06/2019 15:52:59
 */
 
 SET NAMES utf8mb4;
@@ -129,8 +129,24 @@ CREATE TABLE `admins`  (
 -- ----------------------------
 -- Records of admins
 -- ----------------------------
-INSERT INTO `admins` VALUES (154, 'Neha', 'Kashyap', 'admin@gmail.com', 'e6e061838856bf47e1de730719fb2609', 0, NULL, 0, 1, 0, NULL, '2019-02-08 09:50:04', '2019-02-08 09:50:04');
-INSERT INTO `admins` VALUES (222, NULL, NULL, 'usmanhafeez147@gmail.com', '99ce78652ecfc64899f9811135f86ffd', 0, '', 0, 1, 0, '', '2019-04-03 15:23:26', '2019-05-23 10:22:31');
+INSERT INTO `admins` VALUES (154, 'Super', 'Admin', 'admin@gmail.com', 'e6e061838856bf47e1de730719fb2609', 0, NULL, 0, 1, 0, NULL, '2019-02-08 09:50:04', '2019-06-11 11:25:27');
+
+-- ----------------------------
+-- Table structure for chat_ids
+-- ----------------------------
+DROP TABLE IF EXISTS `chat_ids`;
+CREATE TABLE `chat_ids`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_acc_id` int(11) NULL DEFAULT NULL,
+  `chat_id` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
+  `used` tinyint(4) NOT NULL DEFAULT 0,
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `chat_id_unique`(`chat_id`) USING BTREE,
+  INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
+  CONSTRAINT `chat_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
+) ENGINE = InnoDB AUTO_INCREMENT = 30 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for device_whitelabel
@@ -215,11 +231,15 @@ CREATE TABLE `login_history`  (
   `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 222 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 226 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of login_history
 -- ----------------------------
+INSERT INTO `login_history` VALUES (225, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJTdXBlciIsImxhc3RfbmFtZSI6IkFkbWluIiwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJwYXNzd29yZCI6ImU2ZTA2MTgzODg1NmJmNDdlMWRlNzMwNzE5ZmIyNjA5IiwidmVyaWZpZWQiOjAsInZlcmlmaWNhdGlvbl9jb2RlIjpudWxsLCJpc190d29fZmFjdG9yX2F1dGgiOjAsInR5cGUiOjEsInVubGlua19zdGF0dXMiOjAsImFjY291bnRfc3RhdHVzIjpudWxsLCJjcmVhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsInVwZGF0ZWRfYXQiOiIyMDE5LTA2LTExIDExOjI1OjI3IiwiaXBfYWRkcmVzcyI6Ijo6MSJ9LCJpYXQiOjE1NjAyMzY5MDYsImV4cCI6MTU2MDMyMzMwNn0.0FWOkVhjnenSwg-UNf86TgqeRjhDz_ywJofwlWs2k64', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-11 12:08:26', NULL);
+INSERT INTO `login_history` VALUES (224, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJOZWhhIiwibGFzdF9uYW1lIjoiS2FzaHlhcCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicGFzc3dvcmQiOiJlNmUwNjE4Mzg4NTZiZjQ3ZTFkZTczMDcxOWZiMjYwOSIsInZlcmlmaWVkIjowLCJ2ZXJpZmljYXRpb25fY29kZSI6bnVsbCwiaXNfdHdvX2ZhY3Rvcl9hdXRoIjowLCJ0eXBlIjoxLCJ1bmxpbmtfc3RhdHVzIjowLCJhY2NvdW50X3N0YXR1cyI6bnVsbCwiY3JlYXRlZF9hdCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ1cGRhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTYwMTc0NjAxLCJleHAiOjE1NjAyNjEwMDF9.Myvt1I8ekvxB1FXnNAmHw_Ufv6NtCYH6aB1vNJMLK1k', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-10 18:50:01', NULL);
+INSERT INTO `login_history` VALUES (223, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJOZWhhIiwibGFzdF9uYW1lIjoiS2FzaHlhcCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicGFzc3dvcmQiOiJlNmUwNjE4Mzg4NTZiZjQ3ZTFkZTczMDcxOWZiMjYwOSIsInZlcmlmaWVkIjowLCJ2ZXJpZmljYXRpb25fY29kZSI6bnVsbCwiaXNfdHdvX2ZhY3Rvcl9hdXRoIjowLCJ0eXBlIjoxLCJ1bmxpbmtfc3RhdHVzIjowLCJhY2NvdW50X3N0YXR1cyI6bnVsbCwiY3JlYXRlZF9hdCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ1cGRhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTYwMTc0NTk1LCJleHAiOjE1NjAyNjA5OTV9.nTAawJR2OR4OSNQxD3kfN1n5mwnSbMFj7JoCBu7tFNI', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-10 18:49:55', NULL);
+INSERT INTO `login_history` VALUES (222, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJOZWhhIiwibGFzdF9uYW1lIjoiS2FzaHlhcCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicGFzc3dvcmQiOiJlNmUwNjE4Mzg4NTZiZjQ3ZTFkZTczMDcxOWZiMjYwOSIsInZlcmlmaWVkIjowLCJ2ZXJpZmljYXRpb25fY29kZSI6bnVsbCwiaXNfdHdvX2ZhY3Rvcl9hdXRoIjowLCJ0eXBlIjoxLCJ1bmxpbmtfc3RhdHVzIjowLCJhY2NvdW50X3N0YXR1cyI6bnVsbCwiY3JlYXRlZF9hdCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ1cGRhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTYwMTc0NTQzLCJleHAiOjE1NjAyNjA5NDN9.Ukbi59grQiols0A7GgqkQqPcu8KHBKJl-AJZStw-0NY', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-10 18:49:03', NULL);
 INSERT INTO `login_history` VALUES (220, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJOZWhhIiwibGFzdF9uYW1lIjoiS2FzaHlhcCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicGFzc3dvcmQiOiJlNmUwNjE4Mzg4NTZiZjQ3ZTFkZTczMDcxOWZiMjYwOSIsInZlcmlmaWVkIjowLCJ2ZXJpZmljYXRpb25fY29kZSI6bnVsbCwiaXNfdHdvX2ZhY3Rvcl9hdXRoIjowLCJ0eXBlIjoxLCJ1bmxpbmtfc3RhdHVzIjowLCJhY2NvdW50X3N0YXR1cyI6bnVsbCwiY3JlYXRlZF9hdCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ1cGRhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTU5NTQzNjY4LCJleHAiOjE1NTk2MzAwNjh9.fddiSsPGIlphtIRwpGHQK22nhEBv3Saw1B29SwWgHWQ', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-03 11:34:28', NULL);
 INSERT INTO `login_history` VALUES (221, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJOZWhhIiwibGFzdF9uYW1lIjoiS2FzaHlhcCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicGFzc3dvcmQiOiJlNmUwNjE4Mzg4NTZiZjQ3ZTFkZTczMDcxOWZiMjYwOSIsInZlcmlmaWVkIjowLCJ2ZXJpZmljYXRpb25fY29kZSI6bnVsbCwiaXNfdHdvX2ZhY3Rvcl9hdXRoIjowLCJ0eXBlIjoxLCJ1bmxpbmtfc3RhdHVzIjowLCJhY2NvdW50X3N0YXR1cyI6bnVsbCwiY3JlYXRlZF9hdCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ1cGRhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTYwMTUyOTYwLCJleHAiOjE1NjAyMzkzNjB9.gUxRrnYgmJGBO2CWsTcKOtin2ds-82-YB1kRTFlZ_30', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-10 12:49:20', NULL);
 INSERT INTO `login_history` VALUES (219, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJOZWhhIiwibGFzdF9uYW1lIjoiS2FzaHlhcCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicGFzc3dvcmQiOiJlNmUwNjE4Mzg4NTZiZjQ3ZTFkZTczMDcxOWZiMjYwOSIsInZlcmlmaWVkIjowLCJ2ZXJpZmljYXRpb25fY29kZSI6bnVsbCwiaXNfdHdvX2ZhY3Rvcl9hdXRoIjowLCJ0eXBlIjoxLCJ1bmxpbmtfc3RhdHVzIjowLCJhY2NvdW50X3N0YXR1cyI6bnVsbCwiY3JlYXRlZF9hdCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ1cGRhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTU5NTQzNjE1LCJleHAiOjE1NTk2MzAwMTV9.IZvzQmtOSdKAhI2R-JpY8EodPdmPvxqvmerjea8SPhE', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-03 11:33:35', NULL);
@@ -258,6 +278,42 @@ CREATE TABLE `paginations`  (
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
+-- Table structure for pgp_emails
+-- ----------------------------
+DROP TABLE IF EXISTS `pgp_emails`;
+CREATE TABLE `pgp_emails`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_acc_id` int(11) NULL DEFAULT NULL,
+  `pgp_email` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
+  `used` tinyint(4) NOT NULL DEFAULT 0,
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `unique_pgp_emails`(`pgp_email`) USING BTREE,
+  INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
+  CONSTRAINT `pgp_emails_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
+) ENGINE = InnoDB AUTO_INCREMENT = 195 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for sim_ids
+-- ----------------------------
+DROP TABLE IF EXISTS `sim_ids`;
+CREATE TABLE `sim_ids`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_acc_id` int(11) NULL DEFAULT NULL,
+  `sim_id` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
+  `used` tinyint(4) NOT NULL DEFAULT 0,
+  `start_date` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `expiry_date` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `created_at` timestamp(0) NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `sim_id_UNIQUE`(`sim_id`) USING BTREE,
+  INDEX `device_id`(`user_acc_id`) USING BTREE,
+  CONSTRAINT `sim_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
+) ENGINE = InnoDB AUTO_INCREMENT = 85 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
 -- Table structure for user_roles
 -- ----------------------------
 DROP TABLE IF EXISTS `user_roles`;
@@ -284,13 +340,6 @@ CREATE TABLE `white_labels`  (
   `model_id` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `name` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
   `command_name` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
-  `icon` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
-  `apk_file` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
-  `unique_name` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
-  `package_name` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
-  `label` varchar(500) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
-  `version_name` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
-  `version_code` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   `route_uri` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `domain` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `domain_port` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
@@ -314,7 +363,32 @@ CREATE TABLE `white_labels`  (
 -- ----------------------------
 -- Records of white_labels
 -- ----------------------------
-INSERT INTO `white_labels` VALUES (1, 'lockmesh123', 'LockMesh', '#lockmesh123', NULL, 'app-debug.apk', NULL, NULL, NULL, NULL, NULL, '/lockmesh', 'https://lockmesh.com', '3001', 'https://api.lockmesh.com', '3001', '134.209.124.196', 'root', NULL, NULL, NULL, NULL, NULL, 1, 1, 0, '2019-05-24 11:37:48', '2019-06-04 15:07:04');
-INSERT INTO `white_labels` VALUES (2, 'titanlocker123', 'TitanLocker', '#titanlocker123', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '/titanlocker', NULL, NULL, NULL, NULL, '165.22.82.254', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, 0, '2019-05-24 11:38:48', '2019-06-04 15:07:18');
+INSERT INTO `white_labels` VALUES (1, 'lockmesh123', 'LockMesh', '#lockmesh123', '/lockmesh', 'https://lockmesh.com', '3001', 'https://api.lockmesh.com', '3001', '134.209.124.196', 'root', NULL, NULL, NULL, NULL, NULL, 1, 1, 0, '2019-05-24 11:37:48', '2019-06-04 15:07:04');
+INSERT INTO `white_labels` VALUES (2, 'titanlocker123', 'TitanLocker', '#titanlocker123', '/titanlocker', NULL, NULL, NULL, NULL, '165.22.82.254', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, 0, '2019-05-24 11:38:48', '2019-06-04 15:07:18');
+
+-- ----------------------------
+-- Table structure for whitelabel_apks
+-- ----------------------------
+DROP TABLE IF EXISTS `whitelabel_apks`;
+CREATE TABLE `whitelabel_apks`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `whitelabel_id` int(11) NOT NULL,
+  `package_name` varchar(500) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,
+  `apk_icon` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
+  `apk_file` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
+  `apk_size` varchar(100) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `unique_name` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
+  `label` varchar(500) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `version_name` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
+  `version_code` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
+  PRIMARY KEY (`id`) USING BTREE,
+  UNIQUE INDEX `unique_whitelabel_id_package_name`(`whitelabel_id`, `package_name`) USING BTREE
+) ENGINE = MyISAM AUTO_INCREMENT = 3 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of whitelabel_apks
+-- ----------------------------
+INSERT INTO `whitelabel_apks` VALUES (1, 1, 'com.secure.launcher', NULL, 'app-debug.apk', NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `whitelabel_apks` VALUES (2, 1, 'secure.systemcontrol', NULL, 'SCS.apk', NULL, NULL, NULL, NULL, NULL);
 
 SET FOREIGN_KEY_CHECKS = 1;
