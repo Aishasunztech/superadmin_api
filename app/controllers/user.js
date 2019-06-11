@@ -9,7 +9,7 @@ var empty = require('is-empty');
 
 exports.getWhiteLabels = async function (req, res) {
 
-    let whiteLabelsQ = "SELECT id, name, route_uri FROM white_labels";
+    let whiteLabelsQ = "SELECT id, name, route_uri, version_name FROM white_labels";
     let whiteLabels = await sql.query(whiteLabelsQ);
     if (Object.keys(whiteLabels).length) {
         res.send({
@@ -27,7 +27,7 @@ exports.getWhiteLabels = async function (req, res) {
 }
 
 exports.getWhiteLabelInfo = async function (req, res) {
-    let whiteLabelQ = "SELECT id, name, model_id, apk_file,command_name, route_uri FROM white_labels WHERE id =" + req.params.labelId + " limit 1";
+    let whiteLabelQ = "SELECT id, name, model_id, apk_file, command_name, version_name, route_uri FROM white_labels WHERE id =" + req.params.labelId + " limit 1";
     let whiteLabel = await sql.query(whiteLabelQ);
     if (Object.keys(whiteLabel).length) {
         res.send({
@@ -46,43 +46,146 @@ exports.getWhiteLabelInfo = async function (req, res) {
 }
 
 exports.uploadFile = async function (req, res) {
-    let fileUploaded = false;
 
     let fileName = "";
     let mimeType = "";
     let fieldName = "";
     let filePath = "";
     let file = req.files.apk;
-    
+
     fieldName = file.fieldName;
     filePath = file.path;
     mimeType = file.type;
-    
+
     if (file.fieldName === 'apk' && mimeType === "application/vnd.android.package-archive") {
-        
-        fileName = fieldName + '-' + Date.now() + '.apk';
-        let target_path = path.join(__dirname, "../../uploads/" + fileName);
+        versionCode = await general_helpers.getAPKVersionCode(filePath);
+        if (versionCode) {
+            fileName = fieldName + '-' + Date.now() + '.apk';
+            let target_path = path.join(__dirname, "../../uploads/" + fileName);
 
-        general_helpers.move(filePath, target_path, function(error){
-            console.log(error);
-            if(error){
+            general_helpers.move(filePath, target_path, function (error) {
+                console.log(error);
+                if (error) {
+                    res.send({
+                        status: false,
+                        msg: "Error while uploading"
+                    })
+                }
+
                 res.send({
-                    status: false,
-                    msg: "Error while uploading"
+                    status: true,
+                    fileName: fileName
                 })
-            }
-
+            });
+        } else {
             res.send({
-                status: true,
-                fileName: fileName
+                status: false,
+                msg: "Error while uploading"
             })
-        });
+        }
 
     } else {
         res.send({
             status: false,
             msg: "Error while uploading"
         })
+    }
+}
+
+exports.updateWhiteLabelInfo = async function (req, res) {
+    try {
+        let model_id = req.body.model_id;
+        let command_name = req.body.command_name;
+        let apk = req.body.apk;
+
+        if (!empty(apk) && !empty(model_id)) {
+
+            console.log('test 1')
+
+            let file = path.join(__dirname, "../../uploads/" + apk);
+
+            if (fs.existsSync(file)) {
+                let versionCode = '';
+                let versionName = '';
+                let packageName = '';
+                let label = '';
+                let details = '';
+                console.log(versionCode, 'test 3');
+
+                versionCode = await general_helpers.getAPKVersionCode(file);
+
+
+                if (versionCode) {
+                    versionName = await general_helpers.getAPKVersionName(file);
+                    if (!versionName) {
+                        versionName = ''
+                    }
+                    packageName = await general_helpers.getAPKPackageName(file);
+                    if (!packageName) {
+                        packageName = '';
+                    }
+                    label = await general_helpers.getAPKLabel(file);
+                    if (!label) {
+                        label = ''
+                    }
+                } else {
+                    versionCode = '';
+                }
+
+                versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                // label = label.replace(/(\r\n|\n|\r)/gm, "");
+                details = details.replace(/(\r\n|\n|\r)/gm, "");
+                // console.log("versionName", versionName);
+                // console.log("pKGName", packageName);
+                // console.log("version Code", versionCode);
+                console.log("label", label);
+                // console.log('detai')
+
+                // let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
+
+                let apk_stats = fs.statSync(file);
+
+                let formatByte = general_helpers.formatBytes(apk_stats.size);
+                // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
+
+                sql.query("update white_labels set model_id = '" + model_id + "', command_name = '" + command_name + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "'  where id = '" + req.body.id + "'", function (err, rslts) {
+
+                    if (err) throw err;
+                    data = {
+                        status: true,
+                        msg: "Record Updated"
+                    };
+                    res.send(data);
+                    return;
+                });
+
+
+            } else {
+                data = {
+                    status: false,
+                    msg: "Error While Uploading"
+                };
+                res.send(data);
+                return;
+            }
+
+        } else {
+            data = {
+                status: false,
+                msg: "Error While Uploading"
+            };
+            res.send(data);
+            return;
+        }
+    } catch (error) {
+        data = {
+            status: false,
+            msg: "Error while Uploading",
+        };
+        res.send(data);
+        return;
     }
 }
 
@@ -95,22 +198,22 @@ exports.importCSV = async function (req, res) {
     let file = null;
 
     // console.log('fieldName', req.files)
-    if(fieldName === 'sim_ids' || fieldName === 'chat_ids' || fieldName  === 'pgp_emails'){
-        if(fieldName === 'sim_ids'){
+    if (fieldName === 'sim_ids' || fieldName === 'chat_ids' || fieldName === 'pgp_emails') {
+        if (fieldName === 'sim_ids') {
             file = req.files.sim_ids;
-        } else if (fieldName === 'chat_ids'){
+        } else if (fieldName === 'chat_ids') {
             file = req.files.chat_ids;
-        } else if (fieldName === 'pgp_emails'){
+        } else if (fieldName === 'pgp_emails') {
             file = req.files.pgp_emails;
         }
         filePath = file.path;
         mimeType = file.type;
 
-        if(
+        if (
             mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
             mimeType === "text/csv" ||
             mimeType === "application/vnd.ms-excel"
-        ){
+        ) {
             var workbook = XLSX.readFile(filePath);
 
             workbook.SheetNames.forEach(async (sheet) => {
@@ -361,111 +464,10 @@ exports.importCSV = async function (req, res) {
             "duplicateData": [],
         })
     }
-    
+
 
     // }
 }
-
-exports.updateWhiteLabelInfo = async function (req, res) {
-    try {
-        console.log('data is', req.body)
-        let model_id = req.body.model_id;
-        let command_name = req.body.command_name;
-        let apk = req.body.apk;
-        console.log(model_id, 'id is', apk);
-
-        if (!empty(apk) && !empty(model_id)) {
-
-            console.log('test 1')
-
-            let file = path.join(__dirname, "../../uploads/" + apk);
-
-            if (fs.existsSync(file)) {
-                let versionCode = '';
-                let versionName = '';
-                let packageName = '';
-                let label = '';
-                let details = '';
-                console.log(versionCode, 'test 3');
-
-                versionCode = await general_helpers.getAPKVersionCode(file);
-                
-                
-                if (versionCode) {
-                    versionName = await general_helpers.getAPKVersionName(file);
-                    if (!versionName) {
-                        versionName = ''
-                    }
-                    packageName = await general_helpers.getAPKPackageName(file);
-                    if (!packageName) {
-                        packageName = '';
-                    }
-                    label = await general_helpers.getAPKLabel(file);
-                    if (!label) {
-                        label = ''
-                    }
-                } else {
-                    versionCode = '';
-                }
-
-                versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                // label = label.replace(/(\r\n|\n|\r)/gm, "");
-                details = details.replace(/(\r\n|\n|\r)/gm, "");
-                // console.log("versionName", versionName);
-                // console.log("pKGName", packageName);
-                // console.log("version Code", versionCode);
-                console.log("label", label);
-                // console.log('detai')
-
-                // let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
-
-                let apk_stats = fs.statSync(file);
-
-                let formatByte = general_helpers.formatBytes(apk_stats.size);
-                // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
-
-                sql.query("update white_labels set model_id = '" + model_id + "', command_name = '" + command_name + "', apk_file = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "'  where id = '" + req.body.id + "'", function (err, rslts) {
-
-                    if (err) throw err;
-                    data = {
-                        status: true,
-                        msg: "Record Updated"
-                    };
-                    res.send(data);
-                    return;
-                });
-
-
-            } else {
-                data = {
-                    status: false,
-                    msg: "Error While Uploading"
-                };
-                res.send(data);
-                return;
-            }
-
-        } else {
-            data = {
-                status: false,
-                msg: "Error While Uploading"
-            };
-            res.send(data);
-            return;
-        }
-    } catch (error) {
-        data = {
-            status: false,
-            msg: "Error while Uploading",
-        };
-        res.send(data);
-        return;
-    }
-}
-
-
 
 exports.getSimIds = async function (req, res) {
     let query = "select * from sim_ids where used=0";

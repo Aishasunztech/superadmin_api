@@ -31,7 +31,10 @@ module.exports = function (app) {
 
         // router.use('/', indexRouter);
         router.get('/', function (req, res) {
-
+            var ip = req.header('x-forwarded-for') || req.connection.remoteAddress;
+            res.send({
+                ip
+            });
         });
 
     });

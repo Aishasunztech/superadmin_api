@@ -9,7 +9,7 @@ var fs = require("fs");
 
 exports.systemLogin = async function (req, res) {
     let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
-    let device_id= '';
+    let device_id = '';
 
     // if(serial_number === app_constants.PRE_DEFINED_SERIAL_NUMBER){
     //     device_id = await general_helpers.getDeviceId(null, mac_address)
@@ -113,4 +113,51 @@ exports.checkExpiry = async (req, res) => {
         status: true,
 
     })
+}
+
+exports.getUpdate = async (req, res) => {
+    let versionName = req.params.version;
+    let uniqueName = req.params.uniqueName;
+    let query = "SELECT * FROM white_labels WHERE package_name = '" + uniqueName + "'";
+    
+    sql.query(query, function (error, response) {
+
+        if (error) {
+            res.send({
+                success: true,
+                status: false,
+                msg: "Error in Query"
+            });
+        }
+
+        let isAvail = false;
+
+        if (Object.keys(response).length) {
+            for (let i = 0; i < Object.keys(response).length; i++) {
+                if (Number(response[i].version_code) > Number(versionName)) {
+                    isAvail = true;
+                    res.send({
+                        apk_status: true,
+                        success: true,
+                        apk_url: response[i].apk
+                    });
+
+                    break;
+                }
+            }
+            if (!isAvail) {
+                res.send({
+                    apk_status: false,
+                    success: true,
+                });
+            }
+
+        } else {
+            res.send({
+                apk_status: false,
+                success: true,
+            });
+        }
+    })
+
 }

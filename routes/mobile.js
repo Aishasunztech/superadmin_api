@@ -15,6 +15,9 @@ router.post('/get-whitelabel', authMiddleware , mobile.getWhiteLabel);
 /** Get Apk **/
 router.get("/getApk/:apk", mobile.getApk);
 
-router.post('/check_expiry', mobile.checkExpiry)
+router.post('/check_expiry', mobile.checkExpiry);
+
+router.get('/getUpdate/:version/:uniqueName/:label', mobile.getUpdate);
+
 
 module.exports = router;
