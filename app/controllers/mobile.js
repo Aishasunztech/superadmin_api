@@ -118,7 +118,7 @@ exports.checkExpiry = async (req, res) => {
 exports.getUpdate = async (req, res) => {
     let versionName = req.params.version;
     let uniqueName = req.params.uniqueName;
-    let query = "SELECT * FROM white_labels WHERE package_name = '" + uniqueName + "'";
+    let query = "SELECT * FROM whitelabel_apks WHERE package_name = '" + uniqueName + "'";
     
     sql.query(query, function (error, response) {
 
@@ -139,7 +139,7 @@ exports.getUpdate = async (req, res) => {
                     res.send({
                         apk_status: true,
                         success: true,
-                        apk_url: response[i].apk
+                        apk_url: response[i].apk_file
                     });
 
                     break;
