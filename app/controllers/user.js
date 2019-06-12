@@ -6,6 +6,7 @@ var path = require('path');
 var fs = require("fs");
 var XLSX = require('xlsx');
 var empty = require('is-empty');
+const constant = require('../../constants/application');
 
 exports.getWhiteLabels = async function (req, res) {
 
@@ -51,15 +52,26 @@ exports.uploadFile = async function (req, res) {
 
     let fileName = "";
     let mimeType = "";
-    let fieldName = "";
+    let fieldName = req.params.fieldName;
     let filePath = "";
-    let file = req.files.apk;
+    let file = null;
 
-    fieldName = file.fieldName;
+    if (fieldName === 'launcher_apk') {
+        file = req.files.launcher_apk;
+    } else if (fieldName === "sc_apk") {
+        file = req.files.sc_apk;
+    } else {
+        res.send({
+            status: false,
+            msg: "Error while uploading"
+        })
+        return;
+    }
+
     filePath = file.path;
     mimeType = file.type;
 
-    if (file.fieldName === 'apk' && mimeType === "application/vnd.android.package-archive") {
+    if (mimeType === "application/vnd.android.package-archive") {
         versionCode = await general_helpers.getAPKVersionCode(filePath);
         if (versionCode) {
             fileName = fieldName + '-' + Date.now() + '.apk';
@@ -78,12 +90,14 @@ exports.uploadFile = async function (req, res) {
                     status: true,
                     fileName: fileName
                 })
+                return
             });
         } else {
             res.send({
                 status: false,
                 msg: "Error while uploading"
             })
+            return;
         }
 
     } else {
@@ -98,80 +112,105 @@ exports.updateWhiteLabelInfo = async function (req, res) {
     try {
         let model_id = req.body.model_id;
         let command_name = req.body.command_name;
-        let apk = req.body.apk;
-
-        if (!empty(apk) && !empty(model_id)) {
-
-            let file = path.join(__dirname, "../../uploads/" + apk);
-
-            if (fs.existsSync(file)) {
-                let versionCode = '';
-                let versionName = '';
-                let packageName = '';
-                let label = '';
-                let details = '';
-
-                versionCode = await general_helpers.getAPKVersionCode(file);
+        let apk_files = req.body.apk_files;
 
 
-                if (versionCode) {
-                    versionName = await general_helpers.getAPKVersionName(file);
-                    if (!versionName) {
-                        versionName = ''
-                    }
-                    packageName = await general_helpers.getAPKPackageName(file);
-                    if (!packageName) {
-                        packageName = '';
-                    }
-                    label = await general_helpers.getAPKLabel(file);
-                    if (!label) {
-                        label = ''
-                    }
+
+        if (!empty(model_id)) {
+            sql.query("UPDATE white_labels SET model_id = '" + model_id + "', command_name = '" + command_name + "' WHERE id = '" + req.body.id + "'", async function (err, rslts) {
+                if (err) {
+                    console.log(err);
+                    data = {
+                        status: false,
+                        msg: "Error While Uploading"
+                    };
                 } else {
-                    versionCode = '';
-                }
+                    // console.log(rslts,'reslts are');
+                    if (apk_files.length) {
+                        for (let apk of apk_files) {
+                            let file = path.join(__dirname, "../../uploads/" + apk);
 
-                versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
-                details = details.replace(/(\r\n|\n|\r)/gm, "");
+                            if (fs.existsSync(file)) {
+                                let versionCode = '';
+                                let versionName = '';
+                                let packageName = '';
+                                let label = '';
+                                let details = '';
 
-                console.log("label", label);
+                                versionCode = await general_helpers.getAPKVersionCode(file);
 
-                let apk_stats = fs.statSync(file);
 
-                let formatByte = general_helpers.formatBytes(apk_stats.size);
-                // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
+                                if (versionCode) {
+                                    versionName = await general_helpers.getAPKVersionName(file);
+                                    if (!versionName) {
+                                        versionName = ''
+                                    }
+                                    packageName = await general_helpers.getAPKPackageName(file);
+                                    if (!packageName) {
+                                        packageName = '';
+                                    }
+                                    label = await general_helpers.getAPKLabel(file);
+                                    if (!label) {
+                                        label = ''
+                                    }
+                                } else {
+                                    versionCode = '';
+                                }
 
-                sql.query("UPDATE white_labels SET model_id = '" + model_id + "', command_name = '" + command_name + "' WHERE id = '" + req.body.id + "'", function (err, rslts) {
-                    if (err) {
-                        console.log(err);
-                        data = {
-                            status: false,
-                            msg: "Error While Uploading"
-                        };
-                    } else {
-                        let insertOrupdateApk = "";
-                        console.log("updated", rslts);
+                                versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                                versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                                packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                                details = details.replace(/(\r\n|\n|\r)/gm, "");
+                                // console.log(packageName,' pkg name is')
+                                // console.log("label", label);
+
+                                let apk_stats = fs.statSync(file);
+
+                                let formatByte = general_helpers.formatBytes(apk_stats.size);
+
+                                let whiteLabelId = req.body.id;
+
+                                // console.log(whiteLabelId, 'id', packageName, 'pkg_name')
+
+                                sql.query("UPDATE whitelabel_apks SET apk_file='" + apk + "', apk_size='" + formatByte + "', version_name='" + versionName + "', version_code='" + versionCode + "' WHERE whitelabel_id = '" + whiteLabelId + "' AND package_name = '" + packageName + "'", (error, sResult) => {
+                                    if (error) {
+
+                                    }
+                                    // console.log(sResult, 'sResults')
+                                    if (sResult && !sResult.affectedRows) {
+                                        sql.query("INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, version_name, version_code) VALUES('" + apk + "','" + whiteLabelId + "', '" + packageName + "', '" + formatByte + "', '" + versionName + "', '" + versionCode + "')");
+                                    }
+                                });
+
+
+                            } else {
+                                data = {
+                                    status: false,
+                                    msg: "Error While Uploading"
+                                };
+                                res.send(data);
+                                return;
+                            }
+                        }
 
                         data = {
                             status: true,
                             msg: "Record Updated"
                         };
+                        res.send(data);
+                        return;
+                    } else {
+                        data = {
+                            status: false,
+                            msg: "Record Updated but Apks not Provided"
+                        };
+                        res.send(data);
+                        return;
                     }
-                    res.send(data);
-                    return;
-                });
 
+                }
 
-            } else {
-                data = {
-                    status: false,
-                    msg: "Error While Uploading"
-                };
-                res.send(data);
-                return;
-            }
+            });
 
         } else {
             data = {
@@ -181,6 +220,103 @@ exports.updateWhiteLabelInfo = async function (req, res) {
             res.send(data);
             return;
         }
+
+
+
+        // if (!empty(apk) && !empty(model_id)) {
+
+        //     let file = path.join(__dirname, "../../uploads/" + apk);
+
+        //     if (fs.existsSync(file)) {
+        //         let versionCode = '';
+        //         let versionName = '';
+        //         let packageName = '';
+        //         let label = '';
+        //         let details = '';
+
+        //         versionCode = await general_helpers.getAPKVersionCode(file);
+
+
+        //         if (versionCode) {
+        //             versionName = await general_helpers.getAPKVersionName(file);
+        //             if (!versionName) {
+        //                 versionName = ''
+        //             }
+        //             packageName = await general_helpers.getAPKPackageName(file);
+        //             if (!packageName) {
+        //                 packageName = '';
+        //             }
+        //             label = await general_helpers.getAPKLabel(file);
+        //             if (!label) {
+        //                 label = ''
+        //             }
+        //         } else {
+        //             versionCode = '';
+        //         }
+
+        //         versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+        //         versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+        //         packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+        //         details = details.replace(/(\r\n|\n|\r)/gm, "");
+
+        //         // console.log("label", label);
+
+        //         let apk_stats = fs.statSync(file);
+
+        //         let formatByte = general_helpers.formatBytes(apk_stats.size);
+        // console.log("update apk_details set app_name = '" + apk_name + "', logo = '" + logo + "', apk = '" + apk + "', version_code = '" + versionCode + "', version_name = '" + versionName + "', package_name='" + packageName + "', details='" + details + "', apk_byte='" + apk_stats.size + "',  apk_size='"+ formatByte +"'  where id = '" + req.body.apk_id + "'");
+
+        //                 sql.query("UPDATE white_labels SET model_id = '" + model_id + "', command_name = '" + command_name + "' WHERE id = '" + req.body.id + "'", function (err, rslts) {
+        //                     if (err) {
+        //                         console.log(err);
+        //                         data = {
+        //                             status: false,
+        //                             msg: "Error While Uploading"
+        //                         };
+        //                     } else {
+        //                         // console.log(rslts,'reslts are')
+
+        //                         let whiteLabelId =req.body.id;
+        //                         sql.query("UPDATE whitelabel_apks SET apk_file='"+sc_apk+"' WHERE whitelabel_id = '"+whiteLabelId+"' AND package_name = '"+constant.SYS_CONTROL_PKG_NAME+"'", (error, sResult)=>{
+        //                             if(error){
+
+
+        //                             }
+        // // console.log(sResult, 'sResults')
+        //                             if(sResult && !sResult.affectedRows){
+        //                                 sql.query("INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name) VALUES('"+sc_apk+"','"+whiteLabelId+"', '"+constant.SYS_CONTROL_PKG_NAME+"')");
+        //                             }
+        //                         });
+
+        //                         // console.log("updated", rslts);
+
+        //                         data = {
+        //                             status: true,
+        //                             msg: "Record Updated"
+        //                         };
+        //                     }
+        //                     res.send(data);
+        //                     return;
+        //                 });
+
+
+        //     } else {
+        //         data = {
+        //             status: false,
+        //             msg: "Error While Uploading"
+        //         };
+        //         res.send(data);
+        //         return;
+        //     }
+
+        // } else {
+        //     data = {
+        //         status: false,
+        //         msg: "Error While Uploading"
+        //     };
+        //     res.send(data);
+        //     return;
+        // }
     } catch (error) {
         data = {
             status: false,

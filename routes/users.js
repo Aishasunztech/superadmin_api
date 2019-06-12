@@ -10,7 +10,7 @@ router.get('/white-labels/:labelId', user.getWhiteLabelInfo);
 
 router.put('/update-white-label', user.updateWhiteLabelInfo);
 
-router.post('/upload', user.uploadFile);
+router.post('/upload/:fieldName', user.uploadFile);
 
 router.post('/import/:fieldName', user.importCSV);
 
