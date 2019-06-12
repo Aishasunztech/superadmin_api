@@ -70,15 +70,12 @@ exports.getWhiteLabel = async function (req, res) {
         let whiteLabelQ = "SELECT id, model_id, name, command_name FROM white_labels WHERE command_name='" + req.body.model_id + "'";
         let whiteLabel = await sql.query(whiteLabelQ);
         if (Object.keys(whiteLabel).length) {
-            let whiteLabelAPKQ="SELECT apk_file FROM whitelabel_apks WHERE whitelabel_id =" + whiteLabel[0].id;
+            let whiteLabelAPKQ="SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id =" + whiteLabel[0].id;
             let whiteLabelAPKS = await sql.query(whiteLabelAPKQ);
-            let apks = [];
-            whiteLabelAPKS.forEach(apk => {
-                apks.push(apk.apk_file);
-            });
+         
             res.send({
                 status: true,
-                apks: apks,
+                apks: whiteLabelAPKS,
                 msg: "Whitelabel exist",
                 model_id: whiteLabel[0].model_id
             })
