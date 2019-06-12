@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 11/06/2019 15:52:59
+ Date: 12/06/2019 12:26:32
 */
 
 SET NAMES utf8mb4;
@@ -231,11 +231,12 @@ CREATE TABLE `login_history`  (
   `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 226 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 227 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of login_history
 -- ----------------------------
+INSERT INTO `login_history` VALUES (226, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJTdXBlciIsImxhc3RfbmFtZSI6IkFkbWluIiwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJwYXNzd29yZCI6ImU2ZTA2MTgzODg1NmJmNDdlMWRlNzMwNzE5ZmIyNjA5IiwidmVyaWZpZWQiOjAsInZlcmlmaWNhdGlvbl9jb2RlIjpudWxsLCJpc190d29fZmFjdG9yX2F1dGgiOjAsInR5cGUiOjEsInVubGlua19zdGF0dXMiOjAsImFjY291bnRfc3RhdHVzIjpudWxsLCJjcmVhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsInVwZGF0ZWRfYXQiOiIyMDE5LTA2LTExIDExOjI1OjI3IiwiaXBfYWRkcmVzcyI6Ijo6MSJ9LCJpYXQiOjE1NjAzMjM4ODcsImV4cCI6MTU2MDQxMDI4N30.iqCygXg3rwkib09l0N7qWtTyhjVglXmSH2d-Hu2hyQw', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-12 12:18:07', NULL);
 INSERT INTO `login_history` VALUES (225, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJTdXBlciIsImxhc3RfbmFtZSI6IkFkbWluIiwiZW1haWwiOiJhZG1pbkBnbWFpbC5jb20iLCJwYXNzd29yZCI6ImU2ZTA2MTgzODg1NmJmNDdlMWRlNzMwNzE5ZmIyNjA5IiwidmVyaWZpZWQiOjAsInZlcmlmaWNhdGlvbl9jb2RlIjpudWxsLCJpc190d29fZmFjdG9yX2F1dGgiOjAsInR5cGUiOjEsInVubGlua19zdGF0dXMiOjAsImFjY291bnRfc3RhdHVzIjpudWxsLCJjcmVhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsInVwZGF0ZWRfYXQiOiIyMDE5LTA2LTExIDExOjI1OjI3IiwiaXBfYWRkcmVzcyI6Ijo6MSJ9LCJpYXQiOjE1NjAyMzY5MDYsImV4cCI6MTU2MDMyMzMwNn0.0FWOkVhjnenSwg-UNf86TgqeRjhDz_ywJofwlWs2k64', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-11 12:08:26', NULL);
 INSERT INTO `login_history` VALUES (224, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJOZWhhIiwibGFzdF9uYW1lIjoiS2FzaHlhcCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicGFzc3dvcmQiOiJlNmUwNjE4Mzg4NTZiZjQ3ZTFkZTczMDcxOWZiMjYwOSIsInZlcmlmaWVkIjowLCJ2ZXJpZmljYXRpb25fY29kZSI6bnVsbCwiaXNfdHdvX2ZhY3Rvcl9hdXRoIjowLCJ0eXBlIjoxLCJ1bmxpbmtfc3RhdHVzIjowLCJhY2NvdW50X3N0YXR1cyI6bnVsbCwiY3JlYXRlZF9hdCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ1cGRhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTYwMTc0NjAxLCJleHAiOjE1NjAyNjEwMDF9.Myvt1I8ekvxB1FXnNAmHw_Ufv6NtCYH6aB1vNJMLK1k', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-10 18:50:01', NULL);
 INSERT INTO `login_history` VALUES (223, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJOZWhhIiwibGFzdF9uYW1lIjoiS2FzaHlhcCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicGFzc3dvcmQiOiJlNmUwNjE4Mzg4NTZiZjQ3ZTFkZTczMDcxOWZiMjYwOSIsInZlcmlmaWVkIjowLCJ2ZXJpZmljYXRpb25fY29kZSI6bnVsbCwiaXNfdHdvX2ZhY3Rvcl9hdXRoIjowLCJ0eXBlIjoxLCJ1bmxpbmtfc3RhdHVzIjowLCJhY2NvdW50X3N0YXR1cyI6bnVsbCwiY3JlYXRlZF9hdCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ1cGRhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTYwMTc0NTk1LCJleHAiOjE1NjAyNjA5OTV9.nTAawJR2OR4OSNQxD3kfN1n5mwnSbMFj7JoCBu7tFNI', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-10 18:49:55', NULL);
@@ -389,6 +390,6 @@ CREATE TABLE `whitelabel_apks`  (
 -- Records of whitelabel_apks
 -- ----------------------------
 INSERT INTO `whitelabel_apks` VALUES (1, 1, 'com.secure.launcher', NULL, 'app-debug.apk', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO `whitelabel_apks` VALUES (2, 1, 'secure.systemcontrol', NULL, 'SCS.apk', NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `whitelabel_apks` VALUES (2, 1, 'com.secure.systemcontrol', NULL, 'SCS.apk', NULL, NULL, NULL, NULL, NULL);
 
 SET FOREIGN_KEY_CHECKS = 1;
