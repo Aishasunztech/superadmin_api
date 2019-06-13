@@ -1,11 +1,15 @@
+// packages libraries
 var jwt = require('jsonwebtoken');
+var path = require('path');
+var fs = require("fs");
+
+// user defined libraries
 const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
 const { sql } = require('../../config/database');
 const constants = require('../../config/constants');
 const app_constants = require('../../constants/application');
-var path = require('path');
-var fs = require("fs");
+
 
 exports.systemLogin = async function (req, res) {
     let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
@@ -20,7 +24,7 @@ exports.systemLogin = async function (req, res) {
 
     device_id = await general_helpers.getDeviceId(serial_number, mac_address);
 
-    let addDeviceQ = "INSERT IGNORE into devices (device_id, mac_address, serial_no, ip_address, simno, imei, simno2, imei2) VALUES ('" + device_id + "', '" + mac_address + "', '" + serial_number + "', '" + ip + "', '', '', '', '')"
+    let addDeviceQ = `INSERT IGNORE into devices (device_id, mac_address, serial_no, ip_address, simno, imei, simno2, imei2) VALUES ('${device_id}', '${mac_address}', '${serial_number}', '${ip}', '', '', '', '')`;
     let device = await sql.query(addDeviceQ);
     if (device) {
         const sysmtemInfo = {
@@ -67,10 +71,12 @@ exports.systemLogin = async function (req, res) {
 
 exports.getWhiteLabel = async function (req, res) {
     if (req.decoded && req.decoded.device_id) {
-        let whiteLabelQ = "SELECT id, model_id, name, command_name FROM white_labels WHERE command_name='" + req.body.model_id + "'";
+        let whiteLabelQ = `SELECT id, model_id, name, command_name FROM white_labels WHERE command_name='${req.body.model_id}'`;
         let whiteLabel = await sql.query(whiteLabelQ);
+        
         if (Object.keys(whiteLabel).length) {
-            let whiteLabelAPKQ="SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id =" + whiteLabel[0].id;
+            
+            let whiteLabelAPKQ=`SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id}`;
             let whiteLabelAPKS = await sql.query(whiteLabelAPKQ);
          
             res.send({
@@ -118,7 +124,9 @@ exports.checkExpiry = async (req, res) => {
 exports.getUpdate = async (req, res) => {
     let versionName = req.params.version;
     let uniqueName = req.params.uniqueName;
-    let query = "SELECT * FROM whitelabel_apks WHERE package_name = '" + uniqueName + "'";
+    let label = req.params.label;
+
+    let query = `SELECT * FROM whitelabel_apks WHERE package_name = '${uniqueName}' AND ( label = '${label}' OR label = '' OR label = null)`;
     
     sql.query(query, function (error, response) {
 
@@ -134,6 +142,7 @@ exports.getUpdate = async (req, res) => {
 
         if (Object.keys(response).length) {
             for (let i = 0; i < Object.keys(response).length; i++) {
+
                 if (Number(response[i].version_code) > Number(versionName)) {
                     isAvail = true;
                     res.send({

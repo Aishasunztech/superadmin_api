@@ -465,7 +465,6 @@ module.exports = {
 			}
 			if (stdout) {
 				let array = stdout.split(/\r?\n/);
-				console.log("stdout linux: ", array);
 				let label = array[0].split(':');
 
 				return (label[1]) ? label[1].replace(/\'/g, '') : false;
