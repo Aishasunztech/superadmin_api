@@ -6,7 +6,116 @@ var path = require('path');
 var fs = require("fs");
 var XLSX = require('xlsx');
 var empty = require('is-empty');
+var mime = require('mime');
 const constant = require('../../constants/application');
+
+
+
+exports.getFile = async function (req, res) {
+
+
+    if (fs.existsSync(path.join(__dirname, "../../uploads/" + req.params.file))) {
+        let file = path.join(__dirname, "../../uploads/" + req.params.file);
+        let fileMimeType = mime.getType(file);
+        // let filetypes = /jpeg|jpg|apk|png/;
+        // Do something
+        // if (filetypes.test(fileMimeType)) {
+        res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
+        res.sendFile(path.join(__dirname, "../../uploads/" + req.params.file));
+        // } else {
+        //     res.send({
+        //         "status": false,
+        //         "msg": "file not found"
+        //     })
+        // }
+    } else {
+        res.send({
+            "status": false,
+            "msg": "file not found"
+        })
+    }
+
+}
+
+// export CSV 
+exports.exportCSV = async function (req, res) {
+    console.log('-------------------------------------------')
+    console.log('hi, test export api')
+    console.log('-------------------------------------------')
+
+    // var verify = await verifyToken(req, res);
+    // if (verify['status'] !== undefined && verify.status === true) {
+    let fieldName = req.params.fieldName;
+    // if (verify.user.user_type === ADMIN) {
+    let query = '';
+    if (fieldName === "sim_ids") {
+        query = "SELECT * FROM sim_ids where used = 0";
+    } else if (fieldName === "chat_ids") {
+        query = "SELECT * FROM chat_ids where used = 0"
+    } else if (fieldName === "pgp_emails") {
+        query = "SELECT * FROM pgp_emails where used = 0";
+    }
+    sql.query(query, async (error, response) => {
+        if (error) throw error;
+        if (response.length) {
+            var data = [];
+
+            if (fieldName === "sim_ids") {
+                response.forEach((sim_id) => {
+                    data.push({
+                        sim_id: sim_id.sim_id,
+                        start_date: sim_id.start_date,
+                        expiry_date: sim_id.expiry_date
+                    });
+                });
+            } else if (fieldName === "chat_ids") {
+                response.forEach((chat_id) => {
+                    data.push({
+                        chat_id: chat_id.chat_id,
+                    });
+                });
+            } else if (fieldName === "pgp_emails") {
+                response.forEach((pgp_email) => {
+                    data.push({
+                        pgp_email: pgp_email.pgp_email,
+                    });
+                });
+            }
+
+            /* this line is only needed if you are not adding a script tag reference */
+            if (data.length) {
+                /* make the worksheet */
+                var ws = XLSX.utils.json_to_sheet(data);
+
+                /* add to workbook */
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "People");
+
+                /* generate an XLSX file */
+                let fileName = fieldName + '_' + Date.now() + ".xlsx";
+                await XLSX.writeFile(wb, path.join(__dirname, "../../uploads/" + fileName));
+                res.send({
+                    path: fileName,
+                    status: true
+                });
+            } else {
+                res.send({
+                    status: false,
+                    msg: "no data to import"
+                })
+            }
+
+        }
+    })
+    // } else {
+    //     res.send({
+    //         status: false,
+    //         msg: "access forbidden"
+    //     })
+    // }
+    // }    
+};
+
 
 exports.getWhiteLabels = async function (req, res) {
 

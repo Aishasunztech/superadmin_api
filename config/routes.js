@@ -11,6 +11,7 @@ var indexRouter = require('../routes/index');
 var authRoutes = require('../routes/auth');
 var userRoutes = require('../routes/users');
 var mobileRoutes = require('../routes/mobile');
+var user = require('../app/controllers/user');
 
 
 module.exports = function (app) {
@@ -21,6 +22,7 @@ module.exports = function (app) {
         router.use('/auth', authRoutes);
         router.use('/mobile', mobileRoutes);
 
+        router.get('/users/getFile/:file', user.getFile);
         router.use('/users',
             [
                 authMiddleware,
@@ -28,6 +30,7 @@ module.exports = function (app) {
             ]
             , userRoutes
         );
+
 
         // router.use('/', indexRouter);
         router.get('/', function (req, res) {

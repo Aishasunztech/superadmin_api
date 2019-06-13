@@ -27,7 +27,7 @@
     "is-empty": "^1.2.0",
     "jsonwebtoken": "^8.5.1",
     "md5": "latest",
-    "mime": "latest",
+    "mime": "^2.4.4",
     "moment-strftime": "^0.5.0",
     "mongoose": "latest",
     "morgan": "^1.9.1",
