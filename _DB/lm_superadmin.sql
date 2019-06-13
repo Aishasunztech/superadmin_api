@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 12/06/2019 12:26:32
+ Date: 13/06/2019 10:55:21
 */
 
 SET NAMES utf8mb4;
@@ -129,7 +129,7 @@ CREATE TABLE `admins`  (
 -- ----------------------------
 -- Records of admins
 -- ----------------------------
-INSERT INTO `admins` VALUES (154, 'Super', 'Admin', 'admin@gmail.com', 'e6e061838856bf47e1de730719fb2609', 0, NULL, 0, 1, 0, NULL, '2019-02-08 09:50:04', '2019-06-11 11:25:27');
+INSERT INTO `admins` VALUES (154, 'Super', 'Admin', 'super!admin@gmail.com', '1812aa30a3115891f596d208ed3743f3', 0, NULL, 0, 1, 0, NULL, '2019-02-08 09:50:04', '2019-06-12 08:07:11');
 
 -- ----------------------------
 -- Table structure for chat_ids
@@ -231,7 +231,7 @@ CREATE TABLE `login_history`  (
   `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 227 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 229 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of login_history
@@ -260,6 +260,8 @@ INSERT INTO `login_history` VALUES (206, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiI
 INSERT INTO `login_history` VALUES (204, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJOZWhhIiwibGFzdF9uYW1lIjoiS2FzaHlhcCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicGFzc3dvcmQiOiJlNmUwNjE4Mzg4NTZiZjQ3ZTFkZTczMDcxOWZiMjYwOSIsInZlcmlmaWVkIjowLCJ2ZXJpZmljYXRpb25fY29kZSI6bnVsbCwiaXNfdHdvX2ZhY3Rvcl9hdXRoIjowLCJ0eXBlIjoxLCJ1bmxpbmtfc3RhdHVzIjowLCJhY2NvdW50X3N0YXR1cyI6bnVsbCwiY3JlYXRlZF9hdCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ1cGRhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTU4NTk2NTAyLCJleHAiOjE1NTg2ODI5MDJ9.4y8OccXsY217bK-Z21cBlnDudLzwWgsoEgJDOiG7wAY', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-05-23 12:28:22', NULL);
 INSERT INTO `login_history` VALUES (205, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJOZWhhIiwibGFzdF9uYW1lIjoiS2FzaHlhcCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicGFzc3dvcmQiOiJlNmUwNjE4Mzg4NTZiZjQ3ZTFkZTczMDcxOWZiMjYwOSIsInZlcmlmaWVkIjowLCJ2ZXJpZmljYXRpb25fY29kZSI6bnVsbCwiaXNfdHdvX2ZhY3Rvcl9hdXRoIjowLCJ0eXBlIjoxLCJ1bmxpbmtfc3RhdHVzIjowLCJhY2NvdW50X3N0YXR1cyI6bnVsbCwiY3JlYXRlZF9hdCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ1cGRhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTU4NTk3MTk4LCJleHAiOjE1NTg2ODM1OTh9.dBILXtJemLxqWaYC_J96PlhnEy0jyKQF0yO1HinNIP4', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-05-23 12:39:58', NULL);
 INSERT INTO `login_history` VALUES (203, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJOZWhhIiwibGFzdF9uYW1lIjoiS2FzaHlhcCIsImVtYWlsIjoiYWRtaW5AZ21haWwuY29tIiwicGFzc3dvcmQiOiJlNmUwNjE4Mzg4NTZiZjQ3ZTFkZTczMDcxOWZiMjYwOSIsInZlcmlmaWVkIjowLCJ2ZXJpZmljYXRpb25fY29kZSI6bnVsbCwiaXNfdHdvX2ZhY3Rvcl9hdXRoIjowLCJ0eXBlIjoxLCJ1bmxpbmtfc3RhdHVzIjowLCJhY2NvdW50X3N0YXR1cyI6bnVsbCwiY3JlYXRlZF9hdCI6IjIwMTktMDItMDggMDk6NTA6MDQiLCJ1cGRhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsImlwX2FkZHJlc3MiOiI6OjEifSwiaWF0IjoxNTU4NTk1ODU4LCJleHAiOjE1NTg2ODIyNTh9.KfzBJwNAI4p21uY3n57d6EefHC1rr3v-HAhxLmOAcjE', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-05-23 12:17:38', NULL);
+INSERT INTO `login_history` VALUES (227, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJTdXBlciIsImxhc3RfbmFtZSI6IkFkbWluIiwiZW1haWwiOiJzdXBlciFhZG1pbkBnbWFpbC5jb20iLCJwYXNzd29yZCI6IjE4MTJhYTMwYTMxMTU4OTFmNTk2ZDIwOGVkMzc0M2YzIiwidmVyaWZpZWQiOjAsInZlcmlmaWNhdGlvbl9jb2RlIjpudWxsLCJpc190d29fZmFjdG9yX2F1dGgiOjAsInR5cGUiOjEsInVubGlua19zdGF0dXMiOjAsImFjY291bnRfc3RhdHVzIjpudWxsLCJjcmVhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsInVwZGF0ZWRfYXQiOiIyMDE5LTA2LTEyIDA4OjA3OjExIiwiaXBfYWRkcmVzcyI6Ijo6ZmZmZjo2OC4xODMuNzYuNTQifSwiaWF0IjoxNTYwMzI2ODQ4LCJleHAiOjE1NjA0MTMyNDh9.mVcO0napwjr_jzL4j7_F4pfeBkWV9ytWKOHG1X_CQYU', '86400s', '::ffff:68.183.76.54', NULL, 'admin', 'token', 1, '2019-06-12 08:07:28', NULL);
+INSERT INTO `login_history` VALUES (228, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJTdXBlciIsImxhc3RfbmFtZSI6IkFkbWluIiwiZW1haWwiOiJzdXBlciFhZG1pbkBnbWFpbC5jb20iLCJwYXNzd29yZCI6IjE4MTJhYTMwYTMxMTU4OTFmNTk2ZDIwOGVkMzc0M2YzIiwidmVyaWZpZWQiOjAsInZlcmlmaWNhdGlvbl9jb2RlIjpudWxsLCJpc190d29fZmFjdG9yX2F1dGgiOjAsInR5cGUiOjEsInVubGlua19zdGF0dXMiOjAsImFjY291bnRfc3RhdHVzIjpudWxsLCJjcmVhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsInVwZGF0ZWRfYXQiOiIyMDE5LTA2LTEyIDA4OjA3OjExIiwiaXBfYWRkcmVzcyI6Ijo6MSJ9LCJpYXQiOjE1NjAzMzIxMzksImV4cCI6MTU2MDQxODUzOX0.i_s4nv0c2Ssa0PzDbW4ZArCSfmc1e9J1nvy45s3QVMk', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-12 14:35:39', NULL);
 
 -- ----------------------------
 -- Table structure for paginations
@@ -384,12 +386,12 @@ CREATE TABLE `whitelabel_apks`  (
   `version_code` text CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_whitelabel_id_package_name`(`whitelabel_id`, `package_name`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 3 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 5 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of whitelabel_apks
 -- ----------------------------
-INSERT INTO `whitelabel_apks` VALUES (1, 1, 'com.secure.launcher', NULL, 'app-debug.apk', NULL, NULL, NULL, NULL, NULL);
-INSERT INTO `whitelabel_apks` VALUES (2, 1, 'com.secure.systemcontrol', NULL, 'SCS.apk', NULL, NULL, NULL, NULL, NULL);
+INSERT INTO `whitelabel_apks` VALUES (1, 1, 'com.secure.launcher', NULL, 'launcher_apk-1560332167072.apk', '12.55 MB', NULL, NULL, '4.79', '479');
+INSERT INTO `whitelabel_apks` VALUES (2, 1, 'com.secure.systemcontrol', NULL, 'sc_apk-1560331203260.apk', '2.27 MB', NULL, NULL, '1.11', '111');
 
 SET FOREIGN_KEY_CHECKS = 1;
