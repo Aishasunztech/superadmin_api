@@ -114,8 +114,6 @@ exports.updateWhiteLabelInfo = async function (req, res) {
         let command_name = req.body.command_name;
         let apk_files = req.body.apk_files;
 
-
-
         if (!empty(model_id)) {
             sql.query("UPDATE white_labels SET model_id = '" + model_id + "', command_name = '" + command_name + "' WHERE id = '" + req.body.id + "'", async function (err, rslts) {
                 if (err) {
@@ -160,9 +158,10 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                 versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                                 versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                                 packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                                label = label.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                                 details = details.replace(/(\r\n|\n|\r)/gm, "");
-                                // console.log(packageName,' pkg name is')
-                                // console.log("label", label);
+                                
+                                console.log("label", label);
 
                                 let apk_stats = fs.statSync(file);
 
