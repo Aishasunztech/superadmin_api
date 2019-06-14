@@ -14,6 +14,8 @@ router.post('/upload/:fieldName', user.uploadFile);
 
 router.post('/import/:fieldName', user.importCSV);
 
+router.get('/export/:fieldName', user.exportCSV);
+
 router.get('/get_sim_ids', user.getSimIds)
 
 router.get('/get_chat_ids', user.getChatIds)
