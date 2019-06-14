@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 14/06/2019 17:11:49
+ Date: 14/06/2019 17:37:54
 */
 
 SET NAMES utf8mb4;
@@ -188,14 +188,19 @@ CREATE TABLE `chat_ids`  (
 -- ----------------------------
 DROP TABLE IF EXISTS `db_backups`;
 CREATE TABLE `db_backups`  (
-  `id` int(11) NOT NULL,
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `whitelabel_id` int(11) NULL DEFAULT NULL,
   `backup_name` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `db_file` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
   `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = MyISAM CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 2 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of db_backups
+-- ----------------------------
+INSERT INTO `db_backups` VALUES (1, 1, 'dump_lockmesh_db_1560515760019', 'dump_lockmesh_db_1560515760019.zip', '2019-06-14 17:36:43', '2019-06-14 17:36:43');
 
 -- ----------------------------
 -- Table structure for device_whitelabel
