@@ -26,4 +26,7 @@ router.get('/get_used_chat_ids', user.getUsedChatIds)
 
 router.get('/get_used_pgp_emails', user.getUsedPgpEmails)
 
+router.get('/whitelabel_backups/:whitelabel_id', user.whitelabelBackups)
+
+
 module.exports = router;
