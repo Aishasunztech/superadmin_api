@@ -625,6 +625,35 @@ exports.importCSV = async function (req, res) {
     // }
 }
 
+
+
+
+exports.whitelabelBackups = async function (req, res) {
+    let id = req.params.whitelabel_id;
+    console.log(id, 'id is')
+    if (id !== undefined && id !== '' && id !== null) {
+        let query = "select * from db_backups where whitelabel_id='" + id + "'";
+        sql.query(query, (error, resp) => {
+            console.log(resp, 'is response')
+            if (error) throw error;
+            if (resp) {
+                res.send({
+                    status: false,
+                    msg: "data success",
+                    data: resp
+                });
+            }
+        });
+    }else{
+        res.send({
+            status: false,
+            msg: "Error ",
+            data: []
+        });
+    }
+}
+
+
 exports.getSimIds = async function (req, res) {
     let query = "select * from sim_ids where used=0";
     sql.query(query, (error, resp) => {
@@ -636,6 +665,7 @@ exports.getSimIds = async function (req, res) {
         });
     });
 }
+
 
 exports.getChatIds = async function (req, res) {
     let query = "select * from chat_ids where used=0";

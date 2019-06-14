@@ -41,6 +41,7 @@ router.post('/apk/delete', user.deleteApk)
 router.post('/edit/apk', user.editApk)
 
 
+router.get('/whitelabel_backups/:whitelabel_id', user.whitelabelBackups)
 
 
 module.exports = router;
