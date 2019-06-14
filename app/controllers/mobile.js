@@ -78,7 +78,7 @@ exports.getWhiteLabel = async function (req, res) {
             
             let whiteLabelAPKQ=`SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id}`;
             let whiteLabelAPKS = await sql.query(whiteLabelAPKQ);
-         
+            console.log("hello",whiteLabelAPKS);
             res.send({
                 status: true,
                 apks: whiteLabelAPKS,
@@ -126,7 +126,7 @@ exports.getUpdate = async (req, res) => {
     let uniqueName = req.params.uniqueName;
     let label = req.params.label;
 
-    let query = `SELECT * FROM whitelabel_apks WHERE package_name = '${uniqueName}' AND ( label = '${label}' OR label = '' OR label = null)`;
+    let query = `SELECT * FROM apk_details WHERE package_name = '${uniqueName}' AND ( label = '${label}' OR label = '' OR label = null)`;
     
     sql.query(query, function (error, response) {
 
@@ -142,8 +142,11 @@ exports.getUpdate = async (req, res) => {
 
         if (Object.keys(response).length) {
             for (let i = 0; i < Object.keys(response).length; i++) {
+                
+                console.log(response[i].version_code);
 
                 if (Number(response[i].version_code) > Number(versionName)) {
+                    console.log("update available");
                     isAvail = true;
                     res.send({
                         apk_status: true,

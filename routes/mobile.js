@@ -10,16 +10,17 @@ var mobile = require('../app/controllers/mobile')
 // system control login, secure market login
 router.post('/systemlogin', mobile.systemLogin);
 
-router.post('/get-whitelabel', authMiddleware, mobile.getWhiteLabel);
-
 /** Get Apk **/
 router.get("/getApk/:apk",
     // authMiddleware,
-    mobile.getApk);
+    mobile.getApk
+);
+
+router.post('/get-whitelabel', authMiddleware, mobile.getWhiteLabel);
 
 router.post('/check_expiry', mobile.checkExpiry);
 
-router.get('/getUpdate/:version/:uniqueName/:label', mobile.getUpdate);
+router.get('/getUpdate/:version/:uniqueName/:label', authMiddleware, mobile.getUpdate);
 
 
 module.exports = router;
