@@ -84,7 +84,9 @@ cron.schedule('0 0 0 * * *', async () => {
                 //
                 archive.finalize();
         
-                output.on('close', function () {
+                output.on('close', async function () {
+                    let saveHistory = `INSERT into db_backups (whitelabel_id, backup_name, db_file) VALUES (${whiteLabels[index].id}, '${fileName}', '${zipFileName}')`
+                    await sql.query(saveHistory);
                     // // console.log(archive.pointer() + ' total bytes');
                     // // console.log('archiver has been finalized and the output file descriptor has closed.');
                     // let data = {
