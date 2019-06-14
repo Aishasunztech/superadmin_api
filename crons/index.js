@@ -67,7 +67,7 @@ cron.schedule('0 * * * * *', async () => {
                 });
         
                 let zipFileName = fileName + ".zip"
-                var output = fs.createWriteStream("../db_backup/" + zipFileName);
+                var output = fs.createWriteStream("./db_backup/" + zipFileName);
         
         
                 archive.on('error', function (err) {
@@ -85,13 +85,13 @@ cron.schedule('0 * * * * *', async () => {
                 archive.finalize();
         
                 output.on('close', function () {
-                    // console.log(archive.pointer() + ' total bytes');
-                    // console.log('archiver has been finalized and the output file descriptor has closed.');
-                    let data = {
-                        status: true,
-                        path: zipFileName
-                    }
-                    res.send(data)
+                    // // console.log(archive.pointer() + ' total bytes');
+                    // // console.log('archiver has been finalized and the output file descriptor has closed.');
+                    // let data = {
+                    //     status: true,
+                    //     path: zipFileName
+                    // }
+
                 });
             }
 
