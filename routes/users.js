@@ -26,4 +26,19 @@ router.get('/get_used_chat_ids', user.getUsedChatIds)
 
 router.get('/get_used_pgp_emails', user.getUsedPgpEmails)
 
+router.get('/apklist', user.apklist)
+
+router.post('/checkApkName', user.checkApkName)
+
+router.post('/uploadApk/:fieldName', user.uploadApk)
+
+router.post('/addApk', user.addApk)
+
+router.post('/apk/delete', user.deleteApk)
+
+router.post('/edit/apk', user.editApk)
+
+
+
+
 module.exports = router;

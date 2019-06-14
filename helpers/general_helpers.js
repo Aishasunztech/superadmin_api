@@ -3,7 +3,7 @@ var router = express.Router();
 var datetime = require('node-datetime');
 // var moment = require('moment');
 // import ADMIN from "../constants/Application";
-var {sql}= require('../config/database');
+var { sql } = require('../config/database');
 
 var moment = require('moment-strftime');
 var app_constants = require('../constants/application');
@@ -233,13 +233,13 @@ module.exports = {
 			return 'N/A';
 		}
 	},
-	
+
 
 	//Helper function to get unique device_id in format like "ASGH457862" 
 	getDeviceId: async function (sn, mac) {
-		
+
 		var key = md5(sn + mac);
-		
+
 		var num = "";
 		var str = "";
 
@@ -259,9 +259,9 @@ module.exports = {
 		return deviceId;
 	},
 	getSuperAdminDvcId: async function (sn, mac) {
-		
+
 		var key = md5(sn + mac);
-		
+
 		var num = "";
 
 		for (i = 0; i < key.length; i++) {
@@ -270,10 +270,10 @@ module.exports = {
 				if (num.length < 6) {
 					num += key[i];
 				}
-				
+
 			}
 		}
-		var deviceId =  "OF" + num;
+		var deviceId = "OF" + num;
 		return deviceId;
 	},
 	getExpDateByMonth: function (currentDate, expiryMonth) {
@@ -283,8 +283,8 @@ module.exports = {
 		var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 		return re.test(String(email).toLowerCase());
 	},
-	
-	
+
+
 	// APK helpers
 	// windows
 	getWindowAPKPackageNameScript: async (filePath) => {
@@ -546,7 +546,7 @@ module.exports = {
 		var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
 		return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
 	},
-	
+
 
 	// Login Helpers
 	saveAdminLogin: async function (user, loginClient, type, status) {
@@ -610,7 +610,7 @@ module.exports = {
 		let loginQ = "UPDATE login_history SET status=0";
 		sql.query(loginQ);
 	},
-	
+
 	// General Helpers
 	checkValue: (value) => {
 		if (value !== undefined && value !== '' && value !== null && value !== 'undefined' && value !== 'Undefined' && value !== "UNDEFINED" && value !== 'null' && value !== 'Null' && value !== 'NULL') {
@@ -632,18 +632,18 @@ module.exports = {
 			}
 			callback();
 		});
-	
+
 		function copy() {
 			var readStream = fs.createReadStream(oldPath);
 			var writeStream = fs.createWriteStream(newPath);
-	
+
 			readStream.on('error', callback);
 			writeStream.on('error', callback);
-	
+
 			readStream.on('close', function () {
 				fs.unlink(oldPath, callback);
 			});
-	
+
 			readStream.pipe(writeStream);
 		}
 	},
@@ -660,4 +660,16 @@ module.exports = {
 			console.log('DB1 has finished importing')
 		});
 	},
+	formatBytes: function (bytes, decimals = 2) {
+		if (bytes === 0) return '0 Bytes';
+
+		const k = 1024;
+		const dm = decimals < 0 ? 0 : decimals;
+		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+	}
 }
