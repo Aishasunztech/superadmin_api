@@ -19,13 +19,60 @@ const mysql_import = require('mysql-import');
 var path = require('path');
 var fs = require('fs');
 
+const mysql = require('mysql');
+
+
 module.exports = {
+	// secure helpers
+	getDBCon: async function (host, dbUser, dbPass, dbName){
+		const sqlPool = mysql.createPool({
+			//connectionLimit: 1000,
+			//connectTimeout: 60 * 60 * 1000,
+			//aquireTimeout: 60 * 60 * 1000,
+			//timeout: 60 * 60 * 1000,
+		
+			host: host,
+			user: dbUser,
+			password: dbPass,
+			database: dbName,
+		
+			supportBigNumbers: true,
+			bigNumberStrings: true,
+			dateStrings: true
+		});
+		
+		
+		sqlPool.getConnection((err, connection) => {
+			if (err) {
+				if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+					console.error('Database connection was closed.')
+					return false;
+				}
+				
+				if (err.code === 'ER_CON_COUNT_ERROR') {
+					console.error('Database has too many connections.')
+					return false;
+				}
+
+				if (err.code === 'ECONNREFUSED') {
+					console.error('Database connection was refused.')
+					return false;
+				}
+			}
+			if (connection) connection.release()
+			return
+		});
+		
+		sqlPool.query = util.promisify(sqlPool.query); // Magic happens here.
+		return sqlPool;		
+	},
+	
 	// ACL helpers functions
 	isAdmin: async function (userId) {
-		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
+		var query1 = `SELECT type FROM dealers where dealer_id = ${userId}`;
 		var user = await sql.query(query1);
 		if (user.length) {
-			var query2 = "SELECT * FROM user_roles where id =" + user[0].type + " and role='admin' ";
+			var query2 = `SELECT * FROM user_roles where id =${user[0].type} and role='admin'`;
 			var role = await sql.query(query2);
 			if (role.length) {
 				return true;

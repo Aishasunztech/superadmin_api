@@ -1,5 +1,3 @@
-const device_helpers = require('../../helpers/device_helpers');
-const general_helpers = require('../../helpers/general_helpers');
 const { sql } = require('../../config/database');
 const multer = require('multer');
 var path = require('path');
@@ -7,6 +5,10 @@ var fs = require("fs");
 var XLSX = require('xlsx');
 var empty = require('is-empty');
 const Constants = require('../../constants/application');
+
+const device_helpers = require('../../helpers/device_helpers');
+const general_helpers = require('../../helpers/general_helpers');
+// const constant = require('../../constants/application');
 
 exports.getWhiteLabels = async function (req, res) {
 

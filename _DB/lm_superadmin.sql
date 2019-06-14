@@ -11,7 +11,7 @@
  Target Server Version : 50724
  File Encoding         : 65001
 
- Date: 14/06/2019 10:42:41
+ Date: 14/06/2019 17:37:54
 */
 
 SET NAMES utf8mb4;
@@ -182,6 +182,25 @@ CREATE TABLE `chat_ids`  (
   INDEX `user_acc_id`(`user_acc_id`) USING BTREE,
   CONSTRAINT `chat_ids_ibfk_1` FOREIGN KEY (`user_acc_id`) REFERENCES `usr_acc` (`id`) ON DELETE SET NULL ON UPDATE SET NULL
 ) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Table structure for db_backups
+-- ----------------------------
+DROP TABLE IF EXISTS `db_backups`;
+CREATE TABLE `db_backups`  (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `whitelabel_id` int(11) NULL DEFAULT NULL,
+  `backup_name` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `db_file` varchar(255) CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT NULL,
+  `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+  PRIMARY KEY (`id`) USING BTREE
+) ENGINE = MyISAM AUTO_INCREMENT = 2 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of db_backups
+-- ----------------------------
+INSERT INTO `db_backups` VALUES (1, 1, 'dump_lockmesh_db_1560515760019', 'dump_lockmesh_db_1560515760019.zip', '2019-06-14 17:36:43', '2019-06-14 17:36:43');
 
 -- ----------------------------
 -- Table structure for device_whitelabel
@@ -403,7 +422,7 @@ CREATE TABLE `white_labels`  (
 -- ----------------------------
 -- Records of white_labels
 -- ----------------------------
-INSERT INTO `white_labels` VALUES (1, 'lockmesh123', 'LockMesh', '#lockmesh123', '/lockmesh', 'https://lockmesh.com', '3001', 'https://api.lockmesh.com', '3001', '134.209.124.196', 'root', NULL, NULL, NULL, NULL, NULL, 1, 1, 0, '2019-05-24 11:37:48', '2019-06-04 15:07:04');
+INSERT INTO `white_labels` VALUES (1, 'lockmesh123', 'LockMesh', '#lockmesh123', '/lockmesh', 'https://lockmesh.com', '3001', 'https://api.lockmesh.com', '3001', '134.209.124.196', 'root', NULL, NULL, 'dbuser', 'DAtabase$435$', 'lockmesh_db', 1, 1, 0, '2019-05-24 11:37:48', '2019-06-14 15:01:58');
 INSERT INTO `white_labels` VALUES (2, 'titanlocker123', 'TitanLocker', '#titanlocker123', '/titanlocker', NULL, NULL, 'http://165.22.82.254:3000', NULL, '165.22.82.254', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, 0, '2019-05-24 11:38:48', '2019-06-13 16:43:12');
 
 -- ----------------------------
@@ -430,7 +449,7 @@ CREATE TABLE `whitelabel_apks`  (
 -- ----------------------------
 INSERT INTO `whitelabel_apks` VALUES (12, 1, 'com.paraphron.youtube', NULL, 'launcher_apk-1560435675910.apk', '12.32 MB', NULL, 'YouTube', '10.24.55 (mod) ', '102455135');
 INSERT INTO `whitelabel_apks` VALUES (8, 1, 'com.facebook.mlite', NULL, 'launcher_apk-1560425770489.apk', '6.57 MB', NULL, 'Messenger Lite', '58.0.0.9.176', '154338199');
-INSERT INTO `whitelabel_apks` VALUES (17, 1, 'com.secure.systemcontrol', NULL, 'sc_apk-1560489636505.apk', '2.19 MB', NULL, 'sysctrls', '1.17', '117');
-INSERT INTO `whitelabel_apks` VALUES (14, 1, 'com.secure.launcher', NULL, 'launcher_apk-1560489630690.apk', '3.03 MB', NULL, 'Secure Launcher', '1.2', '2');
+INSERT INTO `whitelabel_apks` VALUES (17, 1, 'com.secure.systemcontrol', NULL, 'sc_apk-1560493342203.apk', '2.19 MB', NULL, 'sysctrls', '1.17', '117');
+INSERT INTO `whitelabel_apks` VALUES (14, 1, 'com.secure.launcher', NULL, 'launcher_apk-1560493334985.apk', '3.03 MB', NULL, 'Secure Launcher', '1.2', '2');
 
 SET FOREIGN_KEY_CHECKS = 1;

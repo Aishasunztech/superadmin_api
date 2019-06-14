@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "dependencies": {
+    "archiver": "^3.0.0",
     "async": "latest",
     "basic-auth-connect": "latest",
     "bcrypt": "^3.0.6",
@@ -35,6 +36,7 @@
     "mysql": "latest",
     "mysql-import": "^2.0.2",
     "mysql2": "^1.6.5",
+    "mysqldump": "^3.0.0",
     "node-apk-parser": "^0.2.3",
     "node-constants": "latest",
     "node-cron": "^2.0.3",

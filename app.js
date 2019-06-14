@@ -7,6 +7,8 @@ var multer = require('multer')
 var port = process.env.PORT || 8042;
 var path = require('path');
 
+var crons = require('./crons/index');
+
 var morgan = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
@@ -62,14 +64,5 @@ require('./config/routes.js')(app);
 //launch ======================================================================
 app.listen(port);
 console.log('The magic happens on port ' + port);
-
-//catch 404 and forward to error handler
-// app.use(function (req, res, next) {
-//     res.status(404).render('404', {title: "Sorry, page not found"});
-// });
-
-// app.use(function (req, res, next) {
-//     res.status(500).render('404', {title: "Sorry, page not found"});
-// });
 
 exports = module.exports = app;
