@@ -2,6 +2,7 @@ const { sql } = require('../../config/database');
 const multer = require('multer');
 var path = require('path');
 var fs = require("fs");
+var mime = require('mime');
 var XLSX = require('xlsx');
 var empty = require('is-empty');
 
@@ -516,15 +517,38 @@ exports.importCSV = async function (req, res) {
 }
 
 
+exports.getFile = async function (req, res) {
+    console.log('get file called', req.params.file)
+
+    if (fs.existsSync(path.join(__dirname, "../../uploads/" + req.params.file))) {
+        let file = path.join(__dirname, "../../uploads/" + req.params.file);
+        let fileMimeType = mime.getType(file);
+        // let filetypes = /jpeg|jpg|apk|png/;
+        console.log('content-type', fileMimeType)
+        res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
+        console.log('path is the',path.join(__dirname, "../../uploads/" + req.params.file))
+        res.sendFile(path.join(__dirname, "../../uploads/" + req.params.file));
+        
+   
+    } else {
+        res.send({
+            "status": false,
+            "msg": "file not found"
+        })
+    }
+
+};
+
+
 
 
 exports.whitelabelBackups = async function (req, res) {
     let id = req.params.whitelabel_id;
-    console.log(id, 'id is')
+    // console.log(id, 'id is')
     if (id !== undefined && id !== '' && id !== null) {
         let query = "select * from db_backups where whitelabel_id='" + id + "'";
         sql.query(query, (error, resp) => {
-            console.log(resp, 'is response')
+            // console.log(resp, 'is response')
             if (error) throw error;
             if (resp) {
                 res.send({

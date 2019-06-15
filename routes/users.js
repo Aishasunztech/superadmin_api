@@ -28,5 +28,7 @@ router.get('/get_used_pgp_emails', user.getUsedPgpEmails)
 
 router.get('/whitelabel_backups/:whitelabel_id', user.whitelabelBackups)
 
+router.get('/getFile/:file', user.getFile) 
+
 
 module.exports = router;
