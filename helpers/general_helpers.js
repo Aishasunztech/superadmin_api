@@ -84,7 +84,7 @@ module.exports = {
 		}
 	},
 	getUserType: async function (userId) {
-		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
+		var query1 = `SELECT type FROM dealers where dealer_id = ${userId}`;
 		var user = await sql.query(query1);
 		if (user.length) {
 			var query2 = "SELECT * FROM user_roles where id =" + user[0].type;
