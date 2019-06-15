@@ -518,17 +518,19 @@ exports.importCSV = async function (req, res) {
 
 
 exports.getFile = async function (req, res) {
-    console.log('get file called', req.params.file)
+    // console.log(req, res);
+    // console.log('get file called', req.params.file)
+    
 
     if (fs.existsSync(path.join(__dirname, "../../uploads/" + req.params.file))) {
+        
+        console.log(req.params.file);
+        
         let file = path.join(__dirname, "../../uploads/" + req.params.file);
         let fileMimeType = mime.getType(file);
-        // let filetypes = /jpeg|jpg|apk|png/;
-        console.log('content-type', fileMimeType)
-        res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
-        console.log('path is the',path.join(__dirname, "../../uploads/" + req.params.file))
+       
+        // console.log('path is the',path.join(__dirname, "../../uploads/" + req.params.file))
         res.sendFile(path.join(__dirname, "../../uploads/" + req.params.file));
-        
    
     } else {
         res.send({
