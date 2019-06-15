@@ -39,9 +39,7 @@ exports.getFile = async function (req, res) {
 
 // export CSV 
 exports.exportCSV = async function (req, res) {
-    console.log('-------------------------------------------')
-    console.log('hi, test export api')
-    console.log('-------------------------------------------')
+    
 
     // var verify = await verifyToken(req, res);
     // if (verify['status'] !== undefined && verify.status === true) {
@@ -437,12 +435,14 @@ exports.updateWhiteLabelInfo = async function (req, res) {
 }
 
 exports.importCSV = async function (req, res) {
+    // console.log('lable is: ', req.body.labelID)
 
     let fileName = "";
     let mimeType = "";
     let fieldName = req.params.fieldName;
     let filePath = "";
     let file = null;
+    let labelID = req.body.labelID;
 
     // console.log('fieldName', req.files)
     if (fieldName === 'sim_ids' || fieldName === 'chat_ids' || fieldName === 'pgp_emails') {
@@ -514,18 +514,24 @@ exports.importCSV = async function (req, res) {
                             }
                         }
                     }
+                    console.log('step 2')
 
                     if (duplicatedSimIds.length == 0) {
+                    console.log('step 3')
+
                         for (let row of parsedData) {
                             if (row.sim_id && row.start_date && row.expiry_date) {
-                                let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
+                                // let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
+                                let insertQ = `INSERT INTO sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ( '${row.sim_id}', '${labelID}', '${row.start_date}', '${row.expiry_date}')`;
+                                // console.log('insert query is: ', insertQ);
+                                let result = await sql.query(insertQ);
                             } else {
                                 error = true;
                             }
                         }
                     }
 
-                    // console.log('duplicate data is', duplicatedSimIds)
+                    console.log('duplicate data is', duplicatedSimIds)
 
                     if (!error && duplicatedSimIds.length === 0) {
                         res.send({
@@ -593,7 +599,7 @@ exports.importCSV = async function (req, res) {
                     if (duplicatedChat_ids.length == 0) {
                         for (let row of parsedData) {
                             if (row.chat_id) {
-                                let result = await sql.query("INSERT chat_ids (chat_id) value ('" + row.chat_id + "')");
+                                let result = await sql.query(`INSERT INTO chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${labelID}')`);
                             } else {
                                 error = true;
                             }
@@ -666,7 +672,7 @@ exports.importCSV = async function (req, res) {
                     if (duplicatedPgp_emails.length == 0) {
                         for (let row of parsedData) {
                             if (row.pgp_email) {
-                                let result = await sql.query("INSERT pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
+                                let result = await sql.query(`INSERT INTO pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${labelID}')`);
                             } else {
                                 error = true;
                             }
@@ -729,9 +735,13 @@ exports.getSimIds = async function (req, res) {
 }
 
 exports.getChatIds = async function (req, res) {
+    // console.log('-------------------------------------------')
+    // console.log('hi, test getChatIds api')
+    // console.log('-------------------------------------------')
+
     let query = "select * from chat_ids where used=0";
     sql.query(query, (error, resp) => {
-        console.log(resp, 'is response')
+        // console.log(resp, 'is response')
         res.send({
             status: false,
             msg: "data success",
