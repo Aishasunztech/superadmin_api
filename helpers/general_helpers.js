@@ -14,7 +14,7 @@ const exec = util.promisify(require('child_process').exec);
 var ApkReader = require('node-apk-parser');
 
 var md5 = require('md5');
-var randomize = require('randomatic');
+var randomize = require('randomatic'); 
 const mysql_import = require('mysql-import');
 var path = require('path');
 var fs = require('fs');
