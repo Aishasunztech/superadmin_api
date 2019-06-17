@@ -45,5 +45,9 @@ router.get('/get_used_pgp_emails', user.getUsedPgpEmails)
 
 // OFFLINE DEVICES SECTION
 
+router.post('/check_component', user.checkComponent)
+
+
+
 
 module.exports = router;

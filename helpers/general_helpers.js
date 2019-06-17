@@ -24,31 +24,31 @@ const mysql = require('mysql');
 
 module.exports = {
 	// secure helpers
-	getDBCon: async function (host, dbUser, dbPass, dbName){
+	getDBCon: async function (host, dbUser, dbPass, dbName) {
 		const sqlPool = mysql.createPool({
 			//connectionLimit: 1000,
 			//connectTimeout: 60 * 60 * 1000,
 			//aquireTimeout: 60 * 60 * 1000,
 			//timeout: 60 * 60 * 1000,
-		
+
 			host: host,
 			user: dbUser,
 			password: dbPass,
 			database: dbName,
-		
+
 			supportBigNumbers: true,
 			bigNumberStrings: true,
 			dateStrings: true
 		});
-		
-		
+
+
 		sqlPool.getConnection((err, connection) => {
 			if (err) {
 				if (err.code === 'PROTOCOL_CONNECTION_LOST') {
 					console.error('Database connection was closed.')
 					return false;
 				}
-				
+
 				if (err.code === 'ER_CON_COUNT_ERROR') {
 					console.error('Database has too many connections.')
 					return false;
@@ -62,11 +62,11 @@ module.exports = {
 			if (connection) connection.release()
 			return
 		});
-		
+
 		sqlPool.query = util.promisify(sqlPool.query); // Magic happens here.
-		return sqlPool;		
+		return sqlPool;
 	},
-	
+
 	// ACL helpers functions
 	isAdmin: async function (userId) {
 		var query1 = `SELECT type FROM dealers where dealer_id = ${userId}`;
@@ -99,7 +99,7 @@ module.exports = {
 		}
 	},
 	getUserTypeId: async function (userId) {
-		var query1 = "SELECT type FROM dealers as user left join user_roles as role on( role.id = user.type) where dealer_id =" + userId;
+		var query1 = "SELECT type FROM admins as user left join user_roles as role on( role.id = user.type) where user.id =" + userId;
 		// console.log(query1);
 
 		var user = await sql.query(query1);
