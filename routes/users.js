@@ -43,5 +43,9 @@ router.post('/edit/apk', user.editApk)
 
 router.get('/whitelabel_backups/:whitelabel_id', user.whitelabelBackups)
 
+router.post('/check_component', user.checkComponent)
+
+
+
 
 module.exports = router;
