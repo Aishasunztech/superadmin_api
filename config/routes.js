@@ -22,7 +22,7 @@ module.exports = function (app) {
         router.use('/auth', authRoutes);
         router.use('/mobile', mobileRoutes);
 
-        router.get('/users/getFile/:file', user.getFile);
+        router.get('/users/getFile/:file', user.getFile);   
         router.use('/users',
             [
                 authMiddleware,

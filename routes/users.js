@@ -22,11 +22,19 @@ router.get('/get_chat_ids', user.getChatIds)
 
 router.get('/get_pgp_emails', user.getPgpEmails)
 
+router.post('/get_label_sim_ids', user.getSimIdsLabel)
+
+router.post('/get_label_chat_ids', user.getChatIdsLabel)
+
+router.post('/get_label_pgp_emails', user.getPgpEmailsLabel)
+
 router.get('/get_used_sim_ids', user.getUsedSimIds)
 
 router.get('/get_used_chat_ids', user.getUsedChatIds)
 
 router.get('/get_used_pgp_emails', user.getUsedPgpEmails)
+
+router.post('/save_new_data', user.saveNewData)
 
 
 module.exports = router;
