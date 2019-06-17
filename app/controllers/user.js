@@ -170,7 +170,13 @@ exports.uploadFile = async function (req, res) {
         file = req.files.launcher_apk;
     } else if (fieldName === "sc_apk") {
         file = req.files.sc_apk;
-    } else {
+    }
+    else if (fieldName === Constants.LOGO) {
+        file = req.files.logo;
+    } else if (fieldName === Constants.APK) {
+        file = req.files.apk;
+    }
+    else {
         res.send({
             status: false,
             msg: "Error while uploading"
@@ -180,7 +186,10 @@ exports.uploadFile = async function (req, res) {
 
     filePath = file.path;
     mimeType = file.type;
+    bytes = file.size
+    let formatByte = general_helpers.formatBytes(bytes);
 
+    // if (fieldName === Constants.APK) {
     if (mimeType === "application/vnd.android.package-archive") {
         versionCode = await general_helpers.getAPKVersionCode(filePath);
         if (versionCode) {
@@ -197,8 +206,10 @@ exports.uploadFile = async function (req, res) {
                 }
 
                 res.send({
+                    msg: 'Uploaded Successfully',
                     status: true,
-                    fileName: fileName
+                    fileName: fileName,
+                    size: formatByte
                 })
                 return
             });
@@ -210,6 +221,31 @@ exports.uploadFile = async function (req, res) {
             return;
         }
 
+    } else if (fieldName === Constants.LOGO) {
+        // console.log(req.files);
+
+
+        fileName = fieldName + '-' + Date.now() + '.jpg';
+        let target_path = path.join(__dirname, "../../uploads/" + fileName);
+
+        general_helpers.move(filePath, target_path, function (error) {
+            console.log(error);
+            if (error) {
+                res.send({
+                    status: false,
+                    msg: "Error while uploading"
+                })
+            }
+            data = {
+                status: true,
+                msg: 'Uploaded Successfully',
+                fileName: fileName,
+                size: formatByte
+
+            };
+            res.send(data)
+            return
+        });
     } else {
         res.send({
             status: false,
@@ -897,7 +933,8 @@ exports.uploadApk = async function (req, res) {
             res.send(data)
             return
         });
-    } else {
+    }
+    else {
         data = {
             status: false,
             msg: "Error while Uploading"
@@ -1065,9 +1102,9 @@ exports.editApk = async function (req, res) {
         let apk = req.body.apk;
         let apk_name = req.body.name;
         if (!empty(logo) && !empty(apk) && !empty(apk_name)) {
-            console.log("object");
+            // console.log("object");
             let file = path.join(__dirname, "../../uploads/" + apk);
-            console.log(file);
+            // console.log(file);
             if (fs.existsSync(file)) {
                 let versionCode = '';
                 let versionName = '';
@@ -1103,7 +1140,7 @@ exports.editApk = async function (req, res) {
                 // console.log("versionName", versionName);
                 // console.log("pKGName", packageName);
                 // console.log("version Code", versionCode);
-                console.log("label", label);
+                // console.log("label", label);
                 // console.log('detai')
 
                 // let apk_type = (verify.user.user_type === AUTO_UPDATE_ADMIN) ? 'permanent' : 'basic'
@@ -1162,7 +1199,7 @@ exports.checkComponent = async function (req, res) {
     let user = await sql.query(getUser);
     // var get_connected_devices = await sql.query("SELECT count(*) as total from usr_acc where dealer_id='" + userId + "'");
 
-    console.log(user);
+    // console.log(user);
 
     if (user.length) {
 
