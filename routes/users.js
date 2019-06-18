@@ -3,6 +3,9 @@ var router = express.Router();
 // import controller here
 var user = require('../app/controllers/user');
 
+// ACL
+router.post('/check_component', user.checkComponent);
+
 /* GET users listing. */
 router.get('/white-labels', user.getWhiteLabels);
 
@@ -44,10 +47,7 @@ router.get('/get_used_chat_ids', user.getUsedChatIds)
 router.get('/get_used_pgp_emails', user.getUsedPgpEmails)
 
 // OFFLINE DEVICES SECTION
-
-router.post('/check_component', user.checkComponent)
-
-
+router.get('/offline-devices', user.offlineDevices);
 
 
 module.exports = router;

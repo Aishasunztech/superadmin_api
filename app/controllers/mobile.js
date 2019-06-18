@@ -22,9 +22,9 @@ exports.systemLogin = async function (req, res) {
     // } else {
     // }
 
-    device_id = await general_helpers.getDeviceId(serial_number, mac_address);
+    // device_id = await general_helpers.getDeviceId(serial_number, mac_address);
 
-    let addDeviceQ = `INSERT IGNORE into devices (device_id, mac_address, serial_no, ip_address, simno, imei, simno2, imei2) VALUES ('${device_id}', '${mac_address}', '${serial_number}', '${ip}', '', '', '', '')`;
+    let addDeviceQ = `INSERT IGNORE into devices (mac_address, serial_no, ip_address, simno, imei, simno2, imei2) VALUES ('${mac_address}', '${serial_number}', '${ip}', '', '', '', '')`;
     let device = await sql.query(addDeviceQ);
     if (device) {
         const sysmtemInfo = {

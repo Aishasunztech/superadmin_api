@@ -1199,3 +1199,23 @@ exports.checkComponent = async function (req, res) {
         });
     }
 }
+
+exports.offlineDevices = async function (req, res) {
+    let devicesQ = `SELECT * FROM devices`;
+    let devices = await sql.query(devicesQ);
+    devices.forEach((device) => {
+        device.finalStatus = "Active"
+    })
+    if (devices.length) {
+        res.send({
+            status: true,
+            devices
+        })
+    } else {
+        res.send({
+            status: false,
+            msg: "No data found"
+        })
+    }
+
+}
