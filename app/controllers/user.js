@@ -365,7 +365,7 @@ exports.importCSV = async function (req, res) {
     let labelID = req.body.labelID;
     let corsConnection = ''
     let wLData = await sql.query("SELECT * from white_labels where id = '" + labelID + "'")
-    if (wLData.length) {
+    if (wLData.length && wLData[0].db_user != '' && wLData[0].db_user != null) {
         corsConnection = await general_helpers.getDBCon(wLData[0].ip_address, wLData[0].db_user, wLData[0].db_pass, wLData[0].db_name)
     }
 
@@ -451,12 +451,14 @@ exports.importCSV = async function (req, res) {
 
                         for (let row of parsedData) {
                             if (row.sim_id && row.start_date && row.expiry_date) {
+                                if (corsConnection != '') {
+                                    let corsInsertQ = `INSERT INTO sim_ids (sim_id, start_date, expiry_date) value ( '${row.sim_id}','${row.start_date}', '${row.expiry_date}')`;
+                                    // console.log('insert query is: ', insertQ);
+                                    await corsConnection.query(corsInsertQ);
 
+                                }
                                 // let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
                                 let insertQ = `INSERT INTO sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ( '${row.sim_id}', '${labelID}', '${row.start_date}', '${row.expiry_date}')`;
-                                let corsInsertQ = `INSERT INTO sim_ids (sim_id, start_date, expiry_date) value ( '${row.sim_id}','${row.start_date}', '${row.expiry_date}')`;
-                                // console.log('insert query is: ', insertQ);
-                                await corsConnection.query(corsInsertQ);
                                 let result = await sql.query(insertQ);
                             } else {
                                 error = true;
@@ -533,11 +535,12 @@ exports.importCSV = async function (req, res) {
                     if (duplicatedChat_ids.length == 0) {
                         for (let row of parsedData) {
                             if (row.chat_id) {
+                                if (corsConnection != '') {
+                                    let corsInsertQ = `INSERT INTO chat_ids (chat_id) value ('${row.chat_id}')`;
+                                    // console.log('insert query is: ', insertQ);
+                                    await corsConnection.query(corsInsertQ);
+                                }
 
-
-                                let corsInsertQ = `INSERT INTO chat_ids (chat_id) value ('${row.chat_id}')`;
-                                // console.log('insert query is: ', insertQ);
-                                await corsConnection.query(corsInsertQ);
                                 let result = await sql.query(`INSERT INTO chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${labelID}')`);
                             } else {
                                 error = true;
@@ -612,9 +615,13 @@ exports.importCSV = async function (req, res) {
                     if (duplicatedPgp_emails.length == 0) {
                         for (let row of parsedData) {
                             if (row.pgp_email) {
-                                let corsInsertQ = `INSERT INTO pgp_emails (pgp_email) value ('${row.pgp_email}')`;
-                                // console.log('insert query is: ', insertQ);
-                                await corsConnection.query(corsInsertQ);
+                                if (corsConnection != '') {
+                                    let corsInsertQ = `INSERT INTO pgp_emails (pgp_email) value ('${row.pgp_email}')`;
+                                    // console.log('insert query is: ', insertQ);
+                                    await corsConnection.query(corsInsertQ);
+
+                                }
+
 
                                 let result = await sql.query(`INSERT INTO pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${labelID}')`);
                             } else {
@@ -702,13 +709,15 @@ exports.saveNewData = async function (req, res) {
     let error = 0;
     let corsConnection = ''
     let wLData = await sql.query("SELECT * from white_labels where id = '" + req.body.labelID + "'")
-    if (wLData.length) {
+    if (wLData.length && wLData[0].db_user != '' && wLData[0].db_user != null) {
         corsConnection = await general_helpers.getDBCon(wLData[0].ip_address, wLData[0].db_user, wLData[0].db_pass, wLData[0].db_name)
     }
 
     if (req.body.type == 'sim_id') {
         for (let row of req.body.newData) {
-            await corsConnection.query(`INSERT IGNORE sim_ids (sim_id, start_date, expiry_date) value ('${row.sim_id}', '${row.start_date}', '${row.expiry_date}')`);
+            if (corsConnection != '') {
+                await corsConnection.query(`INSERT IGNORE sim_ids (sim_id, start_date, expiry_date) value ('${row.sim_id}', '${row.start_date}', '${row.expiry_date}')`);
+            }
             let result = await sql.query(`INSERT IGNORE sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ('${row.sim_id}', '${req.body.labelID}', '${row.start_date}', '${row.expiry_date}')`);
             if (!result.affectedRows) {
                 error += 1;
@@ -716,7 +725,9 @@ exports.saveNewData = async function (req, res) {
         }
     } else if (req.body.type == 'chat_id') {
         for (let row of req.body.newData) {
-            await corsConnection.query(`INSERT IGNORE chat_ids (chat_id) value ('${row.chat_id}')`);
+            if (corsConnection != '') {
+                await corsConnection.query(`INSERT IGNORE chat_ids (chat_id) value ('${row.chat_id}')`);
+            }
             let result = await sql.query(`INSERT IGNORE chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${req.body.labelID}')`);
             if (!result.affectedRows) {
                 error += 1;
@@ -724,7 +735,10 @@ exports.saveNewData = async function (req, res) {
         }
     } else if (req.body.type == 'pgp_email') {
         for (let row of req.body.newData) {
-            await corsConnection.query(`INSERT IGNORE pgp_emails (pgp_email) value ('${row.pgp_email}')`);
+            if (corsConnection != '') {
+                await corsConnection.query(`INSERT IGNORE pgp_emails (pgp_email) value ('${row.pgp_email}')`);
+            }
+
             let result = await sql.query(`INSERT IGNORE pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${req.body.labelID}')`);
             if (!result.affectedRows) {
                 error += 1;
