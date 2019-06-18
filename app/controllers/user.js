@@ -13,32 +13,6 @@ const general_helpers = require('../../helpers/general_helpers');
 // const constant = require('../../constants/application');
 var mime = require('mime');
 
-exports.getFile = async function (req, res) {
-
-
-    if (fs.existsSync(path.join(__dirname, "../../uploads/" + req.params.file))) {
-        let file = path.join(__dirname, "../../uploads/" + req.params.file);
-        let fileMimeType = mime.getType(file);
-        // let filetypes = /jpeg|jpg|apk|png/;
-        // Do something
-        // if (filetypes.test(fileMimeType)) {
-        res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
-        res.sendFile(path.join(__dirname, "../../uploads/" + req.params.file));
-        // } else {
-        //     res.send({
-        //         "status": false,
-        //         "msg": "file not found"
-        //     })
-        // }
-    } else {
-        res.send({
-            "status": false,
-            "msg": "file not found"
-        })
-    }
-
-}
-
 // export CSV 
 exports.exportCSV = async function (req, res) {
 
@@ -1438,6 +1412,32 @@ exports.offlineDevices = async function (req, res) {
         res.send({
             status: false,
             msg: "No data found"
+        })
+    }
+
+}
+
+exports.getFile = async function (req, res) {
+
+
+    if (fs.existsSync(path.join(__dirname, "../../uploads/" + req.params.file))) {
+        let file = path.join(__dirname, "../../uploads/" + req.params.file);
+        let fileMimeType = mime.getType(file);
+        // let filetypes = /jpeg|jpg|apk|png/;
+        // Do something
+        // if (filetypes.test(fileMimeType)) {
+        res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
+        res.sendFile(path.join(__dirname, "../../uploads/" + req.params.file));
+        // } else {
+        //     res.send({
+        //         "status": false,
+        //         "msg": "file not found"
+        //     })
+        // }
+    } else {
+        res.send({
+            "status": false,
+            "msg": "file not found"
         })
     }
 
