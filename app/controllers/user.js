@@ -418,6 +418,7 @@ exports.importCSV = async function (req, res) {
                             msg: "Incorrect file data",
                             "duplicateData": [],
                         })
+                        corsConnection.end()
                         return
                     }
 
@@ -483,7 +484,7 @@ exports.importCSV = async function (req, res) {
 
                         });
                     }
-
+                    corsConnection.end()
                     return;
                 } else if (fieldName === "chat_ids") {
                     let error = false;
@@ -502,6 +503,7 @@ exports.importCSV = async function (req, res) {
                             msg: "Incorrect file data",
                             "duplicateData": [],
                         })
+                        corsConnection.end()
                         return
                     }
 
@@ -562,7 +564,7 @@ exports.importCSV = async function (req, res) {
 
                         });
                     }
-
+                    corsConnection.end()
                     return;
                 } else if (fieldName === "pgp_emails") {
                     let error = false;
@@ -581,6 +583,7 @@ exports.importCSV = async function (req, res) {
                             msg: "Incorrect file data",
                             "duplicateData": [],
                         })
+                        corsConnection.end()
                         return;
                     }
 
@@ -639,7 +642,7 @@ exports.importCSV = async function (req, res) {
 
                         });
                     }
-
+                    corsConnection.end()
                     return;
                 }
 
@@ -650,6 +653,7 @@ exports.importCSV = async function (req, res) {
                 msg: "Incorrect file data",
                 "duplicateData": [],
             })
+            corsConnection.end()
         }
     } else {
         res.send({
@@ -657,6 +661,7 @@ exports.importCSV = async function (req, res) {
             msg: "Incorrect file data",
             "duplicateData": [],
         })
+        corsConnection.end()
     }
 
 
@@ -695,8 +700,15 @@ exports.saveNewData = async function (req, res) {
     // var verify = await verifyToken(req, res);
     // if (verify.status !== undefined && verify.status == true) { where sim_ids.whitelabel_id = ${req.body.labelID}
     let error = 0;
+    let corsConnection = ''
+    let wLData = await sql.query("SELECT * from white_labels where id = '" + req.body.labelID + "'")
+    if (wLData.length) {
+        corsConnection = await general_helpers.getDBCon(wLData[0].ip_address, wLData[0].db_user, wLData[0].db_pass, wLData[0].db_name)
+    }
+
     if (req.body.type == 'sim_id') {
         for (let row of req.body.newData) {
+            await corsConnection.query(`INSERT IGNORE sim_ids (sim_id, start_date, expiry_date) value ('${row.sim_id}', '${row.start_date}', '${row.expiry_date}')`);
             let result = await sql.query(`INSERT IGNORE sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ('${row.sim_id}', '${req.body.labelID}', '${row.start_date}', '${row.expiry_date}')`);
             if (!result.affectedRows) {
                 error += 1;
@@ -704,6 +716,7 @@ exports.saveNewData = async function (req, res) {
         }
     } else if (req.body.type == 'chat_id') {
         for (let row of req.body.newData) {
+            await corsConnection.query(`INSERT IGNORE chat_ids (chat_id) value ('${row.chat_id}')`);
             let result = await sql.query(`INSERT IGNORE chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${req.body.labelID}')`);
             if (!result.affectedRows) {
                 error += 1;
@@ -711,6 +724,7 @@ exports.saveNewData = async function (req, res) {
         }
     } else if (req.body.type == 'pgp_email') {
         for (let row of req.body.newData) {
+            await corsConnection.query(`INSERT IGNORE pgp_emails (pgp_email) value ('${row.pgp_email}')`);
             let result = await sql.query(`INSERT IGNORE pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${req.body.labelID}')`);
             if (!result.affectedRows) {
                 error += 1;
@@ -723,12 +737,14 @@ exports.saveNewData = async function (req, res) {
             "status": true,
             "msg": "Inserted Successfully"
         })
+        corsConnection.end()
 
     } else {
         res.send({
             "status": false,
             "msg": "Error While Insertion, " + error + " records not Inserted"
         })
+        corsConnection.end()
     }
     //    let newData = req.body.
     // }
