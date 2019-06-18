@@ -1401,7 +1401,7 @@ exports.offlineDevices = async function (req, res) {
     let devicesQ = `SELECT * FROM devices`;
     let devices = await sql.query(devicesQ);
     devices.forEach((device) => {
-        device.finalStatus = "Active"
+        device.finalStatus = device_helpers.checkStatus(device)
     })
     if (devices.length) {
         res.send({
@@ -1442,3 +1442,98 @@ exports.getFile = async function (req, res) {
     }
 
 }
+exports.saveOfflineDevice = async function (req, res) {
+    console.log('saveOfflineDevice at server: ', req.body);
+    let id = req.body.id;
+    let start_date = req.body.start_date;
+    let expiry_date = req.body.expiry_date;
+
+    console.log('id is: ', id);
+    console.log('start date is: ', start_date);
+    console.log('expire date : ', expiry_date);
+
+    try {
+        if (start_date && expiry_date) {
+            let updateQ = `UPDATE devices SET start_date= '${start_date}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
+            console.log('update query is: ', updateQ);
+            sql.query(updateQ, async function (err, rslts) {
+                if (err) {
+                    console.log(err);
+                    res.send({
+                        status: false,
+                        msg: "Error occur"
+                    });
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "update epiry date successfully"
+                    });
+                }
+
+            });
+        } else {
+            res.send({
+                status: false,
+                msg: "No data found"
+            })
+        }
+    } catch (error) {
+        console.log(error);
+        data = {
+            status: false,
+            msg: "exception for saveOfflineDevice",
+        };
+        res.send(data);
+        return;
+    }
+
+}
+
+exports.deviceStatus = async function (req, res) {
+    console.log('deviceStatus at server: ', req.body);
+    let id = req.body.id;
+
+    console.log('deviceStatus id is: ', id);
+    // let start_date = req.body.start_date;
+    // let expiry_date = req.body.expiry_date;
+
+    // console.log('start date is: ', start_date);
+    // console.log('expire date : ', expiry_date);
+
+    try {
+        if (id) {
+            let updateQ = `UPDATE devices SET account_status= 'suspended' WHERE id = ${id}`;
+            console.log('deviceStatus update query is: ', updateQ);
+            sql.query(updateQ, async function (err, rslts) {
+                if (err) {
+                    console.log(err);
+                    res.send({
+                        status: false,
+                        msg: "Error occur"
+                    });
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "update account_status successfully"
+                    });
+                }
+
+            });
+        } else {
+            res.send({
+                status: false,
+                msg: "No data found"
+            })
+        }
+    } catch (error) {
+        console.log(error);
+        data = {
+            status: false,
+            msg: "exception for deviceStatus",
+        };
+        res.send(data);
+        return;
+    }
+
+}
+

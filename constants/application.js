@@ -15,18 +15,10 @@ module.exports = {
 
     // devices
     DEVICE_ACTIVATED: "Active",
-    DEVICE_TRIAL: "Trial",
     DEVICE_SUSPENDED: "Suspended",
     DEVICE_EXPIRED: "Expired",
     DEVICE_UNLINKED: "Unlinked",
-    DEVICE_PENDING_ACTIVATION: "Pending activation",
-    DEVICE_PRE_ACTIVATION: "Pre-activated",
     UNLINK_DEVICE_DELETE: "Delete",
-    DEVICE_FLAGGED: "Flagged",
-    DEVICE_UNFLAGGED: "Unflagged",
-    DEVICE_ACCEPT: "Accept Device",
-    NEW_DEVICE: "new device",
-    DEVICE_WIPE: "wiped",
 
     DEVICE_ONLINE: "On",
     DEVICE_OFFLINE: "off",
