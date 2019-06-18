@@ -22,9 +22,9 @@ exports.systemLogin = async function (req, res) {
     // } else {
     // }
 
-    device_id = await general_helpers.getDeviceId(serial_number, mac_address);
+    // device_id = await general_helpers.getDeviceId(serial_number, mac_address);
 
-    let addDeviceQ = `INSERT IGNORE into devices (device_id, mac_address, serial_no, ip_address, simno, imei, simno2, imei2) VALUES ('${device_id}', '${mac_address}', '${serial_number}', '${ip}', '', '', '', '')`;
+    let addDeviceQ = `INSERT IGNORE into devices (mac_address, serial_no, ip_address, simno, imei, simno2, imei2) VALUES ('${mac_address}', '${serial_number}', '${ip}', '', '', '', '')`;
     let device = await sql.query(addDeviceQ);
     if (device) {
         const sysmtemInfo = {
@@ -73,12 +73,18 @@ exports.getWhiteLabel = async function (req, res) {
     if (req.decoded && req.decoded.device_id) {
         let whiteLabelQ = `SELECT id, model_id, name, command_name FROM white_labels WHERE command_name='${req.body.model_id}'`;
         let whiteLabel = await sql.query(whiteLabelQ);
-        
+
         if (Object.keys(whiteLabel).length) {
-            
-            let whiteLabelAPKQ=`SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id}`;
+            // let whiteLabelAPKQ = ''
+            // if (req.body.byod_status) {
+            //     whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND label = 'BYOD'`;
+            // } else {
+            //     whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id}`;
+
+            // }
+            let whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id}`;
             let whiteLabelAPKS = await sql.query(whiteLabelAPKQ);
-            console.log("hello",whiteLabelAPKS);
+            console.log("hello", whiteLabelAPKS);
             res.send({
                 status: true,
                 apks: whiteLabelAPKS,
@@ -125,9 +131,10 @@ exports.getUpdate = async (req, res) => {
     let versionName = req.params.version;
     let uniqueName = req.params.uniqueName;
     let label = req.params.label;
+    console.log(label);
 
-    let query = `SELECT * FROM apk_details WHERE package_name = '${uniqueName}' AND ( label = '${label}' OR label = '' OR label = null)`;
-    
+    let query = `SELECT * FROM apk_details WHERE package_name = '${uniqueName}' AND ( label = '${label}' ) AND apk_type = 'permanent' AND delete_status = 0`;
+
     sql.query(query, function (error, response) {
 
         if (error) {
@@ -142,7 +149,7 @@ exports.getUpdate = async (req, res) => {
 
         if (Object.keys(response).length) {
             for (let i = 0; i < Object.keys(response).length; i++) {
-                
+
                 console.log(response[i].version_code);
 
                 if (Number(response[i].version_code) > Number(versionName)) {

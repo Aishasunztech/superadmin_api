@@ -16,6 +16,7 @@ module.exports = function(req, res, next) {
                     success: false,
                     msg: 'Failed to authenticate token.'
                 });
+
             } else {
                 // if everything is good, save to request for use in other routes
                 // let result = await helpers.getLoginByToken(token);

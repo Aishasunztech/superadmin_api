@@ -3,7 +3,7 @@ var router = express.Router();
 var datetime = require('node-datetime');
 // var moment = require('moment');
 // import ADMIN from "../constants/Application";
-var {sql}= require('../config/database');
+var { sql } = require('../config/database');
 
 var moment = require('moment-strftime');
 var app_constants = require('../constants/application');
@@ -14,7 +14,7 @@ const exec = util.promisify(require('child_process').exec);
 var ApkReader = require('node-apk-parser');
 
 var md5 = require('md5');
-var randomize = require('randomatic');
+var randomize = require('randomatic'); 
 const mysql_import = require('mysql-import');
 var path = require('path');
 var fs = require('fs');
@@ -24,31 +24,31 @@ const mysql = require('mysql');
 
 module.exports = {
 	// secure helpers
-	getDBCon: async function (host, dbUser, dbPass, dbName){
+	getDBCon: async function (host, dbUser, dbPass, dbName) {
 		const sqlPool = mysql.createPool({
 			//connectionLimit: 1000,
 			//connectTimeout: 60 * 60 * 1000,
 			//aquireTimeout: 60 * 60 * 1000,
 			//timeout: 60 * 60 * 1000,
-		
+
 			host: host,
 			user: dbUser,
 			password: dbPass,
 			database: dbName,
-		
+
 			supportBigNumbers: true,
 			bigNumberStrings: true,
 			dateStrings: true
 		});
-		
-		
+
+
 		sqlPool.getConnection((err, connection) => {
 			if (err) {
 				if (err.code === 'PROTOCOL_CONNECTION_LOST') {
 					console.error('Database connection was closed.')
 					return false;
 				}
-				
+
 				if (err.code === 'ER_CON_COUNT_ERROR') {
 					console.error('Database has too many connections.')
 					return false;
@@ -62,11 +62,11 @@ module.exports = {
 			if (connection) connection.release()
 			return
 		});
-		
+
 		sqlPool.query = util.promisify(sqlPool.query); // Magic happens here.
-		return sqlPool;		
+		return sqlPool;
 	},
-	
+
 	// ACL helpers functions
 	isAdmin: async function (userId) {
 		var query1 = `SELECT type FROM dealers where dealer_id = ${userId}`;
@@ -84,7 +84,7 @@ module.exports = {
 		}
 	},
 	getUserType: async function (userId) {
-		var query1 = "SELECT type FROM dealers where dealer_id =" + userId;
+		var query1 = `SELECT type FROM dealers where dealer_id = ${userId}`;
 		var user = await sql.query(query1);
 		if (user.length) {
 			var query2 = "SELECT * FROM user_roles where id =" + user[0].type;
@@ -99,7 +99,7 @@ module.exports = {
 		}
 	},
 	getUserTypeId: async function (userId) {
-		var query1 = "SELECT type FROM dealers as user left join user_roles as role on( role.id = user.type) where dealer_id =" + userId;
+		var query1 = "SELECT type FROM admins as user left join user_roles as role on( role.id = user.type) where user.id =" + userId;
 		// console.log(query1);
 
 		var user = await sql.query(query1);
@@ -280,13 +280,13 @@ module.exports = {
 			return 'N/A';
 		}
 	},
-	
+
 
 	//Helper function to get unique device_id in format like "ASGH457862" 
 	getDeviceId: async function (sn, mac) {
-		
+
 		var key = md5(sn + mac);
-		
+
 		var num = "";
 		var str = "";
 
@@ -306,9 +306,9 @@ module.exports = {
 		return deviceId;
 	},
 	getSuperAdminDvcId: async function (sn, mac) {
-		
+
 		var key = md5(sn + mac);
-		
+
 		var num = "";
 
 		for (i = 0; i < key.length; i++) {
@@ -317,10 +317,10 @@ module.exports = {
 				if (num.length < 6) {
 					num += key[i];
 				}
-				
+
 			}
 		}
-		var deviceId =  "OF" + num;
+		var deviceId = "OF" + num;
 		return deviceId;
 	},
 	getExpDateByMonth: function (currentDate, expiryMonth) {
@@ -330,8 +330,8 @@ module.exports = {
 		var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 		return re.test(String(email).toLowerCase());
 	},
-	
-	
+
+
 	// APK helpers
 	// windows
 	getWindowAPKPackageNameScript: async (filePath) => {
@@ -593,7 +593,7 @@ module.exports = {
 		var i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)));
 		return Math.round(bytes / Math.pow(1024, i), 2) + ' ' + sizes[i];
 	},
-	
+
 
 	// Login Helpers
 	saveAdminLogin: async function (user, loginClient, type, status) {
@@ -657,7 +657,7 @@ module.exports = {
 		let loginQ = "UPDATE login_history SET status=0";
 		sql.query(loginQ);
 	},
-	
+
 	// General Helpers
 	checkValue: (value) => {
 		if (value !== undefined && value !== '' && value !== null && value !== 'undefined' && value !== 'Undefined' && value !== "UNDEFINED" && value !== 'null' && value !== 'Null' && value !== 'NULL') {
@@ -679,18 +679,18 @@ module.exports = {
 			}
 			callback();
 		});
-	
+
 		function copy() {
 			var readStream = fs.createReadStream(oldPath);
 			var writeStream = fs.createWriteStream(newPath);
-	
+
 			readStream.on('error', callback);
 			writeStream.on('error', callback);
-	
+
 			readStream.on('close', function () {
 				fs.unlink(oldPath, callback);
 			});
-	
+
 			readStream.pipe(writeStream);
 		}
 	},
@@ -707,4 +707,16 @@ module.exports = {
 			console.log('DB1 has finished importing')
 		});
 	},
+	formatBytes: function (bytes, decimals = 2) {
+		if (bytes === 0) return '0 Bytes';
+
+		const k = 1024;
+		const dm = decimals < 0 ? 0 : decimals;
+		const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+	}
 }
