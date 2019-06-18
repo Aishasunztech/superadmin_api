@@ -61,5 +61,8 @@ router.post('/save_new_data', user.saveNewData)
 // OFFLINE DEVICES SECTION
 router.get('/offline-devices', user.offlineDevices);
 
+router.put('/save-offline-device', user.saveOfflineDevice);
+
+router.put('/device-status', user.deviceStatus)
 
 module.exports = router;
