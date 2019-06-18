@@ -8,9 +8,9 @@ const Constants = require('../../constants/application');
 
 const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
+
 // const constant = require('../../constants/application');
 var mime = require('mime');
-
 
 exports.getFile = async function (req, res) {
 
@@ -40,9 +40,7 @@ exports.getFile = async function (req, res) {
 
 // export CSV 
 exports.exportCSV = async function (req, res) {
-    console.log('-------------------------------------------')
-    console.log('hi, test export api')
-    console.log('-------------------------------------------')
+
 
     // var verify = await verifyToken(req, res);
     // if (verify['status'] !== undefined && verify.status === true) {
@@ -382,12 +380,20 @@ exports.updateWhiteLabelInfo = async function (req, res) {
 }
 
 exports.importCSV = async function (req, res) {
+    // console.log('lable is: ', req.body.labelID)
 
     let fileName = "";
     let mimeType = "";
     let fieldName = req.params.fieldName;
     let filePath = "";
     let file = null;
+    let labelID = req.body.labelID;
+    let corsConnection = ''
+    let wLData = await sql.query("SELECT * from white_labels where id = '" + labelID + "'")
+    if (wLData.length) {
+        corsConnection = await general_helpers.getDBCon(wLData[0].ip_address, wLData[0].db_user, wLData[0].db_pass, wLData[0].db_name)
+    }
+
 
     // console.log('fieldName', req.files)
     if (fieldName === 'sim_ids' || fieldName === 'chat_ids' || fieldName === 'pgp_emails') {
@@ -413,6 +419,7 @@ exports.importCSV = async function (req, res) {
                 let parsedData = XLSX.utils.sheet_to_json(singleSheet, {
                     raw: true
                 });
+
                 if (fieldName == "sim_ids") {
                     let error = false;
                     let duplicatedSimIds = [];
@@ -443,34 +450,45 @@ exports.importCSV = async function (req, res) {
                     for (let row of parsedData) {
                         sim.push(row.sim_id)
                     }
-                    let slctQ = "SELECT sim_id, start_date, expiry_date from sim_ids WHERE sim_id IN (" + sim + ")";
+
+                    // let slctQ = "SELECT sim_id, whitelabel_id, start_date, expiry_date from sim_ids WHERE sim_id IN (" + sim + ")";
+                    let slctQ = "SELECT sim_ids.*, wl.name FROM sim_ids JOIN white_labels as wl on (wl.id = sim_ids.whitelabel_id ) WHERE sim_id IN (" + sim + ")";
+                    // console.log('check query: ', slctQ);
                     let dataof = await sql.query(slctQ);
                     if (dataof.length) {
-                        // console.log(parsedData, 'daata of', dataof);
+                        // console.log(dataof, 'daata of & parsedData', parsedData);
 
                         for (let row of parsedData) {
 
                             let index = dataof.findIndex((item) => item.sim_id == row.sim_id);
-
                             if (index >= 0) {
-                                duplicatedSimIds.push(row)
+                                duplicatedSimIds.push(dataof[index])
                             } else {
                                 InsertableSimIds.push(row)
                             }
                         }
                     }
+                    // console.log('step 2')
 
                     if (duplicatedSimIds.length == 0) {
+                        // console.log('step 3')
+
                         for (let row of parsedData) {
                             if (row.sim_id && row.start_date && row.expiry_date) {
-                                let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
+
+                                // let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
+                                let insertQ = `INSERT INTO sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ( '${row.sim_id}', '${labelID}', '${row.start_date}', '${row.expiry_date}')`;
+                                let corsInsertQ = `INSERT INTO sim_ids (sim_id, start_date, expiry_date) value ( '${row.sim_id}','${row.start_date}', '${row.expiry_date}')`;
+                                // console.log('insert query is: ', insertQ);
+                                await corsConnection.query(corsInsertQ);
+                                let result = await sql.query(insertQ);
                             } else {
                                 error = true;
                             }
                         }
                     }
 
-                    // console.log('duplicate data is', duplicatedSimIds)
+                    // console.log('duplicate data is here', duplicatedSimIds)
 
                     if (!error && duplicatedSimIds.length === 0) {
                         res.send({
@@ -518,7 +536,7 @@ exports.importCSV = async function (req, res) {
                     for (let row of parsedData) {
                         chat_ids.push(row.chat_id.toString())
                     }
-                    let slctQ = "SELECT chat_id from chat_ids WHERE chat_id IN (" + chat_ids + ")";
+                    let slctQ = "SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id ) WHERE chat_id IN (" + chat_ids + ")";
                     let dataof = await sql.query(slctQ);
                     if (dataof.length) {
                         // console.log(parsedData, 'daata of', dataof);
@@ -528,7 +546,7 @@ exports.importCSV = async function (req, res) {
                             let index = dataof.findIndex((item) => item.chat_id == row.chat_id);
 
                             if (index >= 0) {
-                                duplicatedChat_ids.push(row)
+                                duplicatedChat_ids.push(dataof[index])
                             } else {
                                 InsertableChat_ids.push(row)
                             }
@@ -538,7 +556,12 @@ exports.importCSV = async function (req, res) {
                     if (duplicatedChat_ids.length == 0) {
                         for (let row of parsedData) {
                             if (row.chat_id) {
-                                let result = await sql.query("INSERT chat_ids (chat_id) value ('" + row.chat_id + "')");
+
+
+                                let corsInsertQ = `INSERT INTO chat_ids (chat_id) value ('${row.chat_id}')`;
+                                // console.log('insert query is: ', insertQ);
+                                await corsConnection.query(corsInsertQ);
+                                let result = await sql.query(`INSERT INTO chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${labelID}')`);
                             } else {
                                 error = true;
                             }
@@ -590,7 +613,7 @@ exports.importCSV = async function (req, res) {
                     for (let row of parsedData) {
                         pgp_emails.push(row.pgp_email)
                     }
-                    let slctQ = "SELECT pgp_email from pgp_emails WHERE pgp_email IN (" + pgp_emails.map(item => { return "'" + item + "'" }) + ")";
+                    let slctQ = "SELECT pgp_emails.*, wl.name FROM pgp_emails JOIN white_labels as wl on (wl.id = pgp_emails.whitelabel_id ) WHERE pgp_email IN (" + pgp_emails.map(item => { return "'" + item + "'" }) + ")";
                     // console.log('pgp query', slctQ)
                     let dataof = await sql.query(slctQ);
                     if (dataof.length) {
@@ -601,7 +624,7 @@ exports.importCSV = async function (req, res) {
                             let index = dataof.findIndex((item) => item.pgp_email == row.pgp_email);
 
                             if (index >= 0) {
-                                duplicatedPgp_emails.push(row)
+                                duplicatedPgp_emails.push(dataof[index])
                             } else {
                                 InsertablePgp_emails.push(row)
                             }
@@ -611,7 +634,11 @@ exports.importCSV = async function (req, res) {
                     if (duplicatedPgp_emails.length == 0) {
                         for (let row of parsedData) {
                             if (row.pgp_email) {
-                                let result = await sql.query("INSERT pgp_emails (pgp_email) value ('" + row.pgp_email + "')");
+                                let corsInsertQ = `INSERT INTO pgp_emails (pgp_email) value ('${row.pgp_email}')`;
+                                // console.log('insert query is: ', insertQ);
+                                await corsConnection.query(corsInsertQ);
+
+                                let result = await sql.query(`INSERT INTO pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${labelID}')`);
                             } else {
                                 error = true;
                             }
@@ -661,9 +688,6 @@ exports.importCSV = async function (req, res) {
     // }
 }
 
-
-
-
 exports.whitelabelBackups = async function (req, res) {
     let id = req.params.whitelabel_id;
     console.log(id, 'id is')
@@ -689,81 +713,242 @@ exports.whitelabelBackups = async function (req, res) {
     }
 }
 
+// save new data ids
+exports.saveNewData = async function (req, res) {
+    console.log('at server label id is for new save data', req.body.labelID)
+
+    // var verify = await verifyToken(req, res);
+    // if (verify.status !== undefined && verify.status == true) { where sim_ids.whitelabel_id = ${req.body.labelID}
+    let error = 0;
+    if (req.body.type == 'sim_id') {
+        for (let row of req.body.newData) {
+            let result = await sql.query(`INSERT IGNORE sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ('${row.sim_id}', '${req.body.labelID}', '${row.start_date}', '${row.expiry_date}')`);
+            if (!result.affectedRows) {
+                error += 1;
+            }
+        }
+    } else if (req.body.type == 'chat_id') {
+        for (let row of req.body.newData) {
+            let result = await sql.query(`INSERT IGNORE chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${req.body.labelID}')`);
+            if (!result.affectedRows) {
+                error += 1;
+            }
+        }
+    } else if (req.body.type == 'pgp_email') {
+        for (let row of req.body.newData) {
+            let result = await sql.query(`INSERT IGNORE pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${req.body.labelID}')`);
+            if (!result.affectedRows) {
+                error += 1;
+            }
+        }
+    }
+
+    if (error == 0) {
+        res.send({
+            "status": true,
+            "msg": "Inserted Successfully"
+        })
+
+    } else {
+        res.send({
+            "status": false,
+            "msg": "Error While Insertion, " + error + " records not Inserted"
+        })
+    }
+    //    let newData = req.body.
+    // }
+};
 
 exports.getSimIds = async function (req, res) {
-    let query = "select * from sim_ids where used=0";
+    // let query = "select * from sim_ids where used=0";
+    let query = `SELECT sim_ids.*, wl.name FROM sim_ids JOIN white_labels as wl on (wl.id = sim_ids.whitelabel_id )`;
     sql.query(query, (error, resp) => {
         console.log(resp, 'is response')
-        res.send({
-            status: false,
-            msg: "data success",
-            data: resp
-        });
+        if (error) throw error
+        if (resp.length) {
+            console.log(resp, 'is response')
+            res.send({
+                status: true,
+                msg: "data success",
+                data: resp
+            });
+        } else {
+            res.send({
+                status: false,
+                msg: "data success",
+                data: []
+            });
+        }
     });
 }
 
 
 exports.getChatIds = async function (req, res) {
-    let query = "select * from chat_ids where used=0";
+    // console.log('-------------------------------------------')
+    // console.log('hi, test getChatIds api')
+    // console.log('-------------------------------------------')
+
+    // let query = "select * from chat_ids where used=0";
+    let query = `SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id)`;
     sql.query(query, (error, resp) => {
-        console.log(resp, 'is response')
-        res.send({
-            status: false,
-            msg: "data success",
-            data: resp
-        });
+        // console.log(resp, 'is response')
+        if (error) throw error
+        if (resp.length) {
+            console.log(resp, 'is response')
+            res.send({
+                status: true,
+                msg: "data success",
+                data: resp
+            });
+        } else {
+            res.send({
+                status: false,
+                msg: "data success",
+                data: []
+            });
+        }
     });
 }
 
 exports.getPgpEmails = async function (req, res) {
-    let query = "select * from pgp_emails where used=0";
+    // let query = "select * from pgp_emails where used=0";
+    let query = `SELECT pgp_emails.*, wl.name FROM pgp_emails JOIN white_labels as wl on (wl.id = pgp_emails.whitelabel_id)`;
     sql.query(query, (error, resp) => {
         console.log(resp, 'is response')
-        res.send({
-            status: false,
-            msg: "data success",
-            data: resp
-        });
+        if (error) throw error
+        if (resp.length) {
+            console.log(resp, 'is response')
+            res.send({
+                status: true,
+                msg: "data success",
+                data: resp
+            });
+        } else {
+            res.send({
+                status: false,
+                msg: "error",
+                data: []
+            });
+        }
     });
 }
 
 
 
-exports.getUsedSimIds = async function (req, res) {
-    let query = "select * from sim_ids where used=1";
+// get ids with label
+
+exports.getSimIdsLabel = async function (req, res) {
+    console.log('getSimIdsLabel at server:: ', req.body.labelID)
+    // let query = "select * from sim_ids where used=0";
+    let query = `SELECT sim_ids.*, wl.name FROM sim_ids JOIN white_labels as wl on (wl.id = sim_ids.whitelabel_id ) where sim_ids.whitelabel_id = ${req.body.labelID}`;
     sql.query(query, (error, resp) => {
-        console.log(resp, 'is response')
-        res.send({
-            status: false,
-            msg: "data success",
-            data: resp
-        });
+        if (error) throw error
+        if (resp.length) {
+            console.log(resp, 'is response')
+            res.send({
+                status: true,
+                msg: "data success",
+                data: resp
+            });
+        } else {
+            res.send({
+                status: false,
+                msg: "error",
+                data: []
+            });
+        }
+
+
+    });
+}
+exports.getChatIdsLabel = async function (req, res) {
+    console.log('getChatIdsLabel at server:: ', req.body.labelID)
+    // let query = "select * from chat_ids where used=0";
+    let query = `SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id) where chat_ids.whitelabel_id = ${req.body.labelID}`;
+    sql.query(query, (error, resp) => {
+        if (error) throw error
+        if (resp.length) {
+            data = {
+                status: false,
+                msg: "data success",
+                data: resp
+            }
+            console.log(resp, 'is response')
+            res.send(data);
+        } else {
+            data = {
+                status: false,
+                msg: "error",
+                data: []
+            }
+            res.send(data);
+        }
     });
 }
 
-exports.getUsedChatIds = async function (req, res) {
-    let query = "select * from chat_ids where used=1";
+exports.getPgpEmailsLabel = async function (req, res) {
+    // let query = "select * from pgp_emails where used=0";
+    let data = {}
+    let query = `SELECT pgp_emails.*, wl.name FROM pgp_emails JOIN white_labels as wl on (wl.id = pgp_emails.whitelabel_id) where pgp_emails.whitelabel_id = ${req.body.labelID}`;
     sql.query(query, (error, resp) => {
-        console.log(resp, 'is response')
-        res.send({
-            status: false,
-            msg: "data success",
-            data: resp
-        });
+        if (error) throw error
+        if (resp.length) {
+            console.log(resp, 'is response')
+            data = {
+                status: true,
+                msg: "data success",
+                data: resp
+            }
+            res.send(data);
+        } else {
+            data = {
+                status: false,
+                msg: "data success",
+                data: []
+            }
+            res.send(data);
+        }
     });
 }
 
-exports.getUsedPgpEmails = async function (req, res) {
-    let query = "select * from pgp_emails where used=1";
-    sql.query(query, (error, resp) => {
-        console.log(resp, 'is response')
-        res.send({
-            status: false,
-            msg: "data success",
-            data: resp
-        });
-    });
-}
+
+// // get used ids 
+
+// exports.getUsedSimIds = async function (req, res) {
+//     let query = "select * from sim_ids where used=1";
+//     sql.query(query, (error, resp) => {
+//         console.log(resp, 'is response')
+//         res.send({
+//             status: false,
+//             msg: "data success",
+//             data: resp
+//         });
+//     });
+// }
+
+// exports.getUsedChatIds = async function (req, res) {
+//     let query = "select * from chat_ids where used=1";
+//     sql.query(query, (error, resp) => {
+//         console.log(resp, 'is response')
+//         res.send({
+//             status: false,
+//             msg: "data success",
+//             data: resp
+//         });
+//     });
+// }
+
+// exports.getUsedPgpEmails = async function (req, res) {
+//     let query = "select * from pgp_emails where used=1";
+//     sql.query(query, (error, resp) => {
+//         console.log(resp, 'is response')
+//         res.send({
+//             status: false,
+//             msg: "data success",
+//             data: resp
+//         });
+//     });
+// }
 exports.apklist = async function (req, res) {
     console.log(req.decoded);
     let data = []
@@ -811,7 +996,7 @@ exports.apklist = async function (req, res) {
 }
 exports.checkApkName = async function (req, res) {
     try {
-        console.log(req.body);
+        // console.log(req.body);
         let apkName = req.body.name;
         let apk_id = req.body.apk_id
         let query = '';

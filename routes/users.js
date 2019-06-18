@@ -22,11 +22,17 @@ router.get('/get_chat_ids', user.getChatIds)
 
 router.get('/get_pgp_emails', user.getPgpEmails)
 
-router.get('/get_used_sim_ids', user.getUsedSimIds)
+router.post('/get_label_sim_ids', user.getSimIdsLabel)
 
-router.get('/get_used_chat_ids', user.getUsedChatIds)
+router.post('/get_label_chat_ids', user.getChatIdsLabel)
 
-router.get('/get_used_pgp_emails', user.getUsedPgpEmails)
+router.post('/get_label_pgp_emails', user.getPgpEmailsLabel)
+
+// router.get('/get_used_sim_ids', user.getUsedSimIds)
+
+// router.get('/get_used_chat_ids', user.getUsedChatIds)
+
+// router.get('/get_used_pgp_emails', user.getUsedPgpEmails)
 
 router.get('/apklist', user.apklist)
 
@@ -46,6 +52,7 @@ router.get('/whitelabel_backups/:whitelabel_id', user.whitelabelBackups)
 router.post('/check_component', user.checkComponent)
 
 
+router.post('/save_new_data', user.saveNewData)
 
 
 module.exports = router;
