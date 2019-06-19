@@ -1473,14 +1473,14 @@ exports.getFile = async function (req, res) {
 
 }
 exports.saveOfflineDevice = async function (req, res) {
-    console.log('saveOfflineDevice at server: ', req.body);
+    // console.log('saveOfflineDevice at server: ', req.body);
     let id = req.body.id;
     let start_date = req.body.start_date;
     let expiry_date = req.body.expiry_date;
 
-    console.log('id is: ', id);
-    console.log('start date is: ', start_date);
-    console.log('expire date : ', expiry_date);
+    // console.log('id is: ', id);
+    // console.log('start date is: ', start_date);
+    // console.log('expire date : ', expiry_date);
 
     try {
         if (start_date && expiry_date) {
@@ -1520,10 +1520,13 @@ exports.saveOfflineDevice = async function (req, res) {
 }
 
 exports.deviceStatus = async function (req, res) {
-    console.log('deviceStatus at server: ', req.body);
-    let id = req.body.id;
-
-    console.log('deviceStatus id is: ', id);
+    // console.log('deviceStatus at server: ', req.body);
+    let id = req.body.data.id;
+    let requiredStatus = req.body.requireStatus;
+    // console.log('deviceStatus id is: ', id);
+    console.log('deviceStatus requiredStatus is: ', requiredStatus);
+// res.send({status: true})
+// return;
     // let start_date = req.body.start_date;
     // let expiry_date = req.body.expiry_date;
 
@@ -1531,7 +1534,25 @@ exports.deviceStatus = async function (req, res) {
     // console.log('expire date : ', expiry_date);
 
     try {
-        if (id) {
+        if (id && requiredStatus == Constants.DEVICE_ACTIVATED) {
+            let updateQ = `UPDATE devices SET account_status= '', status='active' WHERE id = ${id}`;
+            console.log('deviceStatus update query is: ', updateQ);
+            sql.query(updateQ, async function (err, rslts) {
+                if (err) {
+                    console.log(err);
+                    res.send({
+                        status: false,
+                        msg: "Error occur"
+                    });
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "update account_status successfully"
+                    });
+                }
+
+            });
+        } else if (id && requiredStatus == Constants.DEVICE_SUSPENDED) {
             let updateQ = `UPDATE devices SET account_status= 'suspended' WHERE id = ${id}`;
             console.log('deviceStatus update query is: ', updateQ);
             sql.query(updateQ, async function (err, rslts) {

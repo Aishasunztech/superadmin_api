@@ -75,14 +75,14 @@ module.exports = {
     checkStatus: function (device) {
         let status = "";
 
-        if (device.account_status === 'suspended') {
+        if (device.account_status === app_constants.DEVICE_SUSPENDED) {
             status = app_constants.DEVICE_SUSPENDED;
-        } else if (device.status === 'active' && (device.account_status === '' || device.account_status === null)) {
+        } else if (device.status === app_constants.DEVICE_ACTIVATED && (device.account_status === '' || device.account_status === null)) {
             status = app_constants.DEVICE_ACTIVATED
-        } else if (device.status === 'expired' && (device.account_status === '' || device.account_status === null)) {
+        } else if (device.status === app_constants.DEVICE_EXPIRED && (device.account_status === '' || device.account_status === null)) {
             status = app_constants.DEVICE_EXPIRED;
-        } else if (device.status === 'deleted' && (device.account_status === '' || device.account_status === null)) {
-            status = app_constants.DEVICE_UNLINKED;
+        } else if (device.status === app_constants.DEVICE_DELETE && (device.account_status === '' || device.account_status === null)) {
+            status = app_constants.DEVICE_DELETE;
         } else {
             status = 'N/A';
         }
