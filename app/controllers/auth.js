@@ -90,14 +90,17 @@ exports.login = async function (req, res) {
 
 					// var userType = await helpers.getUserType(users[0].dealer_id);
 					// var get_connected_devices = await sql.query("select count(*) as total from usr_acc where dealer_id='" + users[0].dealer_id + "'");
-					var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-					// console.log('object data is ', users[0]);
+					var ip = req.header('x-real-ip') || req.connection.remoteAddress;
+					
+					delete users[0].password;
+					delete users[0].verification_code;
+					delete users[0].account_status;
 
 					const user = {
 						...users[0],
 						ip_address: ip,
 					}
-
+					
 					jwt.sign(
 						{
 							user
