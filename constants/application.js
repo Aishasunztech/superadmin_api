@@ -19,6 +19,7 @@ module.exports = {
     DEVICE_EXPIRED: "expired",
     DEVICE_UNLINKED: "Unlinked",
     DEVICE_DELETE: "deleted",
+    DEVICE_EXTEND: "extended",
 
     DEVICE_ONLINE: "On",
     DEVICE_OFFLINE: "off",
