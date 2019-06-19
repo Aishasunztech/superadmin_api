@@ -1038,7 +1038,6 @@ exports.uploadApk = async function (req, res) {
     let fileName = "";
     let mimeType = "";
     let fieldName = req.params.fieldName;
-    console.log(fieldName);
 
     let file = null
     if (fieldName === Constants.LOGO) {
@@ -1150,7 +1149,6 @@ exports.addApk = async function (req, res) {
                 let details = '';
 
                 versionCode = await general_helpers.getAPKVersionCode(file);
-                console.log("code", versionCode);
                 if (versionCode) {
                     versionName = await general_helpers.getAPKVersionName(file);
                     if (!versionName) {
@@ -1178,19 +1176,14 @@ exports.addApk = async function (req, res) {
                 packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
                 // label = label.toString().replace(/(\r\n|\n|\r)/gm, "");
                 details = details.toString().replace(/(\r\n|\n|\r)/gm, "");
-                // console.log("versionName", versionName);
-                // console.log("pKGName", packageName);
-                // console.log("version Code", versionCode);
-                console.log("label", label);
-                // console.log('detai')
 
                 let apk_type = 'permanent'
 
                 let apk_stats = fs.statSync(file);
 
                 let formatByte = general_helpers.formatBytes(apk_stats.size);
-                // console.log("INSERT INTO apk_details (app_name, logo, apk, apk_type, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + apk_type + "','" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')");
-                sql.query("INSERT INTO apk_details (app_name, logo, apk_file, apk_type, version_code, version_name, package_name, details, apk_bytes, apk_size) VALUES ('" + apk_name + "' , '" + logo + "' , '" + apk + "', '" + apk_type + "','" + versionCode + "', '" + versionName + "', '" + packageName + "', '" + details + "', " + apk_stats.size + ", '" + formatByte + "')", async function (err, rslts) {
+
+                sql.query(`INSERT INTO apk_details (app_name, logo, apk_file, apk_type, version_code, version_name, package_name, details, apk_bytes, apk_size, label) VALUES ('${apk_name}' , '${logo}' , '${apk}', '${apk_type}', '${versionCode}', '${versionName}', '${packageName}', '${details}', ${apk_stats.size}, '${formatByte}', '${label}')`, async function (err, rslts) {
                     let newData = await sql.query("SELECT * from apk_details where id = " + rslts.insertId)
                     // console.log(newData[0]);
                     dta = {
