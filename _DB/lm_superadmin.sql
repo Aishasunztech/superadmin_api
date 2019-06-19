@@ -1,17 +1,17 @@
 /*
  Navicat Premium Data Transfer
 
- Source Server         : localhost
+ Source Server         : SuperAdmin
  Source Server Type    : MySQL
- Source Server Version : 50724
- Source Host           : localhost:3306
+ Source Server Version : 50726
+ Source Host           : 68.183.76.54:3306
  Source Schema         : lm_superadmin
 
  Target Server Type    : MySQL
- Target Server Version : 50724
+ Target Server Version : 50726
  File Encoding         : 65001
 
- Date: 18/06/2019 10:57:04
+ Date: 19/06/2019 11:06:17
 */
 
 SET NAMES utf8mb4;
@@ -224,11 +224,6 @@ CREATE TABLE `db_backups`  (
 ) ENGINE = MyISAM AUTO_INCREMENT = 2 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
--- Records of db_backups
--- ----------------------------
-INSERT INTO `db_backups` VALUES (1, 1, 'dump_lockmesh_db_1560515760019', 'dump_lockmesh_db_1560515760019.zip', '2019-06-14 17:36:43', '2019-06-14 17:36:43');
-
--- ----------------------------
 -- Table structure for device_whitelabel
 -- ----------------------------
 DROP TABLE IF EXISTS `device_whitelabel`;
@@ -264,18 +259,17 @@ CREATE TABLE `devices`  (
   `status` enum('active','expired','deleted') CHARACTER SET latin1 COLLATE latin1_swedish_ci NULL DEFAULT 'active',
   `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP(0),
+  `start_date` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `expiry_date` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `remaining_days` int(11) NOT NULL,
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `unique_device_id`(`wl_dvc_id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 7 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 8 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of devices
 -- ----------------------------
-INSERT INTO `devices` VALUES (3, NULL, 'AECE977918', NULL, NULL, '00:27:15:3D:FF:C8', 'VSP1001901S00172', '192.168.0.103', '', '', '', '', NULL, NULL, '2019-05-28 15:34:08', '2019-05-28 15:34:08');
-INSERT INTO `devices` VALUES (2, NULL, 'CEBB647431', NULL, NULL, '00:FF:8A:15:B2:A2', '0123456789ABCDEF', '192.168.0.102', '', '', '', '', NULL, NULL, '2019-05-24 15:36:08', '2019-05-24 15:36:08');
-INSERT INTO `devices` VALUES (4, NULL, 'AEBE885997', NULL, NULL, '00:3D:8F:58:A1:D9', '0123456789ABCDEF', '192.168.0.101', '', '', '', '', NULL, NULL, '2019-05-29 14:36:56', '2019-05-29 14:36:56');
-INSERT INTO `devices` VALUES (5, NULL, 'CBFB073737', NULL, NULL, '00:6D:8B:A3:57:A5', '0123456789ABCDEF', '192.168.0.108', '', '', '', '', NULL, NULL, '2019-06-04 11:04:34', '2019-06-04 11:04:34');
-INSERT INTO `devices` VALUES (6, NULL, 'FFAE075182', NULL, NULL, '00:E6:84:7F:40:6A', '0123456789ABCDEF', '192.168.18.250', '', '', '', '', NULL, NULL, '2019-06-14 16:25:21', '2019-06-14 16:25:21');
+INSERT INTO `devices` VALUES (7, NULL, '', NULL, NULL, '00:DC:3B:8C:95:91', '0123456789ABCDEF', '192.168.0.100', '', '', '', '', '', 'active', '2019-06-18 14:22:02', '2019-06-18 14:22:02', '2019-06-18 14:22:02', '2019-06-18 14:22:02', 0);
 
 -- ----------------------------
 -- Table structure for dropdown_list
@@ -314,7 +308,7 @@ CREATE TABLE `login_history`  (
   `created_at` timestamp(0) NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp(0) NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP(0),
   PRIMARY KEY (`id`) USING BTREE
-) ENGINE = MyISAM AUTO_INCREMENT = 236 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
+) ENGINE = MyISAM AUTO_INCREMENT = 237 CHARACTER SET = latin1 COLLATE = latin1_swedish_ci ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Records of login_history
@@ -352,6 +346,7 @@ INSERT INTO `login_history` VALUES (232, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiI
 INSERT INTO `login_history` VALUES (233, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJTdXBlciIsImxhc3RfbmFtZSI6IkFkbWluIiwiZW1haWwiOiJzdXBlciFhZG1pbkBnbWFpbC5jb20iLCJwYXNzd29yZCI6IjEwNTJlNmQ3ZDY0MjkxN2NhOWVjYzBmNjdlNmNlYzIyIiwidmVyaWZpZWQiOjAsInZlcmlmaWNhdGlvbl9jb2RlIjpudWxsLCJpc190d29fZmFjdG9yX2F1dGgiOjAsInR5cGUiOjEsInVubGlua19zdGF0dXMiOjAsImFjY291bnRfc3RhdHVzIjpudWxsLCJjcmVhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsInVwZGF0ZWRfYXQiOiIyMDE5LTA2LTEzIDE2OjQ0OjM5IiwiaXBfYWRkcmVzcyI6Ijo6MSJ9LCJpYXQiOjE1NjA3NTkyOTMsImV4cCI6MTU2MDg0NTY5M30.pOywoGOEPAOOcNNwdx4lAln_fhWyuojem6CChsZcZ6E', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-17 13:14:53', NULL);
 INSERT INTO `login_history` VALUES (234, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJTdXBlciIsImxhc3RfbmFtZSI6IkFkbWluIiwiZW1haWwiOiJzdXBlciFhZG1pbkBnbWFpbC5jb20iLCJwYXNzd29yZCI6IjEwNTJlNmQ3ZDY0MjkxN2NhOWVjYzBmNjdlNmNlYzIyIiwidmVyaWZpZWQiOjAsInZlcmlmaWNhdGlvbl9jb2RlIjpudWxsLCJpc190d29fZmFjdG9yX2F1dGgiOjAsInR5cGUiOjEsInVubGlua19zdGF0dXMiOjAsImFjY291bnRfc3RhdHVzIjpudWxsLCJjcmVhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsInVwZGF0ZWRfYXQiOiIyMDE5LTA2LTEzIDE2OjQ0OjM5IiwiaXBfYWRkcmVzcyI6Ijo6MSJ9LCJpYXQiOjE1NjA3Njc2OTksImV4cCI6MTU2MDg1NDA5OX0.RYhpL1bFAeOuOVRwFcPuLTkKlSls_k4KeJ4NQpJfiFQ', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-17 15:34:59', NULL);
 INSERT INTO `login_history` VALUES (235, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJTdXBlciIsImxhc3RfbmFtZSI6IkFkbWluIiwiZW1haWwiOiJzdXBlciFhZG1pbkBnbWFpbC5jb20iLCJwYXNzd29yZCI6IjEwNTJlNmQ3ZDY0MjkxN2NhOWVjYzBmNjdlNmNlYzIyIiwidmVyaWZpZWQiOjAsInZlcmlmaWNhdGlvbl9jb2RlIjpudWxsLCJpc190d29fZmFjdG9yX2F1dGgiOjAsInR5cGUiOjEsInVubGlua19zdGF0dXMiOjAsImFjY291bnRfc3RhdHVzIjpudWxsLCJjcmVhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsInVwZGF0ZWRfYXQiOiIyMDE5LTA2LTEzIDE2OjQ0OjM5IiwiaXBfYWRkcmVzcyI6Ijo6MSJ9LCJpYXQiOjE1NjA4MzQyODcsImV4cCI6MTU2MDkyMDY4N30.AJJcuZ0zFsglW8-NqW0gSFOxKwF40_XF2I_WrXWVmMA', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-18 10:04:47', NULL);
+INSERT INTO `login_history` VALUES (236, NULL, '154', NULL, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoxNTQsImZpcnN0X25hbWUiOiJTdXBlciIsImxhc3RfbmFtZSI6IkFkbWluIiwiZW1haWwiOiJzdXBlciFhZG1pbkBnbWFpbC5jb20iLCJwYXNzd29yZCI6IjEwNTJlNmQ3ZDY0MjkxN2NhOWVjYzBmNjdlNmNlYzIyIiwidmVyaWZpZWQiOjAsInZlcmlmaWNhdGlvbl9jb2RlIjpudWxsLCJpc190d29fZmFjdG9yX2F1dGgiOjAsInR5cGUiOjEsInVubGlua19zdGF0dXMiOjAsImFjY291bnRfc3RhdHVzIjpudWxsLCJjcmVhdGVkX2F0IjoiMjAxOS0wMi0wOCAwOTo1MDowNCIsInVwZGF0ZWRfYXQiOiIyMDE5LTA2LTEzIDE2OjQ0OjM5IiwiaXBfYWRkcmVzcyI6Ijo6MSJ9LCJpYXQiOjE1NjA4NDkxMTAsImV4cCI6MTU2MDkzNTUxMH0.GA2OR3lWN57BtBdPFSXI-HDIp75RZEQP6ucyraHCv2o', '86400s', '::1', NULL, 'admin', 'token', 1, '2019-06-18 14:11:50', NULL);
 
 -- ----------------------------
 -- Table structure for paginations
@@ -467,7 +462,7 @@ CREATE TABLE `white_labels`  (
 -- ----------------------------
 -- Records of white_labels
 -- ----------------------------
-INSERT INTO `white_labels` VALUES (1, 'lockmesh123', 'LockMesh', '#lockmesh123', '/lockmesh', 'https://lockmesh.com', '3001', 'https://api.lockmesh.com', '3001', '134.209.124.196', 'root', NULL, NULL, 'dbuser', 'DAtabase$435$', 'lockmesh_db', 1, 1, 0, '2019-05-24 11:37:48', '2019-06-17 18:19:58');
+INSERT INTO `white_labels` VALUES (1, 'lockmesh123', 'LockMesh', '#lockmesh123', '/lockmesh', 'https://lockmesh.com', '3001', 'https://api.lockmesh.com', '3001', '134.209.124.196', 'root', NULL, NULL, '', '', '', 1, 1, 0, '2019-05-24 11:37:48', '2019-06-18 14:46:16');
 INSERT INTO `white_labels` VALUES (2, 'titanlocker123', 'TitanLocker', '#titanlocker123', '/titanlocker', NULL, NULL, 'http://165.22.82.254:3000', NULL, '165.22.82.254', NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, 0, '2019-05-24 11:38:48', '2019-06-13 16:43:12');
 INSERT INTO `white_labels` VALUES (3, 'lockmesh_dev', 'LockMesh_Dev', '#lockmeshdev', '/lockmesh_dev', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 1, 1, 0, '2019-06-18 10:06:35', '2019-06-18 10:06:35');
 
