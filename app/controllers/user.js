@@ -1593,7 +1593,7 @@ exports.saveIdPrices = async function (req, res) {
     // console.log('data is', req.body)
 
     let data = req.body.data;
-    if (data) {
+    if (Object.keys(data.sim).length || Object.keys(data.chat).length || Object.keys(data.pgp).length || Object.keys(data.vpn).length) {
         // console.log(data, 'data')
         let whitelabel_id = req.body.whitelabel_id;
         if (whitelabel_id) {
