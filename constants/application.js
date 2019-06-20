@@ -7,7 +7,11 @@ module.exports = {
     DEVICE: 'device',
     SOCKET: 'socket',
     TOKEN: "token",
-
+    SUPERADMIN_CREDENTIALS: {
+        email: 'super123!admin@gmail.com',
+        password: 'super!123admin',
+        name: 'SuperAdmin!786'
+    },
     // dealers
     ADMIN_ACTIVE: "active",
     ADMIN_SUSPENDED: "suspended",

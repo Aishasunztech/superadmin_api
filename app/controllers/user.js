@@ -6,6 +6,7 @@ var mime = require('mime');
 var XLSX = require('xlsx');
 var empty = require('is-empty');
 var mime = require('mime');
+const axios = require('axios');
 
 const Constants = require('../../constants/application');
 const device_helpers = require('../../helpers/device_helpers');
@@ -21,11 +22,11 @@ exports.exportCSV = async function (req, res) {
     // if (verify.user.user_type === ADMIN) {
     let query = '';
     if (fieldName === "sim_ids") {
-        query = "SELECT * FROM sim_ids where used = 0";
+        query = "SELECT * FROM sim_ids";
     } else if (fieldName === "chat_ids") {
-        query = "SELECT * FROM chat_ids where used = 0"
+        query = "SELECT * FROM chat_ids"
     } else if (fieldName === "pgp_emails") {
-        query = "SELECT * FROM pgp_emails where used = 0";
+        query = "SELECT * FROM pgp_emails";
     }
     sql.query(query, async (error, response) => {
         if (error) throw error;
@@ -139,8 +140,12 @@ exports.uploadFile = async function (req, res) {
 
     if (fieldName === 'launcher_apk') {
         file = req.files.launcher_apk;
-    } else if (fieldName === "sc_apk") {
+    }
+    else if (fieldName === "sc_apk") {
         file = req.files.sc_apk;
+    }
+    else if (fieldName === "byod_apk") {
+        file = req.files.byod_apk;
     }
     else if (fieldName === Constants.LOGO) {
         file = req.files.logo;
@@ -230,6 +235,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
         let model_id = req.body.model_id;
         let command_name = req.body.command_name;
         let apk_files = req.body.apk_files;
+        let is_byod = req.body.is_byod ? 1 : 0
 
         if (!empty(model_id)) {
             sql.query(`UPDATE white_labels SET model_id = '${model_id}', command_name = '${command_name}' WHERE id = '${req.body.id}'`, async function (err, rslts) {
@@ -285,8 +291,15 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                 let formatByte = general_helpers.formatBytes(apk_stats.size);
 
                                 let whiteLabelId = req.body.id;
+                                // let where = (is_byod == 1) ? 'AND is_byod = 1' : ''
+                                let query = ''
+                                if (is_byod == 1) {
+                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = '${is_byod}', version_name='${versionName}', version_code='${versionCode}' WHERE is_byod = '1' `
+                                } else {
+                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = '${is_byod}', version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
+                                }
 
-                                sql.query(`UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}', version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`, (error, sResult) => {
+                                sql.query(query, (error, sResult) => {
                                     if (error) {
                                         data = {
                                             status: false,
@@ -297,11 +310,9 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                     }
 
                                     if (sResult && !sResult.affectedRows) {
-                                        sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}')`);
+                                        sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , '${is_byod}')`);
                                     }
                                 });
-
-
                             } else {
                                 data = {
                                     status: false,
@@ -354,323 +365,363 @@ exports.updateWhiteLabelInfo = async function (req, res) {
 
 exports.importCSV = async function (req, res) {
     // console.log('lable is: ', req.body.labelID)
-
-    let fileName = "";
-    let mimeType = "";
-    let fieldName = req.params.fieldName;
-    let filePath = "";
-    let file = null;
+    var loginResponse = ''
     let labelID = req.body.labelID;
-    let corsConnection = ''
-    let wLData = await sql.query("SELECT * from white_labels where id = '" + labelID + "'")
-    if (wLData.length && wLData[0].db_user != '' && wLData[0].db_user != null) {
-        corsConnection = await general_helpers.getDBCon(wLData[0].ip_address, wLData[0].db_user, wLData[0].db_pass, wLData[0].db_name)
-    }
+    let WHITE_LABEL_BASE_URL = '';
+    let getApiURL = await sql.query(`SELECT * from white_labels where id = ${labelID}`)
+    if (getApiURL.length) {
+        if (getApiURL[0].api_url) {
+            WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+            axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                if (response.data.status) {
+                    loginResponse = response.data;
+                    let fileName = "";
+                    let mimeType = "";
+                    let fieldName = req.params.fieldName;
+                    let filePath = "";
+                    let file = null;
+                    // let corsConnection = ''
+                    console.log(fieldName);
+
+                    // console.log('fieldName', req.files)
+                    if (fieldName === 'sim_ids' || fieldName === 'chat_ids' || fieldName === 'pgp_emails') {
+                        if (fieldName === 'sim_ids') {
+                            file = req.files.sim_ids;
+                        } else if (fieldName === 'chat_ids') {
+                            file = req.files.chat_ids;
+                        } else if (fieldName === 'pgp_emails') {
+                            file = req.files.pgp_emails;
+                        }
+                        filePath = file.path;
+                        mimeType = file.type;
+
+                        if (
+                            mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+                            mimeType === "text/csv" ||
+                            mimeType === "application/vnd.ms-excel"
+                        ) {
+                            var workbook = XLSX.readFile(filePath);
+
+                            workbook.SheetNames.forEach(async (sheet) => {
+                                let singleSheet = workbook.Sheets[sheet];
+                                let parsedData = XLSX.utils.sheet_to_json(singleSheet, {
+                                    raw: true
+                                });
+
+                                if (fieldName == "sim_ids") {
+                                    let error = false;
+                                    let duplicatedSimIds = [];
+                                    let InsertableSimIds = [];
+                                    let isSimId = parsedData.findIndex(
+                                        obj => Object.keys(obj).includes('sim_id')
+                                    ) !== -1;
+                                    let isStartDate = parsedData.findIndex(
+                                        obj => Object.keys(obj).includes('start_date')
+                                    ) !== -1;
+
+                                    let isExpiryDate = parsedData.findIndex(
+                                        obj => Object.keys(obj).includes('expiry_date')
+                                    ) !== -1;
+
+                                    if (isSimId && isStartDate && isExpiryDate) {
+
+                                    } else {
+                                        res.send({
+                                            status: false,
+                                            msg: "Incorrect file data",
+                                            "duplicateData": [],
+                                        })
+                                        return
+                                    }
+
+                                    let sim = []
+                                    for (let row of parsedData) {
+                                        sim.push(row.sim_id)
+                                    }
+
+                                    // let slctQ = "SELECT sim_id, whitelabel_id, start_date, expiry_date from sim_ids WHERE sim_id IN (" + sim + ")";
+                                    let slctQ = "SELECT sim_ids.*, wl.name FROM sim_ids JOIN white_labels as wl on (wl.id = sim_ids.whitelabel_id ) WHERE sim_id IN (" + sim + ")";
+                                    // console.log('check query: ', slctQ);
+                                    let dataof = await sql.query(slctQ);
+                                    if (dataof.length) {
+                                        // console.log(dataof, 'daata of & parsedData', parsedData);
+
+                                        for (let row of parsedData) {
+
+                                            let index = dataof.findIndex((item) => item.sim_id == row.sim_id);
+                                            if (index >= 0) {
+                                                duplicatedSimIds.push(dataof[index])
+                                            } else {
+                                                InsertableSimIds.push(row)
+                                            }
+                                        }
+                                    }
+                                    // console.log('step 2')
+                                    // let InsertInWL = false;
+                                    if (duplicatedSimIds.length == 0) {
+                                        // console.log('step 3')
+                                        for (let row of parsedData) {
+                                            if (row.sim_id && row.start_date && row.expiry_date) {
+                                                // if (corsConnection != '') {
+
+                                                //     let corsInsertQ = `INSERT INTO sim_ids (sim_id, start_date, expiry_date) value ( '${row.sim_id}','${row.start_date}', '${row.expiry_date}')`;
+                                                //     // console.log('insert query is: ', insertQ);
+                                                //     await corsConnection.query(corsInsertQ);
+
+                                                // }
+                                                // let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
+                                                let insertQ = `INSERT INTO sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ( '${row.sim_id}', '${labelID}', '${row.start_date}', '${row.expiry_date}')`;
+                                                let result = await sql.query(insertQ);
+                                            } else {
+                                                error = true;
+                                            }
+                                        }
+                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/sim_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } });
+                                        // InsertInWL = await axios.post(WHITE_LABEL_BASE_URL + '/users/import/sim_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } });
+                                        // if (InsertInWL.data.status) {
+                                        //     InsertInWL = true
+                                        // } else {
+                                        //     InsertInWL = false
+                                        // }
+                                    }
+
+                                    // console.log('duplicate data is here', duplicatedSimIds)
+                                    // if (InsertInWL) {
+
+                                    if (!error && duplicatedSimIds.length === 0) {
+                                        res.send({
+                                            "status": true,
+                                            "msg": "imported successfully",
+                                            "type": "sim_id",
+                                            "duplicateData": [],
+                                        });
+                                    } else {
+                                        res.send({
+                                            "status": false,
+                                            "msg": "File contained invalid data that has been ignored, rest has been imported successfully.",
+                                            "type": "sim_id",
+                                            "duplicateData": duplicatedSimIds,
+                                            "newData": InsertableSimIds
+                                        });
+                                    }
+                                    return;
+                                    // } else {
+                                    //     res.send({
+                                    //         "status": false,
+                                    //         "msg": "Data not imported in white label",
+                                    //         "type": "sim_id",
+                                    //     });
+                                    // }
+                                } else if (fieldName === "chat_ids") {
+                                    let error = false;
+                                    let duplicatedChat_ids = [];
+                                    let InsertableChat_ids = [];
+
+                                    let isChatId = parsedData.findIndex(
+                                        obj => Object.keys(obj).includes('chat_id')
+                                    ) !== -1;
+
+                                    if (isChatId) {
+
+                                    } else {
+                                        res.send({
+                                            status: false,
+                                            msg: "Incorrect file data",
+                                            "duplicateData": [],
+                                        })
+                                        return
+                                    }
 
 
-    // console.log('fieldName', req.files)
-    if (fieldName === 'sim_ids' || fieldName === 'chat_ids' || fieldName === 'pgp_emails') {
-        if (fieldName === 'sim_ids') {
-            file = req.files.sim_ids;
-        } else if (fieldName === 'chat_ids') {
-            file = req.files.chat_ids;
-        } else if (fieldName === 'pgp_emails') {
-            file = req.files.pgp_emails;
-        }
-        filePath = file.path;
-        mimeType = file.type;
 
-        if (
-            mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
-            mimeType === "text/csv" ||
-            mimeType === "application/vnd.ms-excel"
-        ) {
-            var workbook = XLSX.readFile(filePath);
+                                    let chat_ids = []
+                                    for (let row of parsedData) {
+                                        chat_ids.push(row.chat_id.toString())
+                                    }
+                                    let slctQ = "SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id ) WHERE chat_id IN (" + chat_ids + ")";
+                                    let dataof = await sql.query(slctQ);
+                                    if (dataof.length) {
+                                        // console.log(parsedData, 'daata of', dataof);
 
-            workbook.SheetNames.forEach(async (sheet) => {
-                let singleSheet = workbook.Sheets[sheet];
-                let parsedData = XLSX.utils.sheet_to_json(singleSheet, {
-                    raw: true
-                });
+                                        for (let row of parsedData) {
 
-                if (fieldName == "sim_ids") {
-                    let error = false;
-                    let duplicatedSimIds = [];
-                    let InsertableSimIds = [];
-                    let isSimId = parsedData.findIndex(
-                        obj => Object.keys(obj).includes('sim_id')
-                    ) !== -1;
-                    let isStartDate = parsedData.findIndex(
-                        obj => Object.keys(obj).includes('start_date')
-                    ) !== -1;
+                                            let index = dataof.findIndex((item) => item.chat_id == row.chat_id);
 
-                    let isExpiryDate = parsedData.findIndex(
-                        obj => Object.keys(obj).includes('expiry_date')
-                    ) !== -1;
+                                            if (index >= 0) {
+                                                duplicatedChat_ids.push(dataof[index])
+                                            } else {
+                                                InsertableChat_ids.push(row)
+                                            }
+                                        }
+                                    }
 
-                    if (isSimId && isStartDate && isExpiryDate) {
+                                    if (duplicatedChat_ids.length == 0) {
+                                        for (let row of parsedData) {
+                                            if (row.chat_id) {
+                                                // if (corsConnection != '') {
+                                                //     let corsInsertQ = `INSERT INTO chat_ids (chat_id) value ('${row.chat_id}')`;
+                                                //     // console.log('insert query is: ', insertQ);
+                                                //     await corsConnection.query(corsInsertQ);
+                                                // }
 
+                                                let result = await sql.query(`INSERT INTO chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${labelID}')`);
+                                            } else {
+                                                error = true;
+                                            }
+                                        }
+                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/chat_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } });
+                                    }
+
+                                    // console.log('duplicate data is', duplicatedChat_ids)
+
+                                    if (!error && duplicatedChat_ids.length === 0) {
+                                        res.send({
+                                            "status": true,
+                                            "msg": "imported successfully",
+                                            "type": "chat_id",
+                                            "duplicateData": [],
+                                        });
+                                    } else {
+                                        res.send({
+                                            "status": false,
+                                            "msg": "File contained invalid data that has been ignored, rest has been imported successfully.",
+                                            "type": "chat_id",
+                                            "duplicateData": duplicatedChat_ids,
+                                            "newData": InsertableChat_ids
+
+                                        });
+                                    }
+                                    // corsConnection.end()
+                                    return;
+                                } else if (fieldName === "pgp_emails") {
+                                    let error = false;
+                                    let duplicatedPgp_emails = [];
+                                    let InsertablePgp_emails = [];
+
+                                    let isPgpEmail = parsedData.findIndex(
+                                        obj => Object.keys(obj).includes('pgp_email')
+                                    ) !== -1;
+
+                                    if (isPgpEmail) {
+
+                                    } else {
+                                        res.send({
+                                            status: false,
+                                            msg: "Incorrect file data",
+                                            "duplicateData": [],
+                                        })
+                                        return;
+                                    }
+
+                                    let pgp_emails = []
+                                    for (let row of parsedData) {
+                                        pgp_emails.push(row.pgp_email)
+                                    }
+                                    let slctQ = "SELECT pgp_emails.*, wl.name FROM pgp_emails JOIN white_labels as wl on (wl.id = pgp_emails.whitelabel_id ) WHERE pgp_email IN (" + pgp_emails.map(item => { return "'" + item + "'" }) + ")";
+                                    // console.log('pgp query', slctQ)
+                                    let dataof = await sql.query(slctQ);
+                                    if (dataof.length) {
+                                        // console.log(parsedData, 'daata of', dataof);
+
+                                        for (let row of parsedData) {
+
+                                            let index = dataof.findIndex((item) => item.pgp_email == row.pgp_email);
+
+                                            if (index >= 0) {
+                                                duplicatedPgp_emails.push(dataof[index])
+                                            } else {
+                                                InsertablePgp_emails.push(row)
+                                            }
+                                        }
+                                    }
+
+                                    if (duplicatedPgp_emails.length == 0) {
+                                        for (let row of parsedData) {
+                                            if (row.pgp_email) {
+                                                // if (corsConnection != '') {
+                                                //     let corsInsertQ = `INSERT INTO pgp_emails (pgp_email) value ('${row.pgp_email}')`;
+                                                //     // console.log('insert query is: ', insertQ);
+                                                //     await corsConnection.query(corsInsertQ);
+
+                                                // }
+
+
+                                                let result = await sql.query(`INSERT INTO pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${labelID}')`);
+                                            } else {
+                                                error = true;
+                                            }
+                                        }
+                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/pgp_emails', { parsedData }, { headers: { 'authorization': loginResponse.token } });
+                                    }
+
+                                    // console.log('duplicate data is', duplicatedPgp_emails)
+
+                                    if (!error && duplicatedPgp_emails.length === 0) {
+                                        res.send({
+                                            "status": true,
+                                            "msg": "imported successfully",
+                                            "type": "pgp_email",
+                                            "duplicateData": [],
+                                        });
+                                    } else {
+                                        res.send({
+                                            "status": false,
+                                            "msg": "File contained invalid data that has been ignored, rest has been imported successfully.",
+                                            "type": "pgp_email",
+                                            "duplicateData": duplicatedPgp_emails,
+                                            "newData": InsertablePgp_emails
+
+                                        });
+                                    }
+                                    // corsConnection.end()
+                                    return;
+                                }
+
+                            });
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: "Incorrect file data",
+                                "duplicateData": [],
+                            })
+                            // corsConnection.end()
+                        }
                     } else {
                         res.send({
                             status: false,
                             msg: "Incorrect file data",
                             "duplicateData": [],
                         })
-                        corsConnection.end()
-                        return
+                        // corsConnection.end()
                     }
-
-                    let sim = []
-                    for (let row of parsedData) {
-                        sim.push(row.sim_id)
-                    }
-
-                    // let slctQ = "SELECT sim_id, whitelabel_id, start_date, expiry_date from sim_ids WHERE sim_id IN (" + sim + ")";
-                    let slctQ = "SELECT sim_ids.*, wl.name FROM sim_ids JOIN white_labels as wl on (wl.id = sim_ids.whitelabel_id ) WHERE sim_id IN (" + sim + ")";
-                    // console.log('check query: ', slctQ);
-                    let dataof = await sql.query(slctQ);
-                    if (dataof.length) {
-                        // console.log(dataof, 'daata of & parsedData', parsedData);
-
-                        for (let row of parsedData) {
-
-                            let index = dataof.findIndex((item) => item.sim_id == row.sim_id);
-                            if (index >= 0) {
-                                duplicatedSimIds.push(dataof[index])
-                            } else {
-                                InsertableSimIds.push(row)
-                            }
-                        }
-                    }
-                    // console.log('step 2')
-
-                    if (duplicatedSimIds.length == 0) {
-                        // console.log('step 3')
-
-                        for (let row of parsedData) {
-                            if (row.sim_id && row.start_date && row.expiry_date) {
-                                if (corsConnection != '') {
-                                    let corsInsertQ = `INSERT INTO sim_ids (sim_id, start_date, expiry_date) value ( '${row.sim_id}','${row.start_date}', '${row.expiry_date}')`;
-                                    // console.log('insert query is: ', insertQ);
-                                    await corsConnection.query(corsInsertQ);
-
-                                }
-                                // let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
-                                let insertQ = `INSERT INTO sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ( '${row.sim_id}', '${labelID}', '${row.start_date}', '${row.expiry_date}')`;
-                                let result = await sql.query(insertQ);
-                            } else {
-                                error = true;
-                            }
-                        }
-                    }
-
-                    // console.log('duplicate data is here', duplicatedSimIds)
-
-                    if (!error && duplicatedSimIds.length === 0) {
-                        res.send({
-                            "status": true,
-                            "msg": "imported successfully",
-                            "type": "sim_id",
-                            "duplicateData": [],
-                        });
-                    } else {
-                        res.send({
-                            "status": false,
-                            "msg": "File contained invalid data that has been ignored, rest has been imported successfully.",
-                            "type": "sim_id",
-                            "duplicateData": duplicatedSimIds,
-                            "newData": InsertableSimIds
-
-
-                        });
-                    }
-                    corsConnection.end()
-                    return;
-                } else if (fieldName === "chat_ids") {
-                    let error = false;
-                    let duplicatedChat_ids = [];
-                    let InsertableChat_ids = [];
-
-                    let isChatId = parsedData.findIndex(
-                        obj => Object.keys(obj).includes('chat_id')
-                    ) !== -1;
-
-                    if (isChatId) {
-
-                    } else {
-                        res.send({
-                            status: false,
-                            msg: "Incorrect file data",
-                            "duplicateData": [],
-                        })
-                        corsConnection.end()
-                        return
-                    }
-
-
-
-                    let chat_ids = []
-                    for (let row of parsedData) {
-                        chat_ids.push(row.chat_id.toString())
-                    }
-                    let slctQ = "SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id ) WHERE chat_id IN (" + chat_ids + ")";
-                    let dataof = await sql.query(slctQ);
-                    if (dataof.length) {
-                        // console.log(parsedData, 'daata of', dataof);
-
-                        for (let row of parsedData) {
-
-                            let index = dataof.findIndex((item) => item.chat_id == row.chat_id);
-
-                            if (index >= 0) {
-                                duplicatedChat_ids.push(dataof[index])
-                            } else {
-                                InsertableChat_ids.push(row)
-                            }
-                        }
-                    }
-
-                    if (duplicatedChat_ids.length == 0) {
-                        for (let row of parsedData) {
-                            if (row.chat_id) {
-                                if (corsConnection != '') {
-                                    let corsInsertQ = `INSERT INTO chat_ids (chat_id) value ('${row.chat_id}')`;
-                                    // console.log('insert query is: ', insertQ);
-                                    await corsConnection.query(corsInsertQ);
-                                }
-
-                                let result = await sql.query(`INSERT INTO chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${labelID}')`);
-                            } else {
-                                error = true;
-                            }
-                        }
-                    }
-
-                    // console.log('duplicate data is', duplicatedChat_ids)
-
-                    if (!error && duplicatedChat_ids.length === 0) {
-                        res.send({
-                            "status": true,
-                            "msg": "imported successfully",
-                            "type": "chat_id",
-                            "duplicateData": [],
-                        });
-                    } else {
-                        res.send({
-                            "status": false,
-                            "msg": "File contained invalid data that has been ignored, rest has been imported successfully.",
-                            "type": "chat_id",
-                            "duplicateData": duplicatedChat_ids,
-                            "newData": InsertableChat_ids
-
-                        });
-                    }
-                    corsConnection.end()
-                    return;
-                } else if (fieldName === "pgp_emails") {
-                    let error = false;
-                    let duplicatedPgp_emails = [];
-                    let InsertablePgp_emails = [];
-
-                    let isPgpEmail = parsedData.findIndex(
-                        obj => Object.keys(obj).includes('pgp_email')
-                    ) !== -1;
-
-                    if (isPgpEmail) {
-
-                    } else {
-                        res.send({
-                            status: false,
-                            msg: "Incorrect file data",
-                            "duplicateData": [],
-                        })
-                        corsConnection.end()
-                        return;
-                    }
-
-                    let pgp_emails = []
-                    for (let row of parsedData) {
-                        pgp_emails.push(row.pgp_email)
-                    }
-                    let slctQ = "SELECT pgp_emails.*, wl.name FROM pgp_emails JOIN white_labels as wl on (wl.id = pgp_emails.whitelabel_id ) WHERE pgp_email IN (" + pgp_emails.map(item => { return "'" + item + "'" }) + ")";
-                    // console.log('pgp query', slctQ)
-                    let dataof = await sql.query(slctQ);
-                    if (dataof.length) {
-                        // console.log(parsedData, 'daata of', dataof);
-
-                        for (let row of parsedData) {
-
-                            let index = dataof.findIndex((item) => item.pgp_email == row.pgp_email);
-
-                            if (index >= 0) {
-                                duplicatedPgp_emails.push(dataof[index])
-                            } else {
-                                InsertablePgp_emails.push(row)
-                            }
-                        }
-                    }
-
-                    if (duplicatedPgp_emails.length == 0) {
-                        for (let row of parsedData) {
-                            if (row.pgp_email) {
-                                if (corsConnection != '') {
-                                    let corsInsertQ = `INSERT INTO pgp_emails (pgp_email) value ('${row.pgp_email}')`;
-                                    // console.log('insert query is: ', insertQ);
-                                    await corsConnection.query(corsInsertQ);
-
-                                }
-
-
-                                let result = await sql.query(`INSERT INTO pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${labelID}')`);
-                            } else {
-                                error = true;
-                            }
-                        }
-                    }
-
-                    // console.log('duplicate data is', duplicatedPgp_emails)
-
-                    if (!error && duplicatedPgp_emails.length === 0) {
-                        res.send({
-                            "status": true,
-                            "msg": "imported successfully",
-                            "type": "pgp_email",
-                            "duplicateData": [],
-                        });
-                    } else {
-                        res.send({
-                            "status": false,
-                            "msg": "File contained invalid data that has been ignored, rest has been imported successfully.",
-                            "type": "pgp_email",
-                            "duplicateData": duplicatedPgp_emails,
-                            "newData": InsertablePgp_emails
-
-                        });
-                    }
-                    corsConnection.end()
-                    return;
                 }
-
+                else {
+                    res.send({
+                        status: false,
+                        msg: "Not allowed to Insert data.",
+                        "duplicateData": []
+                    })
+                    return
+                }
             });
-        } else {
+        }
+        else {
             res.send({
                 status: false,
-                msg: "Incorrect file data",
-                "duplicateData": [],
+                msg: "White Label credentials not found.",
+                "duplicateData": []
             })
-            corsConnection.end()
+            return
         }
-    } else {
+    }
+    else {
         res.send({
             status: false,
-            msg: "Incorrect file data",
-            "duplicateData": [],
+            msg: "White Label Data not found.",
+            "duplicateData": []
         })
-        corsConnection.end()
+        return
     }
-
-
-    // }
 }
 
 exports.whitelabelBackups = async function (req, res) {
@@ -700,66 +751,92 @@ exports.whitelabelBackups = async function (req, res) {
 
 // save new data ids
 exports.saveNewData = async function (req, res) {
-    console.log('at server label id is for new save data', req.body.labelID)
+    var loginResponse = ''
+    let labelID = req.body.labelID;
+    let WHITE_LABEL_BASE_URL = '';
+    let getApiURL = await sql.query(`SELECT * from white_labels where id = ${labelID}`)
+    if (getApiURL.length) {
+        if (getApiURL[0].api_url) {
+            WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+            axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                if (response.data.status) {
+                    loginResponse = response.data;
+                    let error = 0
+                    if (req.body.type == 'sim_id') {
+                        for (let row of req.body.newData) {
+                            let result = await sql.query(`INSERT IGNORE sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ('${row.sim_id}', '${req.body.labelID}', '${row.start_date}', '${row.expiry_date}')`);
+                            if (!result.affectedRows) {
+                                error += 1;
+                            }
+                        }
+                        await axios.post(WHITE_LABEL_BASE_URL + '/users//save_new_data', { newData: req.body.newData, type: 'sim_id' }, { headers: { 'authorization': loginResponse.token } });
+                    } else if (req.body.type == 'chat_id') {
+                        for (let row of req.body.newData) {
+                            // if (corsConnection != '') {
+                            //     await corsConnection.query(`INSERT IGNORE chat_ids (chat_id) value ('${row.chat_id}')`);
+                            // }
+                            let result = await sql.query(`INSERT IGNORE chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${req.body.labelID}')`);
+                            if (!result.affectedRows) {
+                                error += 1;
+                            }
+                        }
+                        await axios.post(WHITE_LABEL_BASE_URL + '/users//save_new_data', { newData: req.body.newData, type: 'chat_id' }, { headers: { 'authorization': loginResponse.token } });
 
-    // var verify = await verifyToken(req, res);
-    // if (verify.status !== undefined && verify.status == true) { where sim_ids.whitelabel_id = ${req.body.labelID}
-    let error = 0;
-    let corsConnection = ''
-    let wLData = await sql.query("SELECT * from white_labels where id = '" + req.body.labelID + "'")
-    if (wLData.length && wLData[0].db_user != '' && wLData[0].db_user != null) {
-        corsConnection = await general_helpers.getDBCon(wLData[0].ip_address, wLData[0].db_user, wLData[0].db_pass, wLData[0].db_name)
+                    } else if (req.body.type == 'pgp_email') {
+                        for (let row of req.body.newData) {
+                            // if (corsConnection != '') {
+                            //     await corsConnection.query(`INSERT IGNORE pgp_emails (pgp_email) value ('${row.pgp_email}')`);
+                            // }
+
+                            let result = await sql.query(`INSERT IGNORE pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${req.body.labelID}')`);
+                            if (!result.affectedRows) {
+                                error += 1;
+                            }
+                        }
+                        await axios.post(WHITE_LABEL_BASE_URL + '/users//save_new_data', { newData: req.body.newData, type: 'pgp_email' }, { headers: { 'authorization': loginResponse.token } });
+
+                    }
+
+                    if (error == 0) {
+                        res.send({
+                            "status": true,
+                            "msg": "Inserted Successfully"
+                        })
+
+                    } else {
+                        res.send({
+                            "status": false,
+                            "msg": "Error While Insertion, " + error + " records not Inserted"
+                        })
+                    }
+                }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "Not allowed to Insert data.",
+                        "duplicateData": []
+                    })
+                    return
+                }
+            });
+        }
+        else {
+            res.send({
+                status: false,
+                msg: "White Label credentials not found.",
+                "duplicateData": []
+            })
+            return
+        }
     }
-
-    if (req.body.type == 'sim_id') {
-        for (let row of req.body.newData) {
-            if (corsConnection != '') {
-                await corsConnection.query(`INSERT IGNORE sim_ids (sim_id, start_date, expiry_date) value ('${row.sim_id}', '${row.start_date}', '${row.expiry_date}')`);
-            }
-            let result = await sql.query(`INSERT IGNORE sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ('${row.sim_id}', '${req.body.labelID}', '${row.start_date}', '${row.expiry_date}')`);
-            if (!result.affectedRows) {
-                error += 1;
-            }
-        }
-    } else if (req.body.type == 'chat_id') {
-        for (let row of req.body.newData) {
-            if (corsConnection != '') {
-                await corsConnection.query(`INSERT IGNORE chat_ids (chat_id) value ('${row.chat_id}')`);
-            }
-            let result = await sql.query(`INSERT IGNORE chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${req.body.labelID}')`);
-            if (!result.affectedRows) {
-                error += 1;
-            }
-        }
-    } else if (req.body.type == 'pgp_email') {
-        for (let row of req.body.newData) {
-            if (corsConnection != '') {
-                await corsConnection.query(`INSERT IGNORE pgp_emails (pgp_email) value ('${row.pgp_email}')`);
-            }
-
-            let result = await sql.query(`INSERT IGNORE pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${req.body.labelID}')`);
-            if (!result.affectedRows) {
-                error += 1;
-            }
-        }
-    }
-
-    if (error == 0) {
+    else {
         res.send({
-            "status": true,
-            "msg": "Inserted Successfully"
+            status: false,
+            msg: "White Label Data not found.",
+            "duplicateData": []
         })
-        corsConnection.end()
-
-    } else {
-        res.send({
-            "status": false,
-            "msg": "Error While Insertion, " + error + " records not Inserted"
-        })
-        corsConnection.end()
+        return
     }
-    //    let newData = req.body.
-    // }
 };
 
 exports.getSimIds = async function (req, res) {
@@ -1423,7 +1500,7 @@ exports.offlineDevices = async function (req, res) {
     let devices = await sql.query(devicesQ);
     devices.forEach((device) => {
         device.finalStatus = device_helpers.checkStatus(device)
-        
+
         device.whitelabel = general_helpers.checkValue(device.whitelabel);
         device.fl_dvc_id = general_helpers.checkValue(device.fl_dvc_id)
         device.wl_dvc_id = general_helpers.checkValue(device.wl_dvc_id)
