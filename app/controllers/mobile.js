@@ -168,9 +168,15 @@ exports.getApk = async (req, res) => {
 exports.checkExpiry = async (req, res) => {
     var serial_number = req.body.serial_no;
     var mac = req.body.mac_address;
-    let ip = '';
-    console.log("information", serial_number, mac);
-
+    var ip = req.body.ip;
+    var uniqueName = req.body.unique_name;
+    console.log("information", serial_number, mac, uniqueName);
+    let dvcInfo = {
+        serial_number,
+        mac,
+        ip,
+        uniqueName
+    }
 
     if (empty(serial_number) && empty(mac)) {
         res.send({
@@ -196,7 +202,7 @@ exports.checkExpiry = async (req, res) => {
             })
             return;
         } else {
-            await newDevice(mac, serial_number, ip, res);
+            await newDevice(dvcInfo, res);
 
             return
         }
@@ -213,7 +219,7 @@ exports.checkExpiry = async (req, res) => {
             })
             return;
         } else {
-            await newDevice(mac, serial_number, ip, res);            
+            await newDevice(dvcInfo, res);
             return;
         }
     } else {
@@ -253,35 +259,46 @@ exports.checkExpiry = async (req, res) => {
                     return
                 }
             } else {
-                await newDevice(mac, serial_number, ip, res);
+                await newDevice(dvcInfo, res);
                 return;
             }
         }
     }
 }
 
-async function newDevice(mac_address, serial_number, ip, res) {
-    let addDeviceQ = `INSERT IGNORE into devices (mac_address, serial_number, ip_address, simno, imei, simno2, imei2) VALUES ('${mac_address}', '${serial_number}', '${ip}', '', '', '', '')`;
-    let device = await sql.query(addDeviceQ);
-    if (device) {
-        // let deviceStatus = device_helpers.checkStatus(d)
-        let dvcQ= `SELECT * FROM devices WHERE id=${device.insertId} limit 1`;
-        let dvcRes= await sql.query(dvcQ);
+async function newDevice(dvcInfo, res) {
+    console.log(dvcInfo);
+    let whitelabelQ = `SELECT id FROM white_labels WHERE unique_name='${dvcInfo.uniqueName}' limit 1`;
+    let whitelabelId = await sql.query(whitelabelQ);
+    if (whitelabelId.length) {
+        let device_id = await general_helpers.getOfflineDvcId(dvcInfo.serial_number, dvcInfo.mac);
+        let addDeviceQ = `INSERT IGNORE into devices (fl_dvc_id, whitelabel_id, mac_address, serial_number, ip_address, simno, imei, simno2, imei2) VALUES ('${device_id}',${whitelabelId[0].id}, '${dvcInfo.mac}', '${dvcInfo.serial_number}', '${dvcInfo.ip}', '', '', '', '')`;
+        let device = await sql.query(addDeviceQ);
+        
+        if (device) {
 
-        let deviceStatus = device_helpers.checkStatus(dvcRes);
+            let dvcQ = `SELECT * FROM devices WHERE id=${device.insertId} limit 1`;
+            let dvcRes = await sql.query(dvcQ);
 
-        console.log("inserting device", device);
-        res.send({
-            status: true,
-            device_status: deviceStatus,
-            of_device_id: dvcRes[0].fl_dvc_id
-        });
-    }
-    else {
+            let deviceStatus = device_helpers.checkStatus(dvcRes);
+
+            res.send({
+                status: true,
+                device_status: deviceStatus,
+                of_device_id: dvcRes[0].fl_dvc_id
+            });
+        } else {
+            res.send({
+                status: false,
+                msg: ""
+            });
+        }
+    } else {
         res.send({
             status: false,
             msg: ""
         });
     }
+
 }
 

@@ -305,7 +305,7 @@ module.exports = {
 		var deviceId = str.toUpperCase() + num;
 		return deviceId;
 	},
-	getSuperAdminDvcId: async function (sn, mac) {
+	getOfflineDvcId: async function (sn, mac) {
 
 		var key = md5(sn + mac);
 
