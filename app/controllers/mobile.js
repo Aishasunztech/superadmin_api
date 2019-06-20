@@ -3,6 +3,7 @@ var jwt = require('jsonwebtoken');
 var path = require('path');
 var fs = require("fs");
 var empty = require('is-empty');
+var moment = require('moment-strftime');
 
 // user defined libraries
 const device_helpers = require('../../helpers/device_helpers');
@@ -267,14 +268,18 @@ exports.checkExpiry = async (req, res) => {
 }
 
 async function newDevice(dvcInfo, res) {
-    console.log(dvcInfo);
     let whitelabelQ = `SELECT id FROM white_labels WHERE unique_name='${dvcInfo.uniqueName}' limit 1`;
     let whitelabelId = await sql.query(whitelabelQ);
     if (whitelabelId.length) {
         let device_id = await general_helpers.getOfflineDvcId(dvcInfo.serial_number, dvcInfo.mac);
-        let addDeviceQ = `INSERT IGNORE into devices (fl_dvc_id, whitelabel_id, mac_address, serial_number, ip_address, simno, imei, simno2, imei2) VALUES ('${device_id}',${whitelabelId[0].id}, '${dvcInfo.mac}', '${dvcInfo.serial_number}', '${dvcInfo.ip}', '', '', '', '')`;
-        let device = await sql.query(addDeviceQ);
         
+        // get expiry dates
+        let start_date = moment();
+        let expiry_date = moment(start_date).add(1, 'M');
+        
+        let addDeviceQ = `INSERT IGNORE into devices (fl_dvc_id, whitelabel_id, mac_address, serial_number, ip_address, simno, imei, simno2, imei2, start_date, expiry_date, remaining_days) VALUES ('${device_id}',${whitelabelId[0].id}, '${dvcInfo.mac}', '${dvcInfo.serial_number}', '${dvcInfo.ip}', '', '', '', '', '${start_date}', '${expiry_date})', '30'`;
+        let device = await sql.query(addDeviceQ);
+
         if (device) {
 
             let dvcQ = `SELECT * FROM devices WHERE id=${device.insertId} limit 1`;

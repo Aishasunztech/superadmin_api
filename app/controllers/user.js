@@ -5,13 +5,11 @@ var fs = require("fs");
 var mime = require('mime');
 var XLSX = require('xlsx');
 var empty = require('is-empty');
-const Constants = require('../../constants/application');
+var mime = require('mime');
 
+const Constants = require('../../constants/application');
 const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
-
-// const constant = require('../../constants/application');
-var mime = require('mime');
 
 // export CSV 
 exports.exportCSV = async function (req, res) {

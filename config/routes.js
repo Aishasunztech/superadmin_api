@@ -3,6 +3,8 @@
 var authMiddleware = require('../config/auth');
 var multipart = require('connect-multiparty');
 var multipartMiddleware = multipart();
+var moment = require('moment-strftime');
+
 var crypto = require("crypto");
 var md5 = require('md5');
 
@@ -12,6 +14,7 @@ var authRoutes = require('../routes/auth');
 var userRoutes = require('../routes/users');
 var mobileRoutes = require('../routes/mobile');
 var user = require('../app/controllers/user');
+
 
 // controllers
 var user = require('../app/controllers/user');
@@ -36,6 +39,8 @@ module.exports = function (app) {
 
         // router.use('/', indexRouter);
         router.get('/', function (req, res) {
+        
+            
             // var ip = req.header('x-forwarded-for') || req.connection.remoteAddress;
             // res.send({
             //     ip
