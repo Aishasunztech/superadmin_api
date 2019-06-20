@@ -65,6 +65,12 @@ router.put('/save-offline-device', user.saveOfflineDevice);
 
 router.put('/device-status', user.deviceStatus)
 
+router.patch('/save-prices', user.saveIdPrices)
+
+router.patch('/save-package', user.savePackage)
+
+
+
 
 
 module.exports = router;
