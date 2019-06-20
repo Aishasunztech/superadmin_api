@@ -62,6 +62,9 @@ router.post('/save_new_data', user.saveNewData)
 router.get('/offline-devices', user.offlineDevices);
 
 
+router.put('/save-prices', user.saveIdPrices)
+
+
 
 
 module.exports = router;

@@ -84,7 +84,7 @@ exports.getWhiteLabel = async function (req, res) {
             // }
             let whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id}`;
             let whiteLabelAPKS = await sql.query(whiteLabelAPKQ);
-            console.log("hello", whiteLabelAPKS);
+            // console.log("hello", whiteLabelAPKS);
             res.send({
                 status: true,
                 apks: whiteLabelAPKS,
