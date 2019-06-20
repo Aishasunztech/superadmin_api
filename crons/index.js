@@ -107,7 +107,6 @@ cron.schedule('0 * * * * *', async () => {
     let today = moment().format('DD-YY-MM');
     var deviceQ = "select * from devices";
     var devices = await sql.query(deviceQ);
-    console.log(moment(devices[0].start_date).format('DD-YY-MM'));
     for (var i = 0; i < devices.length; i++) {
 
         if (today >= moment(devices[i].start_date).format('DD-YY-MM')) {

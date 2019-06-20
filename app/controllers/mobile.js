@@ -276,8 +276,11 @@ async function newDevice(dvcInfo, res) {
         // get expiry dates
         let start_date = moment();
         let expiry_date = moment(start_date).add(1, 'M');
+        start_date = moment(start_date).format()
+        expiry_date = moment(expiry_date).format();
+
         
-        let addDeviceQ = `INSERT IGNORE into devices (fl_dvc_id, whitelabel_id, mac_address, serial_number, ip_address, simno, imei, simno2, imei2, start_date, expiry_date, remaining_days) VALUES ('${device_id}',${whitelabelId[0].id}, '${dvcInfo.mac}', '${dvcInfo.serial_number}', '${dvcInfo.ip}', '', '', '', '', '${start_date}', '${expiry_date})', '30'`;
+        let addDeviceQ = `INSERT IGNORE into devices (fl_dvc_id, whitelabel_id, mac_address, serial_number, ip_address, simno, imei, simno2, imei2, start_date, expiry_date, remaining_days) VALUES ('${device_id}',${whitelabelId[0].id}, '${dvcInfo.mac}', '${dvcInfo.serial_number}', '${dvcInfo.ip}', '', '', '', '', '${start_date}', '${expiry_date}', '30')`;
         let device = await sql.query(addDeviceQ);
 
         if (device) {
