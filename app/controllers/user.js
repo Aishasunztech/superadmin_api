@@ -1419,10 +1419,17 @@ exports.checkComponent = async function (req, res) {
 }
 
 exports.offlineDevices = async function (req, res) {
-    let devicesQ = `SELECT * FROM devices`;
+    let devicesQ = `SELECT devices.*, white_labels.name as whitelabel FROM devices LEFT JOIN white_labels ON (devices.whitelabel_id = white_labels.id)`;
     let devices = await sql.query(devicesQ);
     devices.forEach((device) => {
         device.finalStatus = device_helpers.checkStatus(device)
+        
+        device.whitelabel = general_helpers.checkValue(device.whitelabel);
+        device.fl_dvc_id = general_helpers.checkValue(device.fl_dvc_id)
+        device.wl_dvc_id = general_helpers.checkValue(device.wl_dvc_id)
+        device.status = general_helpers.checkValue(device.status)
+        device.mac_address = general_helpers.checkValue(device.mac_address)
+        device.serial_number = general_helpers.checkValue(device.serial_number);
     })
     if (devices.length) {
         res.send({
