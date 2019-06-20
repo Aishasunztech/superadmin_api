@@ -1588,3 +1588,111 @@ exports.deviceStatus = async function (req, res) {
 
 }
 
+
+exports.saveIdPrices = async function (req, res) {
+    // console.log('data is', req.body)
+
+    let data = req.body.data;
+    if (data) {
+        // console.log(data, 'data')
+        let whitelabel_id = req.body.whitelabel_id;
+        if (whitelabel_id) {
+            // console.log(whitelabel_id, 'whitelableid');
+            let error = 0;
+           
+            let month = ''
+            for (var key in data) {
+                if (data.hasOwnProperty(key)) {
+                    // console.log(key + " -> " + data[key]);
+                    let outerKey = key;
+                    let innerObject = data[key];
+                    // console.log('iner object is', innerObject)
+                    for (var innerKey in innerObject) {
+                        if (innerObject.hasOwnProperty(innerKey)) {
+                            let days = 0;
+                            // console.log(innerKey + " -> " + innerObject[innerKey]);
+                            if (innerObject[innerKey]) {
+
+                                // console.log('is string', string)
+                                let stringarray = [];
+                              
+                                stringarray = innerKey.split(/(\s+)/).filter( function(e) { return e.trim().length > 0; } );
+                                if (stringarray) {
+                                    // console.log(stringarray,'is string lenth', stringarray.length)
+                                    if (stringarray.length) {
+                                        month = stringarray[0];
+                                        // console.log('is month', month, stringarray[1])
+                                        if (month && stringarray[1]) {
+                                            // console.log('sring[1]', stringarray[1])
+                                            if (stringarray[1] == 'month') {
+                                                days = parseInt(month) * 30
+                                            } else if (string[1] == 'year') {
+                                                days = parseInt(month) * 365
+                                            } else {
+                                                days = 30
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            // console.log(days, 'days are')
+                            let unit_price = innerKey;
+                            let updateQuery = "UPDATE prices SET unit_price='" + innerObject[innerKey] + "', price_expiry='" + days + "', whitelabel_id='" + whitelabel_id + "' WHERE price_term='" + innerKey + "' AND price_for='" + key + "'";
+                            // console.log(updateQuery, 'query')
+                            sql.query(updateQuery, async function (err, result) {
+                                if (err) throw err;
+                                if (result) {
+                                    // console.log('outerKey', outerKey)
+                                    if (!result.affectedRows) {
+                                        let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, whitelabel_id) VALUES('" + outerKey + "', '" + innerObject[innerKey] + "', '" + unit_price + "', '" + days + "', '" + whitelabel_id + "')";
+                                        // console.log('insert query', insertQuery)
+                                        let rslt = await sql.query(insertQuery);
+                                        if (rslt) {
+                                            if (rslt.affectedRows == 0) {
+                                                error++;
+                                            }
+                                        }
+                                        // console.log(rslt, 'inner rslt')
+                                    }
+                                }
+                            })
+                        }
+                    }
+
+                }
+            }
+            console.log('errors are ', error)
+
+            if (error == 0) {
+                res.send({
+                    status: true,
+                    msg: 'Prices Set Successfully'
+                })
+            } else {
+                res.send({
+                    status: false,
+                    msg: 'Some Error Accured'
+                })
+            }
+
+        } else {
+            res.send({
+                status: false,
+                msg: 'Invalid WhiteLabel'
+            })
+        }
+
+    } else {
+        res.send({
+            status: false,
+            msg: 'Invalid Data'
+        })
+    }
+}
+
+
+
+
+
+
+

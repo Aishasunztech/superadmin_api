@@ -65,6 +65,9 @@ router.get('/offline-devices', user.offlineDevices);
 
 router.put('/device-status', user.deviceStatus)
 
+router.put('/save-prices', user.saveIdPrices)
+
+
 
 
 module.exports = router;
