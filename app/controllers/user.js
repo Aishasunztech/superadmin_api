@@ -24,11 +24,11 @@ exports.exportCSV = async function (req, res) {
     // if (verify.user.user_type === ADMIN) {
     let query = '';
     if (fieldName === "sim_ids") {
-        query = "SELECT * FROM sim_ids where used = 0";
+        query = "SELECT * FROM sim_ids";
     } else if (fieldName === "chat_ids") {
-        query = "SELECT * FROM chat_ids where used = 0"
+        query = "SELECT * FROM chat_ids"
     } else if (fieldName === "pgp_emails") {
-        query = "SELECT * FROM pgp_emails where used = 0";
+        query = "SELECT * FROM pgp_emails";
     }
     sql.query(query, async (error, response) => {
         if (error) throw error;
