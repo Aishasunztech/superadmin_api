@@ -1779,3 +1779,103 @@ exports.savePackage = async function (req, res) {
 
 
 
+exports.getPrices = async function(req, res) {
+    let whitelebel_id = req.params.whitelabel_id;
+    let sim_id = {};
+    let chat_id = {};
+    let pgp_email = {};
+    let vpn = {};
+    if(whitelebel_id){
+        let selectQuery = "SELECT * FROM prices WHERE whitelabel_id='"+whitelebel_id+"'";
+        sql.query(selectQuery, async (err, reslt) => {
+             if(err) throw err;
+             if(reslt){
+                //  console.log('result for get prices are is ', reslt);
+               
+                 if(reslt.length){
+                     for(let item of reslt){
+                         if(item.price_for == 'sim_id'){
+                            sim_id[item.price_term] = item.unit_price
+                         }else if(item.price_for == 'chat_id'){
+                            chat_id[item.price_term] = item.unit_price
+                        }else if(item.price_for == 'pgp_email'){
+                            pgp_email[item.price_term] = item.unit_price
+                        }else if(item.price_for == 'vpn'){
+                            vpn[item.price_term] = item.unit_price
+                        }
+                     }
+                     let data = {
+                         sim_id: sim_id ? sim_id : {},
+                         chat_id: chat_id ? chat_id : {},
+                         pgp_email: pgp_email ? pgp_email : {},
+                         vpn: vpn ? vpn : {}
+                     }
+                     res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: data
+                        
+                    })
+                 }
+                
+             }else{
+                let data = {
+                    sim_id: sim_id ? sim_id : {},
+                    chat_id: chat_id ? chat_id : {},
+                    pgp_email: pgp_email ? pgp_email : {},
+                    vpn: vpn ? vpn : {}
+                }
+
+                 res.send({
+                     status: true,
+                     msg: "Data found",
+                     data: data
+                 })
+             }
+        })
+    }else{
+
+        let data = {
+            sim_id: sim_id ? sim_id : {},
+            chat_id: chat_id ? chat_id : {},
+            pgp_email: pgp_email ? pgp_email : {},
+            vpn: vpn ? vpn : {}
+        }
+
+        res.send({
+            status: false,
+            msg: 'Invalid Whitelabel_id',
+            data: data
+
+        })
+    }
+}
+
+exports.checkPackageName = async function (req, res) {
+
+    try {
+        let name = req.body.name !== undefined ? req.body.name : null;
+      
+        let checkExistingQ = "SELECT pkg_name FROM packages WHERE pkg_name='" + name + "'";
+      
+        let checkExisting = await sql.query(checkExistingQ);
+        console.log(checkExistingQ, 'query is')
+        if (checkExisting.length) {
+            data = {
+                status: false,
+            };
+            res.send(data);
+            return;
+        }
+        else {
+            data = {
+                status: true,
+            };
+            res.send(data);
+            return;
+        }
+    } catch (error) {
+        throw error
+    }
+
+}

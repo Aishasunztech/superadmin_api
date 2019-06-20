@@ -69,8 +69,9 @@ router.patch('/save-prices', user.saveIdPrices)
 
 router.patch('/save-package', user.savePackage)
 
+router.patch('/check-package-name', user.checkPackageName)
 
-
+router.get('/get-prices/:whitelabel_id', user.getPrices)
 
 
 module.exports = router;
