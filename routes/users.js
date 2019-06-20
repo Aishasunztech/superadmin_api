@@ -65,7 +65,10 @@ router.get('/offline-devices', user.offlineDevices);
 
 router.put('/device-status', user.deviceStatus)
 
-router.put('/save-prices', user.saveIdPrices)
+router.patch('/save-prices', user.saveIdPrices)
+
+router.patch('/save-package', user.savePackage)
+
 
 
 
