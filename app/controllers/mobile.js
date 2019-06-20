@@ -292,13 +292,21 @@ async function newDevice(dvcInfo, res) {
             let dvcQ = `SELECT * FROM devices WHERE id=${device.insertId} limit 1`;
             let dvcRes = await sql.query(dvcQ);
 
-            let deviceStatus = device_helpers.checkStatus(dvcRes);
+            if(dvcRes.length){
 
-            res.send({
-                status: true,
-                device_status: deviceStatus,
-                of_device_id: dvcRes[0].fl_dvc_id
-            });
+                let deviceStatus = device_helpers.checkStatus(dvcRes);
+    
+                res.send({
+                    status: true,
+                    device_status: deviceStatus,
+                    of_device_id: dvcRes[0].fl_dvc_id
+                });
+            }else {
+                res.send({
+                    status: false,
+                    msg: "hello"
+                });
+            }
         } else {
             res.send({
                 status: false,
