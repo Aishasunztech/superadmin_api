@@ -70,21 +70,25 @@ exports.systemLogin = async function (req, res) {
 }
 
 exports.getWhiteLabel = async function (req, res) {
-    if (req.decoded && req.decoded.device_id) {
+
+    // console.log(req.decoded);
+
+    if (req.decoded) {
         let whiteLabelQ = `SELECT id, model_id, name, command_name FROM white_labels WHERE command_name='${req.body.model_id}'`;
         let whiteLabel = await sql.query(whiteLabelQ);
 
         if (Object.keys(whiteLabel).length) {
-            // let whiteLabelAPKQ = ''
-            // if (req.body.byod_status) {
-            //     whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND label = 'BYOD'`;
-            // } else {
-            //     whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id}`;
-
-            // }
-            let whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id}`;
+            let whiteLabelAPKQ = ''
+            console.log(req.body);
+            if (req.body.byod_status) {
+                whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND is_byod = '1'`;
+            } else {
+                whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id}`;
+            }
+            console.log(whiteLabelAPKQ);
+            // let whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id}`;
             let whiteLabelAPKS = await sql.query(whiteLabelAPKQ);
-            console.log("hello", whiteLabelAPKS);
+            // console.log("hello", whiteLabelAPKS);
             res.send({
                 status: true,
                 apks: whiteLabelAPKS,
