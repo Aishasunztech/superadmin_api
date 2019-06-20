@@ -5,6 +5,8 @@ var auth = require('../app/controllers/auth')
 
 router.post('/login', auth.login);
 
+router.post('/white_label_login', auth.wlLogin)
+
 router.post('/verify_code', auth.verifyCode);
 
 
