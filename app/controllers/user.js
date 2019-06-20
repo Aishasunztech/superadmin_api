@@ -11,6 +11,7 @@ const axios = require('axios');
 const Constants = require('../../constants/application');
 const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
+const moment = require('moment')
 
 // export CSV 
 exports.exportCSV = async function (req, res) {
@@ -1516,7 +1517,7 @@ exports.offlineDevices = async function (req, res) {
     } else {
         res.send({
             status: false,
-            msg: "No data found"
+            msg: "No data found",
         })
     }
 
@@ -1552,37 +1553,29 @@ exports.deviceStatus = async function (req, res) {
     // console.log('deviceStatus at server: ', req.body);
     let id = req.body.data.id;
     let requiredStatus = req.body.requireStatus;
-    // console.log('deviceStatus id is: ', id);
-    // console.log('deviceStatus requiredStatus is: ', requiredStatus);
-// res.send({status: true})
-// return;
     let start_date = req.body.data.start_date;
     let expiry_date = req.body.data.expiry_date;
-//  console.log('body is: ', req.body)
-//     console.log('start date is: ', start_date);
-//     console.log('expire date : ', expiry_date);
-//     return;
-    try {        
-        let updateQ='';
-            if (start_date && expiry_date && id && requiredStatus == Constants.DEVICE_EXTEND) {
-                updateQ = `UPDATE devices SET start_date= '${start_date}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
-                console.log('update query is: ', updateQ);
-               
-            } else if (id && requiredStatus == Constants.DEVICE_ACTIVATED) {
+    try {
+        let updateQ = '';
+        if (start_date && expiry_date && id && requiredStatus == Constants.DEVICE_EXTEND) {
+            updateQ = `UPDATE devices SET start_date= '${start_date}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
+            console.log('update query is: ', updateQ);
+
+        } else if (id && requiredStatus == Constants.DEVICE_ACTIVATED) {
             updateQ = `UPDATE devices SET account_status= '', status='active' WHERE id = ${id}`;
             console.log('deviceStatus update query is: ', updateQ);
-        
+
         } else if (id && requiredStatus == Constants.DEVICE_SUSPENDED) {
             updateQ = `UPDATE devices SET account_status= 'suspended' WHERE id = ${id}`;
             console.log('deviceStatus update query is: ', updateQ);
-           
+
         } else {
             res.send({
                 status: false,
                 msg: "No data found"
             })
         }
-         if(updateQ != '') {
+        if (updateQ != '') {
             sql.query(updateQ, async function (err, rslts) {
                 if (err) {
                     console.log(err);
@@ -1598,7 +1591,7 @@ exports.deviceStatus = async function (req, res) {
                 }
 
             });
-         } else {
+        } else {
             res.send({
                 status: false,
                 msg: "Query not run"
@@ -1613,6 +1606,97 @@ exports.deviceStatus = async function (req, res) {
         res.send(data);
         return;
     }
+
+}
+exports.updateDeviceStatus = async function (req, res) {
+
+    // console.log("Update Device", req.body);
+    let linkToWL = req.body.linkToWL
+    let SN = req.body.SN
+    let mac = req.body.mac
+    if (linkToWL) {
+        let query = `UPDATE devices set status= 'deleted' where serial_number = '${SN}' AND mac_address = '${mac}'`
+        console.log(query);
+        sql.query(query);
+
+    } else {
+        let start_date = moment();
+        let expiry_date = moment(start_date).add(1, 'M');
+        start_date = moment(start_date).format()
+        expiry_date = moment(expiry_date).format();
+        let query = `UPDATE devices set status= 'active', start_date = '${start_date}' , expiry_date = '${expiry_date}' , remaining_days = '30' where serial_number = '${SN}' AND mac_address = '${mac}'`
+        // console.log(query);
+        sql.query(query)
+    }
+
+    res.send();
+
+
+
+    // console.log('deviceStatus at server: ', req.body);
+    // let id = req.body.data.id;
+    // let requiredStatus = req.body.requireStatus;
+    // // console.log('deviceStatus id is: ', id);
+    // // console.log('deviceStatus requiredStatus is: ', requiredStatus);
+    // // res.send({status: true})
+    // // return;
+    // let start_date = req.body.data.start_date;
+    // let expiry_date = req.body.data.expiry_date;
+    // //  console.log('body is: ', req.body)
+    // //     console.log('start date is: ', start_date);
+    // //     console.log('expire date : ', expiry_date);
+    // //     return;
+    // try {
+    //     let updateQ = '';
+    //     if (start_date && expiry_date && id && requiredStatus == Constants.DEVICE_EXTEND) {
+    //         updateQ = `UPDATE devices SET start_date= '${start_date}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
+    //         console.log('update query is: ', updateQ);
+
+    //     } else if (id && requiredStatus == Constants.DEVICE_ACTIVATED) {
+    //         updateQ = `UPDATE devices SET account_status= '', status='active' WHERE id = ${id}`;
+    //         console.log('deviceStatus update query is: ', updateQ);
+
+    //     } else if (id && requiredStatus == Constants.DEVICE_SUSPENDED) {
+    //         updateQ = `UPDATE devices SET account_status= 'suspended' WHERE id = ${id}`;
+    //         console.log('deviceStatus update query is: ', updateQ);
+
+    //     } else {
+    //         res.send({
+    //             status: false,
+    //             msg: "No data found"
+    //         })
+    //     }
+    //     if (updateQ != '') {
+    //         sql.query(updateQ, async function (err, rslts) {
+    //             if (err) {
+    //                 console.log(err);
+    //                 res.send({
+    //                     status: false,
+    //                     msg: "Error occur"
+    //                 });
+    //             } else {
+    //                 res.send({
+    //                     status: true,
+    //                     msg: "update account_status successfully"
+    //                 });
+    //             }
+
+    //         });
+    //     } else {
+    //         res.send({
+    //             status: false,
+    //             msg: "Query not run"
+    //         })
+    //     }
+    // } catch (error) {
+    //     console.log(error);
+    //     data = {
+    //         status: false,
+    //         msg: "exception for deviceStatus",
+    //     };
+    //     res.send(data);
+    //     return;
+    // }
 
 }
 
