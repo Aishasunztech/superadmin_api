@@ -1366,7 +1366,7 @@ exports.editApk = async function (req, res) {
             if (fs.existsSync(file)) {
                 let versionCode = '';
                 let versionName = '';
-                let packageName = '';
+                let packageName = ' ';
                 let label = '';
                 let details = '';
 
@@ -1547,68 +1547,42 @@ exports.getFile = async function (req, res) {
     }
 
 }
-exports.saveOfflineDevice = async function (req, res) {
-    console.log('saveOfflineDevice at server: ', req.body);
-    let id = req.body.id;
-    let start_date = req.body.start_date;
-    let expiry_date = req.body.expiry_date;
 
-    console.log('id is: ', id);
-    console.log('start date is: ', start_date);
-    console.log('expire date : ', expiry_date);
-
-    try {
-        if (start_date && expiry_date) {
-            let updateQ = `UPDATE devices SET start_date= '${start_date}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
-            console.log('update query is: ', updateQ);
-            sql.query(updateQ, async function (err, rslts) {
-                if (err) {
-                    console.log(err);
-                    res.send({
-                        status: false,
-                        msg: "Error occur"
-                    });
-                } else {
-                    res.send({
-                        status: true,
-                        msg: "update epiry date successfully"
-                    });
-                }
-
-            });
+exports.deviceStatus = async function (req, res) {
+    // console.log('deviceStatus at server: ', req.body);
+    let id = req.body.data.id;
+    let requiredStatus = req.body.requireStatus;
+    // console.log('deviceStatus id is: ', id);
+    // console.log('deviceStatus requiredStatus is: ', requiredStatus);
+// res.send({status: true})
+// return;
+    let start_date = req.body.data.start_date;
+    let expiry_date = req.body.data.expiry_date;
+//  console.log('body is: ', req.body)
+//     console.log('start date is: ', start_date);
+//     console.log('expire date : ', expiry_date);
+//     return;
+    try {        
+        let updateQ='';
+            if (start_date && expiry_date && id && requiredStatus == Constants.DEVICE_EXTEND) {
+                updateQ = `UPDATE devices SET start_date= '${start_date}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
+                console.log('update query is: ', updateQ);
+               
+            } else if (id && requiredStatus == Constants.DEVICE_ACTIVATED) {
+            updateQ = `UPDATE devices SET account_status= '', status='active' WHERE id = ${id}`;
+            console.log('deviceStatus update query is: ', updateQ);
+        
+        } else if (id && requiredStatus == Constants.DEVICE_SUSPENDED) {
+            updateQ = `UPDATE devices SET account_status= 'suspended' WHERE id = ${id}`;
+            console.log('deviceStatus update query is: ', updateQ);
+           
         } else {
             res.send({
                 status: false,
                 msg: "No data found"
             })
         }
-    } catch (error) {
-        console.log(error);
-        data = {
-            status: false,
-            msg: "exception for saveOfflineDevice",
-        };
-        res.send(data);
-        return;
-    }
-
-}
-
-exports.deviceStatus = async function (req, res) {
-    console.log('deviceStatus at server: ', req.body);
-    let id = req.body.id;
-
-    console.log('deviceStatus id is: ', id);
-    // let start_date = req.body.start_date;
-    // let expiry_date = req.body.expiry_date;
-
-    // console.log('start date is: ', start_date);
-    // console.log('expire date : ', expiry_date);
-
-    try {
-        if (id) {
-            let updateQ = `UPDATE devices SET account_status= 'suspended' WHERE id = ${id}`;
-            console.log('deviceStatus update query is: ', updateQ);
+         if(updateQ != '') {
             sql.query(updateQ, async function (err, rslts) {
                 if (err) {
                     console.log(err);
@@ -1624,10 +1598,10 @@ exports.deviceStatus = async function (req, res) {
                 }
 
             });
-        } else {
+         } else {
             res.send({
                 status: false,
-                msg: "No data found"
+                msg: "Query not run"
             })
         }
     } catch (error) {
@@ -1647,7 +1621,7 @@ exports.saveIdPrices = async function (req, res) {
     // console.log('data is', req.body)
 
     let data = req.body.data;
-    if (data) {
+    if (Object.keys(data.sim).length || Object.keys(data.chat).length || Object.keys(data.pgp).length || Object.keys(data.vpn).length) {
         // console.log(data, 'data')
         let whitelabel_id = req.body.whitelabel_id;
         if (whitelabel_id) {

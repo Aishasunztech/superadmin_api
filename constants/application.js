@@ -18,11 +18,12 @@ module.exports = {
     ADMIN_UNLINKED: "unlinked",
 
     // devices
-    DEVICE_ACTIVATED: "Active",
-    DEVICE_SUSPENDED: "Suspended",
-    DEVICE_EXPIRED: "Expired",
+    DEVICE_ACTIVATED: "active",
+    DEVICE_SUSPENDED: "suspended",
+    DEVICE_EXPIRED: "expired",
     DEVICE_UNLINKED: "Unlinked",
-    UNLINK_DEVICE_DELETE: "Delete",
+    DEVICE_DELETE: "deleted",
+    DEVICE_EXTEND: "extended",
 
     DEVICE_ONLINE: "On",
     DEVICE_OFFLINE: "off",
