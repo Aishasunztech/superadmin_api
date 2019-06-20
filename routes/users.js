@@ -62,7 +62,10 @@ router.post('/save_new_data', user.saveNewData)
 router.get('/offline-devices', user.offlineDevices);
 
 
-router.put('/save-prices', user.saveIdPrices)
+router.patch('/save-prices', user.saveIdPrices)
+
+router.patch('/save-package', user.savePackage)
+
 
 
 
