@@ -2,6 +2,7 @@
 var jwt = require('jsonwebtoken');
 var path = require('path');
 var fs = require("fs");
+var empty = require('is-empty');
 
 // user defined libraries
 const device_helpers = require('../../helpers/device_helpers');
@@ -13,27 +14,18 @@ const app_constants = require('../../constants/application');
 
 exports.systemLogin = async function (req, res) {
     let { imei1, imei2, simNo1, simNo2, serial_number, ip, mac_address } = device_helpers.getDeviceInfo(req);
-    let device_id = '';
 
-    // if(serial_number === app_constants.PRE_DEFINED_SERIAL_NUMBER){
-    //     device_id = await general_helpers.getDeviceId(null, mac_address)
-    // } else if(mac_address === app_constants.PRE_DEFINED_MAC_ADDRESS) {
-    //     device_id = await general_helpers.getDeviceId(serial_number, null);
-    // } else {
-    // }
-
-    // device_id = await general_helpers.getDeviceId(serial_number, mac_address);
-
-    let addDeviceQ = `INSERT IGNORE into devices (mac_address, serial_no, ip_address, simno, imei, simno2, imei2) VALUES ('${mac_address}', '${serial_number}', '${ip}', '', '', '', '')`;
+    let addDeviceQ = `INSERT IGNORE into device_login (mac_address, serial_number, ip_address, simno, imei, simno2, imei2) VALUES ('${mac_address}', '${serial_number}', '${ip}', '', '', '', '')`;
     let device = await sql.query(addDeviceQ);
+
     if (device) {
-        const sysmtemInfo = {
-            serial_number, ip, mac_address, device_id
+        const systemInfo = {
+            serial_number, ip, mac_address
         };
 
         jwt.sign(
             {
-                ...sysmtemInfo
+                ...systemInfo
             },
             constants.SECRET,
             {
@@ -104,29 +96,6 @@ exports.getWhiteLabel = async function (req, res) {
         })
     }
 }
-
-exports.getApk = async (req, res) => {
-
-    let file = path.join(__dirname, "../../uploads/" + req.params.apk + '.apk');
-    if (fs.existsSync(file)) {
-        res.sendFile(file);
-    } else {
-        res.send({
-            status: false,
-            msg: "file not found"
-        })
-    }
-
-}
-
-exports.checkExpiry = async (req, res) => {
-    console.log(req.body);
-    res.send({
-        status: true,
-
-    })
-}
-
 exports.getUpdate = async (req, res) => {
     let versionName = req.params.version;
     let uniqueName = req.params.uniqueName;
@@ -180,3 +149,139 @@ exports.getUpdate = async (req, res) => {
     })
 
 }
+
+exports.getApk = async (req, res) => {
+
+    let file = path.join(__dirname, "../../uploads/" + req.params.apk + '.apk');
+    if (fs.existsSync(file)) {
+        res.sendFile(file);
+    } else {
+        res.send({
+            status: false,
+            msg: "file not found"
+        })
+    }
+
+}
+
+
+exports.checkExpiry = async (req, res) => {
+    var serial_number = req.body.serial_no;
+    var mac = req.body.mac_address;
+    let ip = '';
+    console.log("information", serial_number, mac);
+
+
+    if (empty(serial_number) && empty(mac)) {
+        res.send({
+            status: false,
+            msg: "Information not provided"
+        });
+        return
+    } else if (serial_number === app_constants.PRE_DEFINED_SERIAL_NUMBER && mac === app_constants.PRE_DEFINED_MAC_ADDRESS) {
+        res.send({
+            status: false,
+            msg: app_constants.DUPLICATE_MAC_AND_SERIAL
+        });
+        return
+    } else if (mac == app_constants.PRE_DEFINED_MAC_ADDRESS) {
+        var deviceQ = `SELECT * FROM devices WHERE  serial_number= '${serial_number}' `;
+        var device = await sql.query(deviceQ);
+        if (device.length) {
+            let deviceStatus = device_helpers.checkStatus(device);
+            res.send({
+                status: true,
+                device_status: deviceStatus,
+                of_device_id: device[0].fl_dvc_id
+            })
+            return;
+        } else {
+            await newDevice(mac, serial_number, ip, res);
+
+            return
+        }
+    } else if (serial_number == app_constants.PRE_DEFINED_SERIAL_NUMBER) {
+        var deviceQ = `SELECT * FROM devices WHERE  mac_address= '${mac}' `;
+        var device = await sql.query(deviceQ);
+        if (device.length) {
+
+            let deviceStatus = device_helpers.checkStatus(device);
+            res.send({
+                status: true,
+                device_status: deviceStatus,
+                of_device_id: device[0].fl_dvc_id
+            })
+            return;
+        } else {
+            await newDevice(mac, serial_number, ip, res);            
+            return;
+        }
+    } else {
+        var deviceQuery = `SELECT * FROM devices WHERE mac_address = '${mac}' AND serial_number = '${serial_number}'`;
+
+        let device = await sql.query(deviceQuery);
+
+        if (device.length > 0) {
+            let deviceStatus = device_helpers.checkStatus(device);
+            res.send({
+                status: true,
+                device_status: deviceStatus,
+                of_device_id: device[0].fl_dvc_id
+            })
+            return;
+
+        } else {
+            var deviceQ = `SELECT * FROM devices WHERE mac_address = '${mac}' OR serial_number = '${serial_number}'`;
+            // 
+            let device = await sql.query(deviceQuery);
+
+            if (device.length > 0) {
+
+                if (mac === device[0].mac_address) {
+                    res.send({
+                        status: false,
+                        msg: Constants.DUPLICATE_MAC,
+                        device_id: device[0].fl_dvc_id
+                    });
+                    return
+                } else {
+                    res.send({
+                        status: false,
+                        msg: Constants.DUPLICATE_SERIAL,
+                        of_device_id: device[0].fl_dvc_id
+                    });
+                    return
+                }
+            } else {
+                await newDevice(mac, serial_number, ip, res);
+                return;
+            }
+        }
+    }
+}
+
+async function newDevice(mac_address, serial_number, ip, res) {
+    let addDeviceQ = `INSERT IGNORE into devices (mac_address, serial_number, ip_address, simno, imei, simno2, imei2) VALUES ('${mac_address}', '${serial_number}', '${ip}', '', '', '', '')`;
+    let device = await sql.query(addDeviceQ);
+    if (device) {
+        // let deviceStatus = device_helpers.checkStatus(d)
+        let dvcQ= `SELECT * FROM devices WHERE id=${device.insertId} limit 1`;
+        let dvcRes= await sql.query(dvcQ);
+
+        let deviceStatus = device_helpers.checkStatus(dvcRes);
+
+        console.log("inserting device", device);
+        res.send({
+            status: true,
+            device_status: deviceStatus,
+            of_device_id: dvcRes[0].fl_dvc_id
+        });
+    }
+    else {
+        res.send({
+            status: false,
+            msg: ""
+        });
+    }
+}
+
