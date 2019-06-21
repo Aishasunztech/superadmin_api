@@ -6,6 +6,7 @@ var XLSX = require('xlsx');
 var path = require('path');
 var archiver = require('archiver');
 var fs = require("fs");
+var moment = require('moment-strftime');
 
 const device_helpers = require('../helpers/device_helpers');
 const general_helpers = require('../helpers/general_helpers');
@@ -96,6 +97,31 @@ cron.schedule('0 0 0 * * *', async () => {
 
                 });
             }
+
+        }
+    }
+});
+
+
+cron.schedule('0 0 0 * * *', async () => {
+    let today = moment().format('DD-MM-YY');
+    console.log("today",today);
+    var deviceQ = "select * from devices";
+    var devices = await sql.query(deviceQ);
+    for (var i = 0; i < devices.length; i++) {
+        let dvcDate =moment(devices[i].expiry_date).format('DD-MM-YY')
+        console.log("dvcDate", dvcDate)
+        if (today >= dvcDate) {
+            let updateDvcQ = `UPDATE devices SET status='expired' WHERE id='${devices[i].id}'`
+
+            sql.query(updateDvcQ, function (error, results) {
+                if (error) throw error;
+                if (results.affectedRows == 0) {
+                    console.log('not done');
+                } else {
+            
+                }
+            });
 
         }
     }

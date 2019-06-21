@@ -61,6 +61,8 @@ router.post('/save_new_data', user.saveNewData)
 // OFFLINE DEVICES SECTION
 router.get('/offline-devices', user.offlineDevices);
 
+router.put('/update_device_details', user.updateDeviceStatus);
+
 // router.put('/save-offline-device', user.saveOfflineDevice);
 
 router.put('/device-status', user.deviceStatus)
@@ -69,6 +71,9 @@ router.patch('/save-prices', user.saveIdPrices)
 
 router.patch('/save-package', user.savePackage)
 
+router.patch('/check-package-name', user.checkPackageName)
+
+router.get('/get-prices/:whitelabel_id', user.getPrices)
 
 
 
