@@ -241,11 +241,13 @@ exports.updateWhiteLabelInfo = async function (req, res) {
         if (!empty(model_id)) {
             sql.query(`UPDATE white_labels SET model_id = '${model_id}', command_name = '${command_name}' WHERE id = '${req.body.id}'`, async function (err, rslts) {
                 if (err) {
-                    console.log(err);
+                    console.log(err, 'error is');
                     data = {
                         status: false,
                         msg: "Error While Uploading"
                     };
+                    res.send(data);
+                    return;
                 } else {
                     // console.log(rslts,'reslts are');
                     if (apk_files.length) {
@@ -272,7 +274,8 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                         packageName = '';
                                     }
                                     label = await general_helpers.getAPKLabel(file);
-                                    console.log(label);
+
+                                    console.log(label, 'label is ');
                                     if (!label) {
                                         label = ''
                                     }
@@ -300,19 +303,29 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                     query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = '${is_byod}', version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
                                 }
 
+
                                 sql.query(query, (error, sResult) => {
                                     if (error) {
+                                        console.log(sResult, 'error on update', error)
                                         data = {
                                             status: false,
                                             msg: "Error While Uploading"
                                         };
                                         res.send(data);
                                         return;
+                                    } else if(sResult){
+
+                                      if (!sResult.affectedRows) {
+                                            sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , '${is_byod}')`);
+                                        }
+
+                                        data = {
+                                            status: true,
+                                            msg: "Record Updated Successfully"
+                                        };
+                                        res.send(data);
                                     }
 
-                                    if (sResult && !sResult.affectedRows) {
-                                        sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , '${is_byod}')`);
-                                    }
                                 });
                             } else {
                                 data = {
@@ -324,12 +337,12 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                             }
                         }
 
-                        data = {
-                            status: true,
-                            msg: "Record Updated"
-                        };
-                        res.send(data);
-                        return;
+                        // data = {
+                        //     status: true,
+                        //     msg: "Record Updated"
+                        // };
+                        // res.send(data);
+                        // return;
                     } else {
                         data = {
                             status: false,
@@ -1633,7 +1646,7 @@ exports.updateDeviceStatus = async function (req, res) {
 
 
 
-    
+
 
 }
 
@@ -1801,46 +1814,60 @@ exports.savePackage = async function (req, res) {
 
 
 
-exports.getPrices = async function(req, res) {
+exports.getPrices = async function (req, res) {
     let whitelebel_id = req.params.whitelabel_id;
     let sim_id = {};
     let chat_id = {};
     let pgp_email = {};
     let vpn = {};
-    if(whitelebel_id){
-        let selectQuery = "SELECT * FROM prices WHERE whitelabel_id='"+whitelebel_id+"'";
+    if (whitelebel_id) {
+        let selectQuery = "SELECT * FROM prices WHERE whitelabel_id='" + whitelebel_id + "'";
         sql.query(selectQuery, async (err, reslt) => {
-             if(err) throw err;
-             if(reslt){
-                //  console.log('result for get prices are is ', reslt);
-               
-                 if(reslt.length){
-                     for(let item of reslt){
-                         if(item.price_for == 'sim_id'){
+            if (err) throw err;
+            if (reslt) {
+                console.log('result for get prices are is ', reslt);
+
+                if (reslt.length) {
+                    for (let item of reslt) {
+                        if (item.price_for == 'sim_id') {
                             sim_id[item.price_term] = item.unit_price
-                         }else if(item.price_for == 'chat_id'){
+                        } else if (item.price_for == 'chat_id') {
                             chat_id[item.price_term] = item.unit_price
-                        }else if(item.price_for == 'pgp_email'){
+                        } else if (item.price_for == 'pgp_email') {
                             pgp_email[item.price_term] = item.unit_price
-                        }else if(item.price_for == 'vpn'){
+                        } else if (item.price_for == 'vpn') {
                             vpn[item.price_term] = item.unit_price
                         }
-                     }
-                     let data = {
-                         sim_id: sim_id ? sim_id : {},
-                         chat_id: chat_id ? chat_id : {},
-                         pgp_email: pgp_email ? pgp_email : {},
-                         vpn: vpn ? vpn : {}
-                     }
-                     res.send({
+                    }
+                    let data = {
+                        sim_id: sim_id ? sim_id : {},
+                        chat_id: chat_id ? chat_id : {},
+                        pgp_email: pgp_email ? pgp_email : {},
+                        vpn: vpn ? vpn : {}
+                    }
+                    console.log(data, 'reslt data of prices')
+                    res.send({
                         status: true,
                         msg: "Data found",
                         data: data
-                        
+
                     })
-                 }
-                
-             }else{
+                } else {
+                    let data = {
+                        sim_id: sim_id ? sim_id : {},
+                        chat_id: chat_id ? chat_id : {},
+                        pgp_email: pgp_email ? pgp_email : {},
+                        vpn: vpn ? vpn : {}
+                    }
+
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: data
+                    })
+                }
+
+            } else {
                 let data = {
                     sim_id: sim_id ? sim_id : {},
                     chat_id: chat_id ? chat_id : {},
@@ -1848,14 +1875,14 @@ exports.getPrices = async function(req, res) {
                     vpn: vpn ? vpn : {}
                 }
 
-                 res.send({
-                     status: true,
-                     msg: "Data found",
-                     data: data
-                 })
-             }
+                res.send({
+                    status: true,
+                    msg: "Data found",
+                    data: data
+                })
+            }
         })
-    }else{
+    } else {
 
         let data = {
             sim_id: sim_id ? sim_id : {},
@@ -1877,9 +1904,9 @@ exports.checkPackageName = async function (req, res) {
 
     try {
         let name = req.body.name !== undefined ? req.body.name : null;
-      
+
         let checkExistingQ = "SELECT pkg_name FROM packages WHERE pkg_name='" + name + "'";
-      
+
         let checkExisting = await sql.query(checkExistingQ);
         console.log(checkExistingQ, 'query is')
         if (checkExisting.length) {
