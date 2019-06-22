@@ -75,6 +75,7 @@ router.patch('/check-package-name', user.checkPackageName)
 
 router.get('/get-prices/:whitelabel_id', user.getPrices)
 
+router.get('/get-packages/:whitelabel_id', user.getPackages)
 
 
 

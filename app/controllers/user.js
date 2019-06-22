@@ -238,6 +238,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
         let apk_files = req.body.apk_files;
         let is_byod = req.body.is_byod ? 1 : 0
 
+
         if (!empty(model_id)) {
             sql.query(`UPDATE white_labels SET model_id = '${model_id}', command_name = '${command_name}' WHERE id = '${req.body.id}'`, async function (err, rslts) {
                 if (err) {
@@ -324,8 +325,8 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                             msg: "Record Updated Successfully"
                                         };
                                         res.send(data);
+                                        return;
                                     }
-
                                 });
                             } else {
                                 data = {
@@ -1786,13 +1787,15 @@ exports.savePackage = async function (req, res) {
             }
             let pkg_features = JSON.stringify(data.pkgFeatures)
             let insertQuery = "INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id) VALUES('" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "', '" + whitelabel_id + "')";
-            sql.query(insertQuery, (err, rslt) => {
+            sql.query(insertQuery, async (err, rslt) => {
                 if (err) throw err;
                 if (rslt) {
                     if (rslt.affectedRows) {
+                        insertedRecord = await sql.query("SELECT * FROM packages WHERE whitelabel_id='"+whitelabel_id+"' AND id='"+rslt.insertId+"'")
                         res.send({
                             status: true,
-                            msg: 'Package Saved Successfully'
+                            msg: 'Package Saved Successfully',
+                            data: insertedRecord
                         })
                     }
                 }
@@ -1895,6 +1898,52 @@ exports.getPrices = async function (req, res) {
             status: false,
             msg: 'Invalid Whitelabel_id',
             data: data
+
+        })
+    }
+}
+
+exports.getPackages = async function (req, res) {
+    let whitelebel_id = req.params.whitelabel_id;
+    if (whitelebel_id) {
+        let selectQuery = "SELECT * FROM packages WHERE whitelabel_id='" + whitelebel_id + "'";
+        sql.query(selectQuery, async (err, reslt) => {
+            if (err) throw err;
+            if (reslt) {
+                console.log('result for get prices are is ', reslt);
+
+                if (reslt.length) {
+                    console.log(reslt, 'reslt data of prices')
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: reslt
+
+                    })
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: []
+
+                    })
+                }
+
+            } else {
+                
+                res.send({
+                    status: true,
+                    msg: "Data found",
+                    data: []
+                })
+            }
+        })
+    } else {
+
+        res.send({
+            status: false,
+            msg: 'Invalid Whitelabel_id',
+            data: []
 
         })
     }
