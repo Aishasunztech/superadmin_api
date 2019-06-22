@@ -275,8 +275,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                         packageName = '';
                                     }
                                     label = await general_helpers.getAPKLabel(file);
-
-                                    console.log(label, 'label is ');
+                                    // console.log(label);
                                     if (!label) {
                                         label = ''
                                     }
@@ -299,10 +298,11 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                 // let where = (is_byod == 1) ? 'AND is_byod = 1' : ''
                                 let query = ''
                                 if (is_byod == 1) {
-                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = '${is_byod}', version_name='${versionName}', version_code='${versionCode}' WHERE is_byod = '1' `
+                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = ${is_byod}, version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND is_byod = '1' `
                                 } else {
-                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = '${is_byod}', version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
+                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = ${is_byod}, version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
                                 }
+                                // console.log(query)
 
 
                                 sql.query(query, (error, sResult) => {
@@ -314,18 +314,11 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                         };
                                         res.send(data);
                                         return;
-                                    } else if(sResult){
-
-                                      if (!sResult.affectedRows) {
-                                            sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , '${is_byod}')`);
-                                        }
-
-                                        data = {
-                                            status: true,
-                                            msg: "Record Updated Successfully"
-                                        };
-                                        res.send(data);
-                                        return;
+                                    }
+                                    // console.log(sResult.affectedRows)
+                                    
+                                    if (sResult && !sResult.affectedRows) {
+                                        sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , ${is_byod})`);
                                     }
                                 });
                             } else {
@@ -1511,6 +1504,7 @@ exports.checkComponent = async function (req, res) {
 }
 
 exports.offlineDevices = async function (req, res) {
+    console.log('offline devices get: ');
     let devicesQ = `SELECT devices.*, white_labels.name as whitelabel FROM devices LEFT JOIN white_labels ON (devices.whitelabel_id = white_labels.id)`;
     let devices = await sql.query(devicesQ);
     devices.forEach((device) => {
@@ -1532,6 +1526,7 @@ exports.offlineDevices = async function (req, res) {
         res.send({
             status: false,
             msg: "No data found",
+            devices: []
         })
     }
 
@@ -1572,17 +1567,20 @@ exports.deviceStatus = async function (req, res) {
     try {
         let updateQ = '';
         if (start_date && expiry_date && id && requiredStatus == Constants.DEVICE_EXTEND) {
-            updateQ = `UPDATE devices SET start_date= '${start_date}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
-            console.log('update query is: ', updateQ);
+            let status = 'expired';
+            var varDate = new Date(expiry_date);
+            var today = new Date();
 
+            if (varDate > today) {
+                status = 'active';
+            }
+            // console.log('status is: ', status);
+
+            updateQ = `UPDATE devices SET start_date= '${start_date}', status = '${status}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
         } else if (id && requiredStatus == Constants.DEVICE_ACTIVATED) {
             updateQ = `UPDATE devices SET account_status= '', status='active' WHERE id = ${id}`;
-            console.log('deviceStatus update query is: ', updateQ);
-
         } else if (id && requiredStatus == Constants.DEVICE_SUSPENDED) {
             updateQ = `UPDATE devices SET account_status= 'suspended' WHERE id = ${id}`;
-            console.log('deviceStatus update query is: ', updateQ);
-
         } else {
             res.send({
                 status: false,
@@ -1590,7 +1588,8 @@ exports.deviceStatus = async function (req, res) {
             })
         }
         if (updateQ != '') {
-            sql.query(updateQ, async function (err, rslts) {
+            console.log('deviceStatus update query is: ', updateQ);
+            await sql.query(updateQ, async function (err, rslts) {
                 if (err) {
                     console.log(err);
                     res.send({
@@ -1598,10 +1597,41 @@ exports.deviceStatus = async function (req, res) {
                         msg: "Error occur"
                     });
                 } else {
-                    res.send({
-                        status: true,
-                        msg: "update account_status successfully"
+                    let selectQuery = `SELECT devices.*, white_labels.name as whitelabel FROM devices LEFT JOIN white_labels ON (devices.whitelabel_id = white_labels.id) WHERE devices.id = ${id}`;
+                    console.log('select query: ', selectQuery);
+                    await sql.query(selectQuery, async function (err, devices) {
+                        console.log('selectQuery result is: ', devices);
+                        if (err) {
+                            console.log(err);
+                            res.send({
+                                status: false,
+                                msg: "Error occur"
+                            });
+                        } else if (devices.length) {
+                            devices.forEach((device) => {
+                                device.finalStatus = device_helpers.checkStatus(device)
+
+                                device.whitelabel = general_helpers.checkValue(device.whitelabel);
+                                device.fl_dvc_id = general_helpers.checkValue(device.fl_dvc_id)
+                                device.wl_dvc_id = general_helpers.checkValue(device.wl_dvc_id)
+                                device.status = general_helpers.checkValue(device.status)
+                                device.mac_address = general_helpers.checkValue(device.mac_address)
+                                device.serial_number = general_helpers.checkValue(device.serial_number);
+                            })
+                            res.send({
+                                status: true,
+                                devices: devices,
+                                msg: "Offline Device Status Successfully Updated!"
+                            })
+                        } else {
+                            res.send({
+                                status: false,
+                                devices: [],
+                                msg: "Failed to update Offline Device Status!",
+                            })
+                        }
                     });
+
                 }
 
             });
@@ -1613,11 +1643,10 @@ exports.deviceStatus = async function (req, res) {
         }
     } catch (error) {
         console.log(error);
-        data = {
+        res.send({
             status: false,
             msg: "exception for deviceStatus",
-        };
-        res.send(data);
+        });
         return;
     }
 
@@ -1828,7 +1857,7 @@ exports.getPrices = async function (req, res) {
         sql.query(selectQuery, async (err, reslt) => {
             if (err) throw err;
             if (reslt) {
-                console.log('result for get prices are is ', reslt);
+                //  console.log('result for get prices are is ', reslt);
 
                 if (reslt.length) {
                     for (let item of reslt) {
@@ -1848,25 +1877,11 @@ exports.getPrices = async function (req, res) {
                         pgp_email: pgp_email ? pgp_email : {},
                         vpn: vpn ? vpn : {}
                     }
-                    console.log(data, 'reslt data of prices')
                     res.send({
                         status: true,
                         msg: "Data found",
                         data: data
 
-                    })
-                } else {
-                    let data = {
-                        sim_id: sim_id ? sim_id : {},
-                        chat_id: chat_id ? chat_id : {},
-                        pgp_email: pgp_email ? pgp_email : {},
-                        vpn: vpn ? vpn : {}
-                    }
-
-                    res.send({
-                        status: true,
-                        msg: "Data found",
-                        data: data
                     })
                 }
 
