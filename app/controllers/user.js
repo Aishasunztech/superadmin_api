@@ -238,14 +238,17 @@ exports.updateWhiteLabelInfo = async function (req, res) {
         let apk_files = req.body.apk_files;
         let is_byod = req.body.is_byod ? 1 : 0
 
+
         if (!empty(model_id)) {
             sql.query(`UPDATE white_labels SET model_id = '${model_id}', command_name = '${command_name}' WHERE id = '${req.body.id}'`, async function (err, rslts) {
                 if (err) {
-                    console.log(err);
+                    console.log(err, 'error is');
                     data = {
                         status: false,
                         msg: "Error While Uploading"
                     };
+                    res.send(data);
+                    return;
                 } else {
                     // console.log(rslts,'reslts are');
                     if (apk_files.length) {
@@ -272,7 +275,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                         packageName = '';
                                     }
                                     label = await general_helpers.getAPKLabel(file);
-                                    console.log(label);
+                                    // console.log(label);
                                     if (!label) {
                                         label = ''
                                     }
@@ -295,13 +298,16 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                 // let where = (is_byod == 1) ? 'AND is_byod = 1' : ''
                                 let query = ''
                                 if (is_byod == 1) {
-                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = '${is_byod}', version_name='${versionName}', version_code='${versionCode}' WHERE is_byod = '1' `
+                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = ${is_byod}, version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND is_byod = '1' `
                                 } else {
-                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = '${is_byod}', version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
+                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = ${is_byod}, version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
                                 }
+                                // console.log(query)
+
 
                                 sql.query(query, (error, sResult) => {
                                     if (error) {
+                                        console.log(sResult, 'error on update', error)
                                         data = {
                                             status: false,
                                             msg: "Error While Uploading"
@@ -309,7 +315,8 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                         res.send(data);
                                         return;
                                     }
-
+                                    // console.log(sResult.affectedRows)
+                                    
                                     if (sResult && !sResult.affectedRows) {
                                         console.log(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , ${is_byod})`);
                                         sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , ${is_byod})`);
@@ -325,12 +332,12 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                             }
                         }
 
-                        data = {
-                            status: true,
-                            msg: "Record Updated"
-                        };
-                        res.send(data);
-                        return;
+                        // data = {
+                        //     status: true,
+                        //     msg: "Record Updated"
+                        // };
+                        // res.send(data);
+                        // return;
                     } else {
                         data = {
                             status: false,
@@ -1498,6 +1505,7 @@ exports.checkComponent = async function (req, res) {
 }
 
 exports.offlineDevices = async function (req, res) {
+    console.log('offline devices get: ');
     let devicesQ = `SELECT devices.*, white_labels.name as whitelabel FROM devices LEFT JOIN white_labels ON (devices.whitelabel_id = white_labels.id)`;
     let devices = await sql.query(devicesQ);
     devices.forEach((device) => {
@@ -1519,6 +1527,7 @@ exports.offlineDevices = async function (req, res) {
         res.send({
             status: false,
             msg: "No data found",
+            devices: []
         })
     }
 
@@ -1559,17 +1568,20 @@ exports.deviceStatus = async function (req, res) {
     try {
         let updateQ = '';
         if (start_date && expiry_date && id && requiredStatus == Constants.DEVICE_EXTEND) {
-            updateQ = `UPDATE devices SET start_date= '${start_date}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
-            console.log('update query is: ', updateQ);
+            let status = 'expired';
+            var varDate = new Date(expiry_date);
+            var today = new Date();
 
+            if (varDate > today) {
+                status = 'active';
+            }
+            // console.log('status is: ', status);
+
+            updateQ = `UPDATE devices SET start_date= '${start_date}', status = '${status}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
         } else if (id && requiredStatus == Constants.DEVICE_ACTIVATED) {
             updateQ = `UPDATE devices SET account_status= '', status='active' WHERE id = ${id}`;
-            console.log('deviceStatus update query is: ', updateQ);
-
         } else if (id && requiredStatus == Constants.DEVICE_SUSPENDED) {
             updateQ = `UPDATE devices SET account_status= 'suspended' WHERE id = ${id}`;
-            console.log('deviceStatus update query is: ', updateQ);
-
         } else {
             res.send({
                 status: false,
@@ -1577,7 +1589,8 @@ exports.deviceStatus = async function (req, res) {
             })
         }
         if (updateQ != '') {
-            sql.query(updateQ, async function (err, rslts) {
+            console.log('deviceStatus update query is: ', updateQ);
+            await sql.query(updateQ, async function (err, rslts) {
                 if (err) {
                     console.log(err);
                     res.send({
@@ -1585,10 +1598,41 @@ exports.deviceStatus = async function (req, res) {
                         msg: "Error occur"
                     });
                 } else {
-                    res.send({
-                        status: true,
-                        msg: "update account_status successfully"
+                    let selectQuery = `SELECT devices.*, white_labels.name as whitelabel FROM devices LEFT JOIN white_labels ON (devices.whitelabel_id = white_labels.id) WHERE devices.id = ${id}`;
+                    console.log('select query: ', selectQuery);
+                    await sql.query(selectQuery, async function (err, devices) {
+                        console.log('selectQuery result is: ', devices);
+                        if (err) {
+                            console.log(err);
+                            res.send({
+                                status: false,
+                                msg: "Error occur"
+                            });
+                        } else if (devices.length) {
+                            devices.forEach((device) => {
+                                device.finalStatus = device_helpers.checkStatus(device)
+
+                                device.whitelabel = general_helpers.checkValue(device.whitelabel);
+                                device.fl_dvc_id = general_helpers.checkValue(device.fl_dvc_id)
+                                device.wl_dvc_id = general_helpers.checkValue(device.wl_dvc_id)
+                                device.status = general_helpers.checkValue(device.status)
+                                device.mac_address = general_helpers.checkValue(device.mac_address)
+                                device.serial_number = general_helpers.checkValue(device.serial_number);
+                            })
+                            res.send({
+                                status: true,
+                                devices: devices,
+                                msg: "Offline Device Status Successfully Updated!"
+                            })
+                        } else {
+                            res.send({
+                                status: false,
+                                devices: [],
+                                msg: "Failed to update Offline Device Status!",
+                            })
+                        }
                     });
+
                 }
 
             });
@@ -1600,11 +1644,10 @@ exports.deviceStatus = async function (req, res) {
         }
     } catch (error) {
         console.log(error);
-        data = {
+        res.send({
             status: false,
             msg: "exception for deviceStatus",
-        };
-        res.send(data);
+        });
         return;
     }
 
@@ -1634,70 +1677,7 @@ exports.updateDeviceStatus = async function (req, res) {
 
 
 
-    // console.log('deviceStatus at server: ', req.body);
-    // let id = req.body.data.id;
-    // let requiredStatus = req.body.requireStatus;
-    // // console.log('deviceStatus id is: ', id);
-    // // console.log('deviceStatus requiredStatus is: ', requiredStatus);
-    // // res.send({status: true})
-    // // return;
-    // let start_date = req.body.data.start_date;
-    // let expiry_date = req.body.data.expiry_date;
-    // //  console.log('body is: ', req.body)
-    // //     console.log('start date is: ', start_date);
-    // //     console.log('expire date : ', expiry_date);
-    // //     return;
-    // try {
-    //     let updateQ = '';
-    //     if (start_date && expiry_date && id && requiredStatus == Constants.DEVICE_EXTEND) {
-    //         updateQ = `UPDATE devices SET start_date= '${start_date}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
-    //         console.log('update query is: ', updateQ);
 
-    //     } else if (id && requiredStatus == Constants.DEVICE_ACTIVATED) {
-    //         updateQ = `UPDATE devices SET account_status= '', status='active' WHERE id = ${id}`;
-    //         console.log('deviceStatus update query is: ', updateQ);
-
-    //     } else if (id && requiredStatus == Constants.DEVICE_SUSPENDED) {
-    //         updateQ = `UPDATE devices SET account_status= 'suspended' WHERE id = ${id}`;
-    //         console.log('deviceStatus update query is: ', updateQ);
-
-    //     } else {
-    //         res.send({
-    //             status: false,
-    //             msg: "No data found"
-    //         })
-    //     }
-    //     if (updateQ != '') {
-    //         sql.query(updateQ, async function (err, rslts) {
-    //             if (err) {
-    //                 console.log(err);
-    //                 res.send({
-    //                     status: false,
-    //                     msg: "Error occur"
-    //                 });
-    //             } else {
-    //                 res.send({
-    //                     status: true,
-    //                     msg: "update account_status successfully"
-    //                 });
-    //             }
-
-    //         });
-    //     } else {
-    //         res.send({
-    //             status: false,
-    //             msg: "Query not run"
-    //         })
-    //     }
-    // } catch (error) {
-    //     console.log(error);
-    //     data = {
-    //         status: false,
-    //         msg: "exception for deviceStatus",
-    //     };
-    //     res.send(data);
-    //     return;
-    // }
 
 }
 
@@ -1706,7 +1686,7 @@ exports.saveIdPrices = async function (req, res) {
     // console.log('data is', req.body)
 
     let data = req.body.data;
-    if (Object.keys(data.sim).length || Object.keys(data.chat).length || Object.keys(data.pgp).length || Object.keys(data.vpn).length) {
+    if (data) {
         // console.log(data, 'data')
         let whitelabel_id = req.body.whitelabel_id;
         if (whitelabel_id) {
@@ -1718,6 +1698,7 @@ exports.saveIdPrices = async function (req, res) {
                 if (data.hasOwnProperty(key)) {
                     // console.log(key + " -> " + data[key]);
                     let outerKey = key;
+
                     let innerObject = data[key];
                     // console.log('iner object is', innerObject)
                     for (var innerKey in innerObject) {
@@ -1836,13 +1817,15 @@ exports.savePackage = async function (req, res) {
             }
             let pkg_features = JSON.stringify(data.pkgFeatures)
             let insertQuery = "INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id) VALUES('" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "', '" + whitelabel_id + "')";
-            sql.query(insertQuery, (err, rslt) => {
+            sql.query(insertQuery, async (err, rslt) => {
                 if (err) throw err;
                 if (rslt) {
                     if (rslt.affectedRows) {
+                        insertedRecord = await sql.query("SELECT * FROM packages WHERE whitelabel_id='"+whitelabel_id+"' AND id='"+rslt.insertId+"'")
                         res.send({
                             status: true,
-                            msg: 'Package Saved Successfully'
+                            msg: 'Package Saved Successfully',
+                            data: insertedRecord
                         })
                     }
                 }
@@ -1864,3 +1847,149 @@ exports.savePackage = async function (req, res) {
 
 
 
+exports.getPrices = async function (req, res) {
+    let whitelebel_id = req.params.whitelabel_id;
+    let sim_id = {};
+    let chat_id = {};
+    let pgp_email = {};
+    let vpn = {};
+    if (whitelebel_id) {
+        let selectQuery = "SELECT * FROM prices WHERE whitelabel_id='" + whitelebel_id + "'";
+        sql.query(selectQuery, async (err, reslt) => {
+            if (err) throw err;
+            if (reslt) {
+                //  console.log('result for get prices are is ', reslt);
+
+                if (reslt.length) {
+                    for (let item of reslt) {
+                        if (item.price_for == 'sim_id') {
+                            sim_id[item.price_term] = item.unit_price
+                        } else if (item.price_for == 'chat_id') {
+                            chat_id[item.price_term] = item.unit_price
+                        } else if (item.price_for == 'pgp_email') {
+                            pgp_email[item.price_term] = item.unit_price
+                        } else if (item.price_for == 'vpn') {
+                            vpn[item.price_term] = item.unit_price
+                        }
+                    }
+                    let data = {
+                        sim_id: sim_id ? sim_id : {},
+                        chat_id: chat_id ? chat_id : {},
+                        pgp_email: pgp_email ? pgp_email : {},
+                        vpn: vpn ? vpn : {}
+                    }
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: data
+
+                    })
+                }
+
+            } else {
+                let data = {
+                    sim_id: sim_id ? sim_id : {},
+                    chat_id: chat_id ? chat_id : {},
+                    pgp_email: pgp_email ? pgp_email : {},
+                    vpn: vpn ? vpn : {}
+                }
+
+                res.send({
+                    status: true,
+                    msg: "Data found",
+                    data: data
+                })
+            }
+        })
+    } else {
+
+        let data = {
+            sim_id: sim_id ? sim_id : {},
+            chat_id: chat_id ? chat_id : {},
+            pgp_email: pgp_email ? pgp_email : {},
+            vpn: vpn ? vpn : {}
+        }
+
+        res.send({
+            status: false,
+            msg: 'Invalid Whitelabel_id',
+            data: data
+
+        })
+    }
+}
+
+exports.getPackages = async function (req, res) {
+    let whitelebel_id = req.params.whitelabel_id;
+    if (whitelebel_id) {
+        let selectQuery = "SELECT * FROM packages WHERE whitelabel_id='" + whitelebel_id + "'";
+        sql.query(selectQuery, async (err, reslt) => {
+            if (err) throw err;
+            if (reslt) {
+                console.log('result for get prices are is ', reslt);
+
+                if (reslt.length) {
+                    console.log(reslt, 'reslt data of prices')
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: reslt
+
+                    })
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: []
+
+                    })
+                }
+
+            } else {
+                
+                res.send({
+                    status: true,
+                    msg: "Data found",
+                    data: []
+                })
+            }
+        })
+    } else {
+
+        res.send({
+            status: false,
+            msg: 'Invalid Whitelabel_id',
+            data: []
+
+        })
+    }
+}
+
+exports.checkPackageName = async function (req, res) {
+
+    try {
+        let name = req.body.name !== undefined ? req.body.name : null;
+
+        let checkExistingQ = "SELECT pkg_name FROM packages WHERE pkg_name='" + name + "'";
+
+        let checkExisting = await sql.query(checkExistingQ);
+        console.log(checkExistingQ, 'query is')
+        if (checkExisting.length) {
+            data = {
+                status: false,
+            };
+            res.send(data);
+            return;
+        }
+        else {
+            data = {
+                status: true,
+            };
+            res.send(data);
+            return;
+        }
+    } catch (error) {
+        throw error
+    }
+
+}
