@@ -13,182 +13,181 @@ const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
 const moment = require('moment')
 
-// export CSV 
-exports.exportCSV = async function (req, res) {
 
-    // var verify = await verifyToken(req, res);
-    // if (verify['status'] !== undefined && verify.status === true) {
-    let fieldName = req.params.fieldName;
-    // if (verify.user.user_type === ADMIN) {
-    let query = '';
-    if (fieldName === "sim_ids") {
-        query = "SELECT * FROM sim_ids";
-    } else if (fieldName === "chat_ids") {
-        query = "SELECT * FROM chat_ids"
-    } else if (fieldName === "pgp_emails") {
-        query = "SELECT * FROM pgp_emails";
-    }
-    sql.query(query, async (error, response) => {
-        if (error) throw error;
-        if (response.length) {
-            var data = [];
+exports.getWhiteLabels = async function (req, res) {
 
-            if (fieldName === "sim_ids") {
-                response.forEach((sim_id) => {
-                    data.push({
-                        sim_id: sim_id.sim_id,
-                        start_date: sim_id.start_date,
-                        expiry_date: sim_id.expiry_date
-                    });
-                });
-            } else if (fieldName === "chat_ids") {
-                response.forEach((chat_id) => {
-                    data.push({
-                        chat_id: chat_id.chat_id,
-                    });
-                });
-            } else if (fieldName === "pgp_emails") {
-                response.forEach((pgp_email) => {
-                    data.push({
-                        pgp_email: pgp_email.pgp_email,
-                    });
-                });
-            }
-
-            /* this line is only needed if you are not adding a script tag reference */
-            if (data.length) {
-                /* make the worksheet */
-                var ws = XLSX.utils.json_to_sheet(data);
-
-                /* add to workbook */
-                var wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "People");
-
-                /* generate an XLSX file */
-                let fileName = fieldName + '_' + Date.now() + ".xlsx";
-                await XLSX.writeFile(wb, path.join(__dirname, "../../uploads/" + fileName));
-                res.send({
-                    path: fileName,
-                    status: true
-                });
-            } else {
-                res.send({
-                    status: false,
-                    msg: "no data to import"
-                })
-            }
-
-        }
-    })
-    // } else {
-    //     res.send({
-    //         status: false,
-    //         msg: "access forbidden"
-    //     })
-    // }
-    // }    
-};
-
-exports.uploadFile = async function (req, res) {
-
-    let fileName = "";
-    let mimeType = "";
-    let fieldName = req.params.fieldName;
-    let filePath = "";
-    let file = null;
-
-    if (fieldName === 'launcher_apk') {
-        file = req.files.launcher_apk;
-    }
-    else if (fieldName === "sc_apk") {
-        file = req.files.sc_apk;
-    }
-    else if (fieldName === "byod_apk") {
-        file = req.files.byod_apk;
-    }
-    else if (fieldName === Constants.LOGO) {
-        file = req.files.logo;
-    } else if (fieldName === Constants.APK) {
-        file = req.files.apk;
-    }
-    else {
+    let whiteLabelsQ = "SELECT id, name, route_uri FROM white_labels";
+    let whiteLabels = await sql.query(whiteLabelsQ);
+    if (Object.keys(whiteLabels).length) {
         res.send({
-            status: false,
-            msg: "Error while uploading"
+            status: true,
+            whiteLabels: whiteLabels,
+            msg: "data found"
         })
-        return;
-    }
-
-    filePath = file.path;
-    mimeType = file.type;
-    bytes = file.size
-    let formatByte = general_helpers.formatBytes(bytes);
-
-    // if (fieldName === Constants.APK) {
-    if (mimeType === "application/vnd.android.package-archive") {
-        versionCode = await general_helpers.getAPKVersionCode(filePath);
-        if (versionCode) {
-            fileName = fieldName + '-' + Date.now() + '.apk';
-            let target_path = path.join(__dirname, "../../uploads/" + fileName);
-
-            general_helpers.move(filePath, target_path, function (error) {
-                console.log(error);
-                if (error) {
-                    res.send({
-                        status: false,
-                        msg: "Error while uploading"
-                    })
-                }
-
-                res.send({
-                    msg: 'Uploaded Successfully',
-                    status: true,
-                    fileName: fileName,
-                    size: formatByte
-                })
-                return
-            });
-        } else {
-            res.send({
-                status: false,
-                msg: "Error while uploading"
-            })
-            return;
-        }
-
-    } else if (fieldName === Constants.LOGO) {
-        // console.log(req.files);
-
-
-        fileName = fieldName + '-' + Date.now() + '.jpg';
-        let target_path = path.join(__dirname, "../../uploads/" + fileName);
-
-        general_helpers.move(filePath, target_path, function (error) {
-            console.log(error);
-            if (error) {
-                res.send({
-                    status: false,
-                    msg: "Error while uploading"
-                })
-            }
-            data = {
-                status: true,
-                msg: 'Uploaded Successfully',
-                fileName: fileName,
-                size: formatByte
-
-            };
-            res.send(data)
-            return
-        });
     } else {
         res.send({
             status: false,
-            msg: "Error while uploading"
+            whiteLabels: [],
+            msg: "data not found"
         })
     }
 }
 
+exports.getWhiteLabelInfo = async function (req, res) {
+    let whiteLabelQ = "SELECT id, name, model_id, command_name, route_uri FROM white_labels WHERE id =" + req.params.labelId + " limit 1";
+    let whiteLabel = await sql.query(whiteLabelQ);
+    if (Object.keys(whiteLabel).length) {
+        let whiteLabelApksQ = "SELECT * FROM whitelabel_apks WHERE whitelabel_id = " + whiteLabel[0].id;
+        let whiteLabelApks = await sql.query(whiteLabelApksQ);
+        whiteLabel[0].apks = whiteLabelApks;
+        res.send({
+            status: true,
+            whiteLabel: whiteLabel[0],
+            msg: "Data found"
+        })
+    } else {
+        res.send({
+            status: false,
+            whiteLabel: {},
+            msg: "Data not found"
+        })
+    }
+}
+
+exports.updateWhiteLabelInfo = async function (req, res) {
+    try {
+        let model_id = req.body.model_id;
+        let command_name = req.body.command_name;
+        let apk_files = req.body.apk_files;
+        let is_byod = req.body.is_byod ? 1 : 0
+
+        if (!empty(model_id)) {
+            sql.query(`UPDATE white_labels SET model_id = '${model_id}', command_name = '${command_name}' WHERE id = '${req.body.id}'`, async function (err, rslts) {
+                if (err) {
+                    console.log(err);
+                    data = {
+                        status: false,
+                        msg: "Error While Uploading"
+                    };
+                } else {
+                    // console.log(rslts,'reslts are');
+                    if (apk_files.length) {
+                        for (let apk of apk_files) {
+                            let file = path.join(__dirname, "../../uploads/" + apk);
+
+                            if (fs.existsSync(file)) {
+                                let versionCode = '';
+                                let versionName = '';
+                                let packageName = '';
+                                let label = '';
+                                let details = '';
+
+                                versionCode = await general_helpers.getAPKVersionCode(file);
+
+
+                                if (versionCode) {
+                                    versionName = await general_helpers.getAPKVersionName(file);
+                                    if (!versionName) {
+                                        versionName = ''
+                                    }
+                                    packageName = await general_helpers.getAPKPackageName(file);
+                                    if (!packageName) {
+                                        packageName = '';
+                                    }
+                                    label = await general_helpers.getAPKLabel(file);
+                                    // console.log(label);
+                                    if (!label) {
+                                        label = ''
+                                    }
+                                } else {
+                                    versionCode = '';
+                                }
+
+                                versionCode = versionCode.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                                versionName = versionName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                                packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                                label = label.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+                                details = details.replace(/(\r\n|\n|\r)/gm, "");
+
+
+                                let apk_stats = fs.statSync(file);
+
+                                let formatByte = general_helpers.formatBytes(apk_stats.size);
+
+                                let whiteLabelId = req.body.id;
+                                // let where = (is_byod == 1) ? 'AND is_byod = 1' : ''
+                                let query = ''
+                                if (is_byod == 1) {
+                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = ${is_byod}, version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND is_byod = '1' `
+                                } else {
+                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = ${is_byod}, version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
+                                }
+                                // console.log(query)
+
+                                sql.query(query, (error, sResult) => {
+                                    if (error) {
+                                        data = {
+                                            status: false,
+                                            msg: "Error While Uploading"
+                                        };
+                                        res.send(data);
+                                        return;
+                                    }
+                                    // console.log(sResult.affectedRows)
+                                    
+                                    if (sResult && !sResult.affectedRows) {
+                                        sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , ${is_byod})`);
+                                    }
+                                });
+                            } else {
+                                data = {
+                                    status: false,
+                                    msg: "Error While Uploading"
+                                };
+                                res.send(data);
+                                return;
+                            }
+                        }
+
+                        data = {
+                            status: true,
+                            msg: "Record Updated"
+                        };
+                        res.send(data);
+                        return;
+                    } else {
+                        data = {
+                            status: false,
+                            msg: "Record Updated but Apks not Provided"
+                        };
+                        res.send(data);
+                        return;
+                    }
+
+                }
+
+            });
+
+        } else {
+            data = {
+                status: false,
+                msg: "Error While Uploading"
+            };
+            res.send(data);
+            return;
+        }
+
+
+
+    } catch (error) {
+        data = {
+            status: false,
+            msg: "Error while Uploading",
+        };
+        res.send(data);
+        return;
+    }
+}
 
 
 exports.importCSV = async function (req, res) {
@@ -552,152 +551,36 @@ exports.importCSV = async function (req, res) {
     }
 }
 
-// save new data ids
-exports.saveNewData = async function (req, res) {
-    var loginResponse = ''
-    let labelID = req.body.labelID;
-    let WHITE_LABEL_BASE_URL = '';
-    let getApiURL = await sql.query(`SELECT * from white_labels where id = ${labelID}`)
-    if (getApiURL.length) {
-        if (getApiURL[0].api_url) {
-            WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
-            axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
-                if (response.data.status) {
-                    loginResponse = response.data;
-                    let error = 0
-                    if (req.body.type == 'sim_id') {
-                        for (let row of req.body.newData) {
-                            let result = await sql.query(`INSERT IGNORE sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ('${row.sim_id}', '${req.body.labelID}', '${row.start_date}', '${row.expiry_date}')`);
-                            if (!result.affectedRows) {
-                                error += 1;
-                            }
-                        }
-                        await axios.post(WHITE_LABEL_BASE_URL + '/users//save_new_data', { newData: req.body.newData, type: 'sim_id' }, { headers: { 'authorization': loginResponse.token } });
-                    } else if (req.body.type == 'chat_id') {
-                        for (let row of req.body.newData) {
-                            // if (corsConnection != '') {
-                            //     await corsConnection.query(`INSERT IGNORE chat_ids (chat_id) value ('${row.chat_id}')`);
-                            // }
-                            let result = await sql.query(`INSERT IGNORE chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${req.body.labelID}')`);
-                            if (!result.affectedRows) {
-                                error += 1;
-                            }
-                        }
-                        await axios.post(WHITE_LABEL_BASE_URL + '/users//save_new_data', { newData: req.body.newData, type: 'chat_id' }, { headers: { 'authorization': loginResponse.token } });
 
-                    } else if (req.body.type == 'pgp_email') {
-                        for (let row of req.body.newData) {
-                            // if (corsConnection != '') {
-                            //     await corsConnection.query(`INSERT IGNORE pgp_emails (pgp_email) value ('${row.pgp_email}')`);
-                            // }
-
-                            let result = await sql.query(`INSERT IGNORE pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${req.body.labelID}')`);
-                            if (!result.affectedRows) {
-                                error += 1;
-                            }
-                        }
-                        await axios.post(WHITE_LABEL_BASE_URL + '/users//save_new_data', { newData: req.body.newData, type: 'pgp_email' }, { headers: { 'authorization': loginResponse.token } });
-
-                    }
-
-                    if (error == 0) {
-                        res.send({
-                            "status": true,
-                            "msg": "Inserted Successfully"
-                        })
-
-                    } else {
-                        res.send({
-                            "status": false,
-                            "msg": "Error While Insertion, " + error + " records not Inserted"
-                        })
-                    }
-                }
-                else {
-                    res.send({
-                        status: false,
-                        msg: "Not allowed to Insert data.",
-                        "duplicateData": []
-                    })
-                    return
-                }
-            });
-        }
-        else {
-            res.send({
-                status: false,
-                msg: "White Label credentials not found.",
-                "duplicateData": []
-            })
-            return
-        }
-    }
-    else {
+exports.whitelabelBackups = async function (req, res) {
+    let id = req.params.whitelabel_id;
+    // console.log(id, 'id is')
+    if (id !== undefined && id !== '' && id !== null) {
+        let query = "select * from db_backups where whitelabel_id='" + id + "'";
+        sql.query(query, (error, resp) => {
+            // console.log(resp, 'is response')
+            if (error) throw error;
+            if (resp) {
+                res.send({
+                    status: false,
+                    msg: "data success",
+                    data: resp
+                });
+            }
+        });
+    } else {
         res.send({
             status: false,
-            msg: "White Label Data not found.",
-            "duplicateData": []
-        })
-        return
+            msg: "Error ",
+            data: []
+        });
     }
-};
-
-exports.getSimIds = async function (req, res) {
-    // let query = "select * from sim_ids where used=0";
-    let query = `SELECT sim_ids.*, wl.name FROM sim_ids JOIN white_labels as wl on (wl.id = sim_ids.whitelabel_id )`;
-    sql.query(query, (error, resp) => {
-        console.log(resp, 'is response')
-        if (error) throw error
-        if (resp.length) {
-            console.log(resp, 'is response')
-            res.send({
-                status: true,
-                msg: "data success",
-                data: resp
-            });
-        } else {
-            res.send({
-                status: false,
-                msg: "data success",
-                data: []
-            });
-        }
-    });
 }
 
-
-exports.getChatIds = async function (req, res) {
-    // console.log('-------------------------------------------')
-    // console.log('hi, test getChatIds api')
-    // console.log('-------------------------------------------')
-
-    // let query = "select * from chat_ids where used=0";
-    let query = `SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id)`;
+// get ids with label
+exports.getLabelSimIds = async function (req, res) {
+    let query = `SELECT sim_ids.*, wl.name FROM sim_ids JOIN white_labels as wl on (wl.id = sim_ids.whitelabel_id ) where sim_ids.whitelabel_id = ${req.body.labelID}`;
     sql.query(query, (error, resp) => {
-        // console.log(resp, 'is response')
-        if (error) throw error
-        if (resp.length) {
-            console.log(resp, 'is response')
-            res.send({
-                status: true,
-                msg: "data success",
-                data: resp
-            });
-        } else {
-            res.send({
-                status: false,
-                msg: "data success",
-                data: []
-            });
-        }
-    });
-}
-
-exports.getPgpEmails = async function (req, res) {
-    // let query = "select * from pgp_emails where used=0";
-    let query = `SELECT pgp_emails.*, wl.name FROM pgp_emails JOIN white_labels as wl on (wl.id = pgp_emails.whitelabel_id)`;
-    sql.query(query, (error, resp) => {
-        console.log(resp, 'is response')
         if (error) throw error
         if (resp.length) {
             console.log(resp, 'is response')
@@ -713,156 +596,62 @@ exports.getPgpEmails = async function (req, res) {
                 data: []
             });
         }
+
+
     });
 }
 
-exports.getFile = async function (req, res) {
-
-
-    if (fs.existsSync(path.join(__dirname, "../../uploads/" + req.params.file))) {
-        let file = path.join(__dirname, "../../uploads/" + req.params.file);
-        let fileMimeType = mime.getType(file);
-        // let filetypes = /jpeg|jpg|apk|png/;
-        // Do something
-        // if (filetypes.test(fileMimeType)) {
-        res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
-        res.sendFile(path.join(__dirname, "../../uploads/" + req.params.file));
-        // } else {
-        //     res.send({
-        //         "status": false,
-        //         "msg": "file not found"
-        //     })
-        // }
-    } else {
-        res.send({
-            "status": false,
-            "msg": "file not found"
-        })
-    }
-
-}
-
-exports.deviceStatus = async function (req, res) {
-    // console.log('deviceStatus at server: ', req.body);
-    let id = req.body.data.id;
-    let requiredStatus = req.body.requireStatus;
-    let start_date = req.body.data.start_date;
-    let expiry_date = req.body.data.expiry_date;
-    try {
-        let updateQ = '';
-        if (start_date && expiry_date && id && requiredStatus == Constants.DEVICE_EXTEND) {
-            let status = 'expired';
-            var varDate = new Date(expiry_date);
-            var today = new Date();
-
-            if (varDate > today) {
-                status = 'active';
+exports.getLabelChatIds = async function (req, res) {
+    console.log('getChatIdsLabel at server:: ', req.body.labelID)
+    // let query = "select * from chat_ids where used=0";
+    let query = `SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id) where chat_ids.whitelabel_id = ${req.body.labelID}`;
+    sql.query(query, (error, resp) => {
+        if (error) throw error
+        if (resp.length) {
+            data = {
+                status: false,
+                msg: "data success",
+                data: resp
             }
-            // console.log('status is: ', status);
-
-            updateQ = `UPDATE devices SET start_date= '${start_date}', status = '${status}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
-        } else if (id && requiredStatus == Constants.DEVICE_ACTIVATED) {
-            updateQ = `UPDATE devices SET account_status= '', status='active' WHERE id = ${id}`;
-        } else if (id && requiredStatus == Constants.DEVICE_SUSPENDED) {
-            updateQ = `UPDATE devices SET account_status= 'suspended' WHERE id = ${id}`;
+            console.log(resp, 'is response')
+            res.send(data);
         } else {
-            res.send({
+            data = {
                 status: false,
-                msg: "No data found"
-            })
+                msg: "error",
+                data: []
+            }
+            res.send(data);
         }
-        if (updateQ != '') {
-            console.log('deviceStatus update query is: ', updateQ);
-            await sql.query(updateQ, async function (err, rslts) {
-                if (err) {
-                    console.log(err);
-                    res.send({
-                        status: false,
-                        msg: "Error occur"
-                    });
-                } else {
-                    let selectQuery = `SELECT devices.*, white_labels.name as whitelabel FROM devices LEFT JOIN white_labels ON (devices.whitelabel_id = white_labels.id) WHERE devices.id = ${id}`;
-                    console.log('select query: ', selectQuery);
-                    await sql.query(selectQuery, async function (err, devices) {
-                        console.log('selectQuery result is: ', devices);
-                        if (err) {
-                            console.log(err);
-                            res.send({
-                                status: false,
-                                msg: "Error occur"
-                            });
-                        } else if (devices.length) {
-                            devices.forEach((device) => {
-                                device.finalStatus = device_helpers.checkStatus(device)
+    });
+}
 
-                                device.whitelabel = general_helpers.checkValue(device.whitelabel);
-                                device.fl_dvc_id = general_helpers.checkValue(device.fl_dvc_id)
-                                device.wl_dvc_id = general_helpers.checkValue(device.wl_dvc_id)
-                                device.status = general_helpers.checkValue(device.status)
-                                device.mac_address = general_helpers.checkValue(device.mac_address)
-                                device.serial_number = general_helpers.checkValue(device.serial_number);
-                            })
-                            res.send({
-                                status: true,
-                                devices: devices,
-                                msg: "Offline Device Status Successfully Updated!"
-                            })
-                        } else {
-                            res.send({
-                                status: false,
-                                devices: [],
-                                msg: "Failed to update Offline Device Status!",
-                            })
-                        }
-                    });
-
-                }
-
-            });
+exports.getLabelPgpEmails = async function (req, res) {
+    // let query = "select * from pgp_emails where used=0";
+    let data = {}
+    let query = `SELECT pgp_emails.*, wl.name FROM pgp_emails JOIN white_labels as wl on (wl.id = pgp_emails.whitelabel_id) where pgp_emails.whitelabel_id = ${req.body.labelID}`;
+    sql.query(query, (error, resp) => {
+        if (error) throw error
+        if (resp.length) {
+            console.log(resp, 'is response')
+            data = {
+                status: true,
+                msg: "data success",
+                data: resp
+            }
+            res.send(data);
         } else {
-            res.send({
+            data = {
                 status: false,
-                msg: "Query not run"
-            })
+                msg: "data success",
+                data: []
+            }
+            res.send(data);
         }
-    } catch (error) {
-        console.log(error);
-        res.send({
-            status: false,
-            msg: "exception for deviceStatus",
-        });
-        return;
-    }
-
+    });
 }
-exports.updateDeviceStatus = async function (req, res) {
-
-    // console.log("Update Device", req.body);
-    let linkToWL = req.body.linkToWL
-    let SN = req.body.SN
-    let mac = req.body.mac
-    if (linkToWL) {
-        let query = `UPDATE devices set status= 'deleted' where serial_number = '${SN}' AND mac_address = '${mac}'`
-        console.log(query);
-        sql.query(query);
-
-    } else {
-        let start_date = moment();
-        let expiry_date = moment(start_date).add(1, 'M');
-        start_date = moment(start_date).format()
-        expiry_date = moment(expiry_date).format();
-        let query = `UPDATE devices set status= 'active', start_date = '${start_date}' , expiry_date = '${expiry_date}' , remaining_days = '30' where serial_number = '${SN}' AND mac_address = '${mac}'`
-        // console.log(query);
-        sql.query(query)
-    }
-
-    res.send();
 
 
-
-
-
-}
 
 
 exports.saveIdPrices = async function (req, res) {
@@ -1127,4 +916,8 @@ exports.checkPackageName = async function (req, res) {
         throw error
     }
 
+}
+
+exports.restartWhitelabel = async function(req, res){
+    
 }
