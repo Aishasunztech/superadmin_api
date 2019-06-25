@@ -13,8 +13,6 @@ var indexRouter = require('../routes/index');
 var authRoutes = require('../routes/auth');
 var userRoutes = require('../routes/users');
 var mobileRoutes = require('../routes/mobile');
-var user = require('../app/controllers/user');
-
 
 // controllers
 var user = require('../app/controllers/user');
@@ -35,17 +33,9 @@ module.exports = function (app) {
             ]
             , userRoutes
         );
-
-
-        // router.use('/', indexRouter);
-        router.get('/', function (req, res) {
         
-            
-            // var ip = req.header('x-forwarded-for') || req.connection.remoteAddress;
-            // res.send({
-            //     ip
-            // });
-        });
+
+
 
     });
 

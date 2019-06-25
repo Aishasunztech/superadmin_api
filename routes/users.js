@@ -1,39 +1,56 @@
 var express = require('express');
 var router = express.Router();
+
 // import controller here
 var user = require('../app/controllers/user');
+var whitelabel = require('../app/controllers/whitelabel');
+var acl = require('../app/controllers/acl');
+var device = require('../app/controllers/device');
+var apk = require('../app/controllers/apk');
 
 // ACL
-router.post('/check_component', user.checkComponent);
+router.post('/check_component', acl.checkComponent);
 
 // ===========================================================================
 /* GET users listing. */
-router.get('/white-labels', user.getWhiteLabels);
+router.get('/white-labels', whitelabel.getWhiteLabels);
 
-router.get('/white-labels/:labelId', user.getWhiteLabelInfo);
+router.get('/white-labels/:labelId', whitelabel.getWhiteLabelInfo);
 
-router.put('/update-white-label', user.updateWhiteLabelInfo);
+router.put('/update-white-label', whitelabel.updateWhiteLabelInfo);
 
-router.post('/upload/:fieldName', user.uploadFile);
+router.get('/whitelabel_backups/:whitelabel_id', whitelabel.whitelabelBackups)
 
-router.get('/apklist', user.apklist)
+router.post('/get_label_sim_ids', whitelabel.getLabelSimIds)
 
-router.post('/checkApkName', user.checkApkName)
+router.post('/get_label_chat_ids', whitelabel.getLabelChatIds)
 
-router.get('/whitelabel_backups/:whitelabel_id', user.whitelabelBackups)
+router.post('/get_label_pgp_emails', whitelabel.getLabelPgpEmails)
+
+router.post('restart-whitelabel', whitelabel.restartWhitelabel);
+
 
 // ==============================================================================
 // apk file
-router.post('/uploadApk/:fieldName', user.uploadApk)
 
-router.post('/addApk', user.addApk)
+// router.post('/uploadApk/:fieldName', user.uploadApk)
 
-router.post('/apk/delete', user.deleteApk)
+router.get('/apklist', apk.apklist)
 
-router.post('/edit/apk', user.editApk)
+router.post('/checkApkName', apk.checkApkName)
+
+router.post('/upload/:fieldName', user.uploadFile);
+
+router.post('/addApk', apk.addApk)
+
+router.post('/apk/delete', apk.deleteApk)
+
+router.post('/edit/apk', apk.editApk)
+
 
 // ==============================================================================
 // Manage Data
+
 router.post('/import/:fieldName', user.importCSV);
 
 router.get('/export/:fieldName', user.exportCSV);
@@ -44,28 +61,20 @@ router.get('/get_chat_ids', user.getChatIds)
 
 router.get('/get_pgp_emails', user.getPgpEmails)
 
-router.post('/get_label_sim_ids', user.getSimIdsLabel)
-
-router.post('/get_label_chat_ids', user.getChatIdsLabel)
-
-router.post('/get_label_pgp_emails', user.getPgpEmailsLabel)
-
 router.post('/save_new_data', user.saveNewData)
-// router.get('/get_used_sim_ids', user.getUsedSimIds)
 
-// router.get('/get_used_chat_ids', user.getUsedChatIds)
-
-// router.get('/get_used_pgp_emails', user.getUsedPgpEmails)
 
 // =================================================================================
 // OFFLINE DEVICES SECTION
-router.get('/offline-devices', user.offlineDevices);
+router.get('/offline-devices', device.offlineDevices);
+
+router.put('/device-status', device.deviceStatus)
 
 router.put('/update_device_details', user.updateDeviceStatus);
 
-// router.put('/save-offline-device', user.saveOfflineDevice);
 
-router.put('/device-status', user.deviceStatus)
+// =================================================================================
+// PRICING
 
 router.patch('/save-prices', user.saveIdPrices)
 
@@ -76,7 +85,5 @@ router.patch('/check-package-name', user.checkPackageName)
 router.get('/get-prices/:whitelabel_id', user.getPrices)
 
 router.get('/get-packages/:whitelabel_id', user.getPackages)
-
-
 
 module.exports = router;
