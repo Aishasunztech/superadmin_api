@@ -42,6 +42,7 @@
     "node-constants": "latest",
     "node-cron": "^2.0.3",
     "node-datetime": "^2.1.2",
+    "node-ssh": "^6.0.0",
     "nodemailer": "^2.4.1",
     "nodemailer-smtp-transport": "^2.5.0",
     "nodemon": "latest",

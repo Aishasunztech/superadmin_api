@@ -13,6 +13,8 @@ const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
 const moment = require('moment')
 
+var node_ssh = require('node-ssh')
+ssh = new node_ssh()
 
 exports.getWhiteLabels = async function (req, res) {
 
@@ -134,7 +136,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                         return;
                                     }
                                     // console.log(sResult.affectedRows)
-                                    
+
                                     if (sResult && !sResult.affectedRows) {
                                         sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , ${is_byod})`);
                                     }
@@ -918,6 +920,48 @@ exports.checkPackageName = async function (req, res) {
 
 }
 
-exports.restartWhitelabel = async function(req, res){
-    
+exports.restartWhitelabel = async function (req, res) {
+    let wlID = req.body.whitelabel_id;
+    let whitelabelQ = `SELECT * FROM white_labels WHERE id =${wlID}`;
+    let whitelabel = await sql.query(whitelabelQ);
+    if (whitelabel.length) {
+
+        ssh.connect({
+            host: whitelabel[0].ip_address,
+            username: whitelabel[0].ssh_user,
+            port: whitelabel[0].ssh_port,
+            password: whitelabel[0].ssh_pass
+            // privateKey: '/home/steel/.ssh/id_rsa'
+        })
+        .then(function () {
+           
+            // Command
+            ssh.execCommand('ls'
+            // , { cwd: '/var/www' }
+            ).then(function (result) {
+                console.log('STDOUT: ' + result.stdout)
+                console.log('STDERR: ' + result.stderr)
+            })
+            
+            // Command with escaped params
+            // ssh.exec('hh_client', ['--json'], { cwd: '/var/www', stream: 'stdout', options: { pty: true } }).then(function (result) {
+            //     console.log('STDOUT: ' + result)
+            // })
+            // With streaming stdout/stderr callbacks
+            // ssh.exec('hh_client', ['--json'], {
+            //     cwd: '/var/www',
+            //     onStdout(chunk) {
+            //         console.log('stdoutChunk', chunk.toString('utf8'))
+            //     },
+            //     onStderr(chunk) {
+            //         console.log('stderrChunk', chunk.toString('utf8'))
+            //     },
+            // })
+        })
+    } else {
+        res.send({
+            status: false,
+            msg: ""
+        })
+    }
 }
