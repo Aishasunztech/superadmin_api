@@ -299,23 +299,27 @@ async function newDevice(dvcInfo, res) {
                     device_status: deviceStatus,
                     of_device_id: dvcRes[0].fl_dvc_id
                 });
+                return;
             }else {
                 res.send({
                     status: false,
                     msg: "hello"
                 });
+                return;
             }
         } else {
             res.send({
                 status: false,
                 msg: ""
             });
+            return;
         }
     } else {
         res.send({
             status: false,
             msg: ""
         });
+        return;
     }
 
 }
