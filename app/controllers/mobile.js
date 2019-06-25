@@ -208,7 +208,6 @@ exports.checkExpiry = async (req, res) => {
             return;
         } else {
             await newDevice(dvcInfo, res);
-
             return
         }
     } else if (serial_number == app_constants.PRE_DEFINED_SERIAL_NUMBER) {
@@ -280,11 +279,10 @@ async function newDevice(dvcInfo, res) {
         // get expiry dates
         let start_date = moment();
         let expiry_date = moment(start_date).add(1, 'M');
-        start_date = moment(start_date).format()
-        expiry_date = moment(expiry_date).format();
-
+        start_date = moment(start_date).format('YYYY-MM-DD hh:mm:ss')
+        expiry_date = moment(expiry_date).format('YYYY-MM-DD hh:mm:ss');
         
-        let addDeviceQ = `INSERT IGNORE into devices (fl_dvc_id, whitelabel_id, mac_address, serial_number, ip_address, simno, imei, simno2, imei2, start_date, expiry_date, remaining_days) VALUES ('${device_id}',${whitelabelId[0].id}, '${dvcInfo.mac}', '${dvcInfo.serial_number}', '${dvcInfo.ip}', '', '', '', '', '${start_date}', '${expiry_date}', '30')`;
+        let addDeviceQ = `INSERT into devices (fl_dvc_id, whitelabel_id, mac_address, serial_number, ip_address, simno, imei, simno2, imei2, start_date, expiry_date, remaining_days) VALUES ('${device_id}', ${whitelabelId[0].id}, '${dvcInfo.mac}', '${dvcInfo.serial_number}', '${dvcInfo.ip}', '', '', '', '', '${start_date}', '${expiry_date}', '30')`;
         let device = await sql.query(addDeviceQ);
 
         if (device) {
