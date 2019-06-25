@@ -27,7 +27,7 @@ router.post('/get_label_chat_ids', whitelabel.getLabelChatIds)
 
 router.post('/get_label_pgp_emails', whitelabel.getLabelPgpEmails)
 
-router.post('restart-whitelabel', whitelabel.restartWhitelabel);
+router.post('/restart-whitelabel', whitelabel.restartWhitelabel);
 
 
 // ==============================================================================

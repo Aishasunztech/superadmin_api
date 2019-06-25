@@ -921,11 +921,12 @@ exports.checkPackageName = async function (req, res) {
 }
 
 exports.restartWhitelabel = async function (req, res) {
-    let wlID = req.body.whitelabel_id;
+
+    let wlID = req.body.wlID;
     let whitelabelQ = `SELECT * FROM white_labels WHERE id =${wlID}`;
+
     let whitelabel = await sql.query(whitelabelQ);
     if (whitelabel.length) {
-
         ssh.connect({
             host: whitelabel[0].ip_address,
             username: whitelabel[0].ssh_user,
@@ -935,33 +936,33 @@ exports.restartWhitelabel = async function (req, res) {
         })
         .then(function () {
            
-            // Command
             ssh.execCommand('ls'
-            // , { cwd: '/var/www' }
+            , { cwd: '/var/www/html/' }
             ).then(function (result) {
-                console.log('STDOUT: ' + result.stdout)
-                console.log('STDERR: ' + result.stderr)
+                if(result.stderr){
+                    res.send({
+                        status: false,
+                        msg: "Invalid Credentials"
+                    })
+                }
+                
+                if(result.stdout){
+                    res.send({
+                        status: true,
+                        msg: "Server Rebooted"
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: "Invalid Credentials"
+                    })
+                }
             })
-            
-            // Command with escaped params
-            // ssh.exec('hh_client', ['--json'], { cwd: '/var/www', stream: 'stdout', options: { pty: true } }).then(function (result) {
-            //     console.log('STDOUT: ' + result)
-            // })
-            // With streaming stdout/stderr callbacks
-            // ssh.exec('hh_client', ['--json'], {
-            //     cwd: '/var/www',
-            //     onStdout(chunk) {
-            //         console.log('stdoutChunk', chunk.toString('utf8'))
-            //     },
-            //     onStderr(chunk) {
-            //         console.log('stderrChunk', chunk.toString('utf8'))
-            //     },
-            // })
         })
     } else {
         res.send({
             status: false,
-            msg: ""
+            msg: "Invalid Credentials"
         })
     }
 }
