@@ -971,23 +971,22 @@ exports.deviceStatus = async function (req, res) {
 }
 exports.updateDeviceStatus = async function (req, res) {
 
-    // console.log("Update Device", req.body);
-    let linkToWL = req.body.linkToWL
-    let SN = req.body.SN
-    let mac = req.body.mac
-    if (linkToWL) {
-        let query = `UPDATE devices set status= 'deleted' where serial_number = '${SN}' AND mac_address = '${mac}'`
-        console.log(query);
-        sql.query(query);
+    let linkToWL = req.body.linkToWL;
+    let SN = req.body.SN;
+    let mac = req.body.mac;
+    let device_id = req.body.device_id;
 
+    if (linkToWL) {
+        let query = `UPDATE devices set status= 'deleted', wl_dvc_id='${device_id}' where serial_number = '${SN}' AND mac_address = '${mac}'`
+        await sql.query(query);
     } else {
         let start_date = moment();
         let expiry_date = moment(start_date).add(1, 'M');
-        start_date = moment(start_date).format()
-        expiry_date = moment(expiry_date).format();
-        let query = `UPDATE devices set status= 'active', start_date = '${start_date}' , expiry_date = '${expiry_date}' , remaining_days = '30' where serial_number = '${SN}' AND mac_address = '${mac}'`
-        // console.log(query);
-        sql.query(query)
+        start_date = moment(start_date).format('YYYY-MM-DD hh:mm:ss');
+        expiry_date = moment(expiry_date).format('YYYY-MM-DD hh:mm:ss');
+
+        let query = `UPDATE devices SET status= 'active', start_date = '${start_date}', expiry_date = '${expiry_date}' , remaining_days = '30' WHERE wl_dvc_id='${device_id}'`
+        await sql.query(query)
     }
 
     res.send();
