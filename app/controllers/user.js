@@ -327,6 +327,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
 
 
 
+
 exports.importCSV = async function (req, res) {
         // console.log('lable is: ', req.body.labelID)
         var loginResponse = ''
@@ -1172,12 +1173,13 @@ exports.importCSV = async function (req, res) {
         let chat_id = {};
         let pgp_email = {};
         let vpn = {};
+        console.log(whitelebel_id, 'whitelebel aid')
         if (whitelebel_id) {
             let selectQuery = "SELECT * FROM prices WHERE whitelabel_id='" + whitelebel_id + "'";
             sql.query(selectQuery, async (err, reslt) => {
                 if (err) throw err;
                 if (reslt) {
-                    //  console.log('result for get prices are is ', reslt);
+                     console.log('result for get prices are is ', reslt);
 
                     if (reslt.length) {
                         for (let item of reslt) {
@@ -1191,6 +1193,7 @@ exports.importCSV = async function (req, res) {
                                 vpn[item.price_term] = item.unit_price
                             }
                         }
+                    }
                         let data = {
                             sim_id: sim_id ? sim_id : {},
                             chat_id: chat_id ? chat_id : {},
@@ -1203,7 +1206,7 @@ exports.importCSV = async function (req, res) {
                             data: data
 
                         })
-                    }
+                    
 
                 } else {
                     let data = {
@@ -1245,7 +1248,7 @@ exports.importCSV = async function (req, res) {
             sql.query(selectQuery, async (err, reslt) => {
                 if (err) throw err;
                 if (reslt) {
-                    console.log('result for get prices are is ', reslt);
+                    console.log('result for get packages are is ', reslt);
 
                     if (reslt.length) {
                         console.log(reslt, 'reslt data of prices')
