@@ -927,38 +927,45 @@ exports.restartWhitelabel = async function (req, res) {
 
     let whitelabel = await sql.query(whitelabelQ);
     if (whitelabel.length) {
-        ssh.connect({
-            host: whitelabel[0].ip_address,
-            username: whitelabel[0].ssh_user,
-            port: whitelabel[0].ssh_port,
-            password: whitelabel[0].ssh_pass
-            // privateKey: '/home/steel/.ssh/id_rsa'
-        })
-        .then(function () {
-           
-            ssh.execCommand('ls'
-            , { cwd: '/var/www/html/' }
-            ).then(function (result) {
-                if(result.stderr){
-                    res.send({
-                        status: false,
-                        msg: "Invalid Credentials"
-                    })
-                }
-                
-                if(result.stdout){
-                    res.send({
-                        status: true,
-                        msg: "Server Rebooted"
-                    })
-                } else {
-                    res.send({
-                        status: false,
-                        msg: "Invalid Credentials"
-                    })
-                }
+            
+            ssh.connect({
+                host: whitelabel[0].ip_address,
+                username: whitelabel[0].ssh_user,
+                port: whitelabel[0].ssh_port,
+                password: whitelabel[0].ssh_pass
+                // privateKey: '/home/steel/.ssh/id_rsa'
             })
-        })
+            .then(function () {
+                
+                ssh.execCommand('ls'
+                , { cwd: '/var/www/html/' }
+                ).then(function (result) {
+                    if(result.stderr){
+                        res.send({
+                            status: false,
+                            msg: "Invalid Credentials"
+                        })
+                    }
+                    
+                    if(result.stdout){
+                        res.send({
+                            status: true,
+                            msg: "Server Rebooted"
+                        })
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: "Invalid Credentials"
+                        })
+                    }
+                })
+            }).catch(function(error){
+                res.send({
+                    status: false,
+                    msg: "Invalid Credentials"
+                })        
+            });
+        
     } else {
         res.send({
             status: false,
