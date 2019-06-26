@@ -1163,19 +1163,19 @@ exports.savePackage = async function (req, res) {
 }
 
 
-
 exports.getPrices = async function (req, res) {
     let whitelebel_id = req.params.whitelabel_id;
     let sim_id = {};
     let chat_id = {};
     let pgp_email = {};
     let vpn = {};
+    console.log(whitelebel_id, 'whitelebel aid')
     if (whitelebel_id) {
         let selectQuery = "SELECT * FROM prices WHERE whitelabel_id='" + whitelebel_id + "'";
         sql.query(selectQuery, async (err, reslt) => {
             if (err) throw err;
             if (reslt) {
-                //  console.log('result for get prices are is ', reslt);
+                console.log('result for get prices are is ', reslt);
 
                 if (reslt.length) {
                     for (let item of reslt) {
@@ -1189,19 +1189,20 @@ exports.getPrices = async function (req, res) {
                             vpn[item.price_term] = item.unit_price
                         }
                     }
-                    let data = {
-                        sim_id: sim_id ? sim_id : {},
-                        chat_id: chat_id ? chat_id : {},
-                        pgp_email: pgp_email ? pgp_email : {},
-                        vpn: vpn ? vpn : {}
-                    }
-                    res.send({
-                        status: true,
-                        msg: "Data found",
-                        data: data
-
-                    })
                 }
+                let data = {
+                    sim_id: sim_id ? sim_id : {},
+                    chat_id: chat_id ? chat_id : {},
+                    pgp_email: pgp_email ? pgp_email : {},
+                    vpn: vpn ? vpn : {}
+                }
+                res.send({
+                    status: true,
+                    msg: "Data found",
+                    data: data
+
+                })
+
 
             } else {
                 let data = {
@@ -1243,7 +1244,7 @@ exports.getPackages = async function (req, res) {
         sql.query(selectQuery, async (err, reslt) => {
             if (err) throw err;
             if (reslt) {
-                console.log('result for get prices are is ', reslt);
+                console.log('result for get packages are is ', reslt);
 
                 if (reslt.length) {
                     console.log(reslt, 'reslt data of prices')
