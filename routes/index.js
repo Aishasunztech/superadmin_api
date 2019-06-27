@@ -1,16 +1,45 @@
-var express = require('express');
-var router = express.Router();
 
-/* GET home page. */
-// router.get('/', function (req, res, next) {
-//   // single line middleware
-//   next();
-// }, function (req, res, next) {
-//   res.render('index', { title: 'Express' });
-// });
-router.get('/', function (req, res, next) {
+// middlewares
+var authMiddleware = require('../config/auth');
+var multipart = require('connect-multiparty');
+var multipartMiddleware = multipart();
+var moment = require('moment-strftime');
 
-  res.render('index', { title: 'Express' });
-});
+var crypto = require("crypto");
+var md5 = require('md5');
 
-module.exports = router;
+// routes
+var authRoutes = require('./auth');
+var userRoutes = require('./users');
+var mobileRoutes = require('./mobile');
+var pub = require('./pub');
+
+// controllers
+var user = require('../app/controllers/user');
+
+
+
+module.exports = function (app) {
+    app.get('/', async function (req, res) {
+    
+        res.send("Express Js");
+    });
+    app.group('/api/v1', function (router) {
+        router.use('/auth', authRoutes);
+        router.use('/mobile', mobileRoutes);
+        router.use('/pub', pub);
+        router.get('/users/getFile/:file', user.getFile);   
+        router.use('/users',
+            [
+                authMiddleware,
+                multipartMiddleware
+            ]
+            , userRoutes
+        );
+        
+
+
+
+    });
+
+}
