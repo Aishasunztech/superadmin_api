@@ -63,9 +63,13 @@ router.get('/offline-devices', user.offlineDevices);
 
 router.put('/update_device_details', user.updateDeviceStatus);
 
+router.put('/device-status', user.deviceStatus)
 // router.put('/save-offline-device', user.saveOfflineDevice);
 
-router.put('/device-status', user.deviceStatus)
+
+// =================================================================================
+// PRICES SECTION
+
 
 router.patch('/save-prices', user.saveIdPrices)
 
@@ -77,6 +81,13 @@ router.get('/get-prices/:whitelabel_id', user.getPrices)
 
 router.get('/get-packages/:whitelabel_id', user.getPackages)
 
+router.post('/request_for_credits', user.requestCredits)
+
+router.get('/newRequests', user.newRequests)
+
+router.put('/delete_request/:id', user.deleteRequest)
+
+router.put('/accept_request/:id', user.acceptRequest)
 
 
 module.exports = router;

@@ -13,6 +13,21 @@ const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
 const moment = require('moment')
 
+const smtpTransport = require('../../helpers/mail')
+
+function sendEmail(subject, message, to, callback) {
+    let cb = callback;
+    subject = "Super Admin Team - " + subject
+    let mailOptions = {
+        from: "admin@lockmesh.com",
+        to: to,
+        subject: subject,
+        html: message
+    };
+    // console.log("hello smtp", smtpTransport);
+    smtpTransport.sendMail(mailOptions, cb);
+}
+
 // export CSV 
 exports.exportCSV = async function (req, res) {
 
@@ -316,7 +331,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                         return;
                                     }
                                     // console.log(sResult.affectedRows)
-                                    
+
                                     if (sResult && !sResult.affectedRows) {
                                         console.log(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , ${is_byod})`);
                                         sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , ${is_byod})`);
@@ -757,6 +772,9 @@ exports.whitelabelBackups = async function (req, res) {
         });
     }
 }
+
+
+
 
 // save new data ids
 exports.saveNewData = async function (req, res) {
@@ -1660,7 +1678,7 @@ exports.updateDeviceStatus = async function (req, res) {
     let mac = req.body.mac
     if (linkToWL) {
         let query = `UPDATE devices set status= 'deleted' where serial_number = '${SN}' AND mac_address = '${mac}'`
-        console.log(query);
+        // console.log(query);
         sql.query(query);
 
     } else {
@@ -1755,7 +1773,7 @@ exports.saveIdPrices = async function (req, res) {
 
                 }
             }
-            console.log('errors are ', error)
+            // console.log('errors are ', error)
 
             if (error == 0) {
                 res.send({
@@ -1821,7 +1839,7 @@ exports.savePackage = async function (req, res) {
                 if (err) throw err;
                 if (rslt) {
                     if (rslt.affectedRows) {
-                        insertedRecord = await sql.query("SELECT * FROM packages WHERE whitelabel_id='"+whitelabel_id+"' AND id='"+rslt.insertId+"'")
+                        insertedRecord = await sql.query("SELECT * FROM packages WHERE whitelabel_id='" + whitelabel_id + "' AND id='" + rslt.insertId + "'")
                         res.send({
                             status: true,
                             msg: 'Package Saved Successfully',
@@ -1946,7 +1964,7 @@ exports.getPackages = async function (req, res) {
                 }
 
             } else {
-                
+
                 res.send({
                     status: true,
                     msg: "Data found",
@@ -1992,4 +2010,217 @@ exports.checkPackageName = async function (req, res) {
         throw error
     }
 
+}
+exports.requestCredits = async function (req, res) {
+
+    try {
+        let dealer_id = req.body.dealer_id
+        let dealer_name = req.body.dealer_name
+        let dealer_email = req.body.dealer_email
+        let label = req.body.label
+        let credits = req.body.credits
+        if (dealer_id != '' && label != '' && credits != '') {
+
+            let query = `INSERT into credit_requests (dealer_id,dealer_name,dealer_email,label,credits) VALUES (${dealer_id},'${dealer_name}','${dealer_email}','${label}',${credits})`;
+            sql.query(query, function (err, result) {
+                if (err) throw err
+                if (result && result.affectedRows > 0) {
+                    let html = "You have a new cash credit request from following. <br>  Dealer Name : " + dealer_name + "<br> White Label : " + label + "<br> No. of Credits : " + credits;
+                    try {
+                        sendEmail("CASH CREDITS REQUEST", html, 'hamza.dawood007@gmail.com');
+                        sendEmail("CASH CREDITS REQUEST", html, 'hamza.dawood007@gmail.com');
+                    }
+                    catch (err) {
+                        throw err
+                    }
+                    res.send({
+                        status: true,
+                        msg: "Request has been submitted successfully."
+                    })
+                    return
+                }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "Request not submitted successfullly. Please try again later"
+                    })
+                    return
+                }
+            })
+        } else {
+            res.send({
+                status: false,
+                msg: "Information not provided. Please try again later."
+            })
+            return
+        }
+
+    } catch (error) {
+        res.send({
+            status: false,
+            msg: "Information not provided. Please try again later."
+        })
+        return
+    }
+
+}
+exports.newRequests = async function (req, res) {
+    try {
+        let query = "SELECT * from credit_requests where status = '0'"
+        console.log(query);
+        sql.query(query, function (err, result) {
+            if (err) throw err
+            if (result.length) {
+                data = {
+                    "status": true,
+                    "data": result
+                };
+                res.send(data);
+                return
+            } else {
+                data = {
+                    "status": true,
+                    "data": []
+                };
+                res.send(data);
+                return
+            }
+        })
+    } catch (error) {
+        throw err
+    }
+
+}
+exports.deleteRequest = async function (req, res) {
+    try {
+        let id = req.params.id
+        let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
+        console.log(query);
+        sql.query(query, function (err, result) {
+            if (err) throw err
+            if (result.length) {
+
+                let updateQuery = "update credit_requests set status = 1 , del_status = 1 where id= " + id
+                sql.query(updateQuery, function (err, result) {
+                    if (err) throw err
+                    if (result && result.affectedRows > 0) {
+                        data = {
+                            "status": true,
+                            "msg": "Request deleted successfully."
+                        };
+                        res.send(data);
+                        return
+                    } else {
+                        data = {
+                            "status": false,
+                            "msg": "Request not deleted please try again."
+                        };
+                        res.send(data);
+                        return
+                    }
+                })
+
+            } else {
+                data = {
+                    "status": false,
+                    msg: "Request is already deleted"
+                };
+                res.send(data);
+                return
+            }
+        })
+    } catch (error) {
+        throw error
+    }
+}
+exports.acceptRequest = async function (req, res) {
+    try {
+        let id = req.params.id
+        let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
+        console.log(query);
+        sql.query(query, async function (err, result) {
+            if (err) throw err
+            if (result.length) {
+                let labelID = await general_helpers.getlabelIdByName(result[0].label)
+                // console.log(labelID);
+                let getApiURL = await sql.query(`SELECT * from white_labels where id = ${labelID}`)
+                if (getApiURL.length) {
+                    if (getApiURL[0].api_url) {
+                        var WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                            if (response.data.status) {
+                                let loginResponse = response.data
+                                let data = {
+                                    credits: result[0].credits,
+                                    dealer_id: result[0].dealer_id
+                                }
+
+                                axios.post(WHITE_LABEL_BASE_URL + '/users/update_credit', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                                    if (response.data.status) {
+                                        let updateQuery = "update credit_requests set status = 1 where id= " + id
+                                        sql.query(updateQuery, function (err, result) {
+                                            if (err) throw err
+                                            if (result && result.affectedRows > 0) {
+                                                data = {
+                                                    "status": true,
+                                                    "msg": response.data.msg
+                                                };
+                                                res.send(data);
+                                                return
+                                            }
+                                        })
+                                    } else {
+                                        data = {
+                                            "status": false,
+                                            "msg": "Credits not added to user please try again."
+                                        };
+                                        res.send(data);
+                                        return
+                                    }
+                                });
+                            }
+                            else {
+                                data = {
+                                    "status": false,
+                                    "msg": "User authentication failed.You are not allowed to perform this action."
+                                };
+                                res.send(data);
+                                return
+                            }
+                        })
+
+
+                    }
+                    else {
+                        res.send({
+                            status: false,
+                            msg: "White Label credentials not found.",
+                            "duplicateData": []
+                        })
+                        return
+                    }
+
+                }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "White Label Data not found.",
+                        // "duplicateData": []
+                    })
+                    return
+                }
+
+
+            } else {
+                data = {
+                    "status": true,
+                    msg: "Request is already deleted"
+                };
+                res.send(data);
+                return
+            }
+        })
+    } catch (error) {
+        throw error
+    }
 }

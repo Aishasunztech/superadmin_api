@@ -14,7 +14,7 @@ const exec = util.promisify(require('child_process').exec);
 var ApkReader = require('node-apk-parser');
 
 var md5 = require('md5');
-var randomize = require('randomatic'); 
+var randomize = require('randomatic');
 const mysql_import = require('mysql-import');
 var path = require('path');
 var fs = require('fs');
@@ -718,5 +718,13 @@ module.exports = {
 
 
 		return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+	},
+	getlabelIdByName: async function (name) {
+		var labelID = 0
+		let data = await sql.query("SELECT id from white_labels where name = '" + name + "'")
+		if (data.length) {
+			labelID = data[0].id
+		}
+		return labelID
 	}
 }
