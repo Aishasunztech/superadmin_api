@@ -58,9 +58,11 @@ exports.getWhiteLabelInfo = async function (req, res) {
 
 exports.updateWhiteLabelInfo = async function (req, res) {
     try {
+        // console.log(req.body, 'body data is')
         let model_id = req.body.model_id;
         let command_name = req.body.command_name;
         let apk_files = req.body.apk_files;
+        let byod_type = req.body.byod_type ? req.body.byod_type : 'BYOD';
         let is_byod = req.body.is_byod ? 1 : 0
 
         if (!empty(model_id)) {
@@ -120,7 +122,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                 // let where = (is_byod == 1) ? 'AND is_byod = 1' : ''
                                 let query = ''
                                 if (is_byod == 1) {
-                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = ${is_byod}, version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND is_byod = '1' `
+                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = ${is_byod}, version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND is_byod = '1' AND byod_type='${byod_type}'`
                                 } else {
                                     query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = ${is_byod}, version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
                                 }
@@ -138,7 +140,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                     // console.log(sResult.affectedRows)
 
                                     if (sResult && !sResult.affectedRows) {
-                                        sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , ${is_byod})`);
+                                        sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod, byod_type) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , ${is_byod}, '${byod_type}')`);
                                     }
                                 });
                             } else {
