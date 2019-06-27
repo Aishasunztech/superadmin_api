@@ -140,7 +140,7 @@ exports.uploadFile = async function (req, res) {
     let formatByte = general_helpers.formatBytes(bytes);
 
     // if (fieldName === Constants.APK) {
-    if (mimeType === "application/vnd.android.package-archive") {
+    if (mimeType === "application/vnd.android.package-archive" || mimeType === "application/octet-stream") {
         versionCode = await general_helpers.getAPKVersionCode(filePath);
         if (versionCode) {
             fileName = fieldName + '-' + Date.now() + '.apk';
@@ -172,8 +172,6 @@ exports.uploadFile = async function (req, res) {
         }
 
     } else if (fieldName === Constants.LOGO) {
-        // console.log(req.files);
-
 
         fileName = fieldName + '-' + Date.now() + '.jpg';
         let target_path = path.join(__dirname, "../../uploads/" + fileName);
