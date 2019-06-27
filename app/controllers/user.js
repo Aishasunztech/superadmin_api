@@ -991,10 +991,6 @@ exports.updateDeviceStatus = async function (req, res) {
 
     res.send();
 
-
-
-
-
 }
 
 

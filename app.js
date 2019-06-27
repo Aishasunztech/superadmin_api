@@ -57,7 +57,7 @@ app.use(function (req, res, next) {
 // routes ======================================================================
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // app.set(express_group);
-require('./config/routes.js')(app); 
+require('./routes/index.js')(app); 
 
 
 

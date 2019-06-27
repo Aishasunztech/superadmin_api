@@ -19,4 +19,8 @@ module.exports = {
 	DB_NAME:"lm_superadmin",
 	DB_USERNAME: "root",
 	DB_PASSWORD: "",
+
+	// Fixer API key
+	FIXER_API_KEY:'96035c5c5b46baea5a96b84930eaed79',
+	BASE_CURRENCY: 'USD'
 };
