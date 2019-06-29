@@ -7,6 +7,7 @@ var XLSX = require('xlsx');
 var empty = require('is-empty');
 var mime = require('mime');
 const axios = require('axios');
+var md5 = require('md5');
 
 const Constants = require('../../constants/application');
 const device_helpers = require('../../helpers/device_helpers');
@@ -1532,4 +1533,23 @@ exports.acceptRequest = async function (req, res) {
     } catch (error) {
         throw error
     }
+}
+exports.checkPwd = async function(req, res){
+    // console.log(req.decoded);
+    if(req.decoded && req.decoded.user){
+        let pwd = md5(req.body.password);
+        let query_res = await sql.query(`SELECT * FROM admins WHERE id=${req.decoded.user.id} AND password='${pwd}'`);
+        if (query_res.length) {
+            res.send({
+                "password_matched": true
+            });
+            return;
+        } else {
+            res.send({
+                "password_matched": false
+            });
+            return;
+        }
+    }
+    
 }

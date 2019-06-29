@@ -63,6 +63,7 @@ router.get('/get_pgp_emails', user.getPgpEmails)
 
 router.post('/save_new_data', user.saveNewData)
 
+router.post('/check-pwd', user.checkPwd)
 
 // =================================================================================
 // OFFLINE DEVICES SECTION
