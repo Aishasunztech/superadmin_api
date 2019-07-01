@@ -925,53 +925,101 @@ exports.checkPackageName = async function (req, res) {
 exports.restartWhitelabel = async function (req, res) {
 
     let wlID = req.body.wlID;
-    let whitelabelQ = `SELECT * FROM white_labels WHERE id =${wlID}`;
-
-    let whitelabel = await sql.query(whitelabelQ);
-    if (whitelabel.length) {
+    if(!empty(wlID)){
+        let whitelabelQ = `SELECT * FROM white_labels WHERE id =${wlID}`;
+    
+        let whitelabel = await sql.query(whitelabelQ);
+        if (whitelabel.length) {
             
-            ssh.connect({
-                host: whitelabel[0].ip_address,
-                username: whitelabel[0].ssh_user,
-                port: whitelabel[0].ssh_port,
-                password: whitelabel[0].ssh_pass
-                // privateKey: '/home/steel/.ssh/id_rsa'
-            })
-            .then(function () {
-                
-                ssh.execCommand('ls'
-                , { cwd: '/var/www/html/' }
-                ).then(function (result) {
-                    if(result.stderr){
+            let host = whitelabel[0].ip_address;
+            let dbUser = whitelabel[0].db_user;
+            let dbPass = whitelabel[0].db_pass;
+            let dbName = whitelabel[0].db_name;
+            
+            let sshUser = whitelabel[0].ssh_user;
+            let sshPort = whitelabel[0].ssh_port;
+            let sshPass = whitelabel[0].ssh_pass;
+    
+            if (!empty(host) && !empty(dbUser) && !empty(dbPass) && !empty(dbName)) {
+    
+                let host_db_conn = await general_helpers.getDBCon(host, dbUser, dbPass, dbName);
+                if (host_db_conn) {
+                    console.log("db connection established");
+
+                    let deletePushPoliciesQ = "DELETE FROM policy_queue_jobs";
+                    host_db_conn.query(deletePushPoliciesQ);
+    
+                    ssh.connect({
+                        host: host,
+                        username: sshUser,
+                        port: sshPort,
+                        password: sshPass
+                        // privateKey: '/home/steel/.ssh/id_rsa'
+                    }).then(function () {
+                        if (!empty(whitelabel[0].api_cmd)) {
+                            console.log("executing system command");
+
+                            ssh.execCommand(
+                                `sudo ${whitelabel[0].api_cmd}`
+                                , { cwd: '/var/www/html/' }
+                            ).then(function (result) {
+                                
+                                console.log(result);
+                                
+                                if (result.stderr) {
+                                    res.send({
+                                        status: false,
+                                        msg: "Invalid Credentials"
+                                    })
+                                }
+    
+                                // if (result.stdout) {    
+                                    res.send({
+                                        status: true,
+                                        msg: "Server Rebooted"
+                                    })
+                                // } else {
+                                //     res.send({
+                                //         status: false,
+                                //         msg: "Invalid Credentials"
+                                //     })
+                                // }
+                            })
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: "Invalid Credentials"
+                            })
+                        }
+                    }).catch(function (error) {
                         res.send({
                             status: false,
                             msg: "Invalid Credentials"
                         })
-                    }
-                    
-                    if(result.stdout){
-                        res.send({
-                            status: true,
-                            msg: "Server Rebooted"
-                        })
-                    } else {
-                        res.send({
-                            status: false,
-                            msg: "Invalid Credentials"
-                        })
-                    }
-                })
-            }).catch(function(error){
+                    });
+                } else {
+                    res.send({
+                        status: false,
+                        msg: "Invalid Credentials"
+                    })
+                }
+    
+            } else {
                 res.send({
                     status: false,
                     msg: "Invalid Credentials"
-                })        
-            });
-        
+                })
+            }
+        } else {
+            res.send({
+                status: false,
+                msg: "Invalid Credentials"
+            })
+        }
     } else {
         res.send({
             status: false,
-            msg: "Invalid Credentials"
+            msg:"whitelabel not defined"
         })
     }
 }
