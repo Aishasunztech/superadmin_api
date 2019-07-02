@@ -13,7 +13,7 @@ router.post('/check_component', acl.checkComponent);
 
 // ===========================================================================
 /* GET users listing. */
-router.get('/white-labels', whitelabel.getWhiteLabels);
+router.get('/white-labels/:type', whitelabel.getWhiteLabels);
 
 router.get('/white-labels/:labelId', whitelabel.getWhiteLabelInfo);
 
