@@ -934,40 +934,39 @@ exports.restartWhitelabel = async function (req, res) {
 
     let wlID = req.body.wlID;
     if (!empty(wlID)) {
-        try {
 
-            let whitelabelQ = `SELECT * FROM white_labels WHERE id =${wlID}`;
+        let whitelabelQ = `SELECT * FROM white_labels WHERE id =${wlID}`;
 
-            let whitelabel = await sql.query(whitelabelQ);
-            if (whitelabel.length) {
-                let sshUser = whitelabel[0].ssh_user;
-                let sshPort = whitelabel[0].ssh_port;
-                let sshPass = whitelabel[0].ssh_pass;
+        let whitelabel = await sql.query(whitelabelQ);
+        if (whitelabel.length) {
+            let sshUser = whitelabel[0].ssh_user;
+            let sshPort = whitelabel[0].ssh_port;
+            let sshPass = whitelabel[0].ssh_pass;
 
-                if (whitelabel[0].status) {
-                    // database
-                    let host = whitelabel[0].ip_address;
-                    let dbUser = whitelabel[0].db_user;
-                    let dbPass = whitelabel[0].db_pass;
-                    let dbName = whitelabel[0].db_name;
+            if (whitelabel[0].status) {
+                // database
+                let host = whitelabel[0].ip_address;
+                let dbUser = whitelabel[0].db_user;
+                let dbPass = whitelabel[0].db_pass;
+                let dbName = whitelabel[0].db_name;
 
 
-                    if (!empty(host) && !empty(dbUser) && !empty(dbPass) && !empty(dbName)) {
+                if (!empty(host) && !empty(dbUser) && !empty(dbPass) && !empty(dbName)) {
 
-                        let host_db_conn = await general_helpers.getDBCon(host, dbUser, dbPass, dbName);
-                        if (host_db_conn) {
-                            console.log("db connection established");
+                    let host_db_conn = await general_helpers.getDBCon(host, dbUser, dbPass, dbName);
+                    if (host_db_conn) {
+                        console.log("db connection established");
 
-                            let deletePushPoliciesQ = "DELETE FROM policy_queue_jobs";
-                            await host_db_conn.query(deletePushPoliciesQ);
-
+                        let deletePushPoliciesQ = "DELETE FROM policy_queue_jobs";
+                        await host_db_conn.query(deletePushPoliciesQ);
+                        try {
                             await rebootServer(host, sshUser, sshPort, sshPass, whitelabel, res);
-
-                        } else {
+                        } catch (error) {
+                            console.log(error);
                             res.send({
-                                status: false,
-                                msg: "Invalid Credentials"
-                            })
+                                status: true,
+                                msg: "Server Rebooted"
+                            });
                         }
 
                     } else {
@@ -976,22 +975,32 @@ exports.restartWhitelabel = async function (req, res) {
                             msg: "Invalid Credentials"
                         })
                     }
-                } else {
-                    await rebootServer(host, sshUser, sshPort, sshPass, whitelabel, res);
-                }
 
+                } else {
+                    res.send({
+                        status: false,
+                        msg: "Invalid Credentials"
+                    })
+                }
             } else {
-                res.send({
-                    status: false,
-                    msg: "Invalid Credentials"
-                })
+                try {
+                    await rebootServer(host, sshUser, sshPort, sshPass, whitelabel, res);
+                } catch (error) {
+                    console.log(error);
+                    res.send({
+                        status: true,
+                        msg: "Server Rebooted"
+                    });
+                }
             }
-        } catch (error) {
+
+        } else {
             res.send({
                 status: false,
-                msg: "whitelabel not defined"
+                msg: "Invalid Credentials"
             })
         }
+
     } else {
         res.send({
             status: false,
