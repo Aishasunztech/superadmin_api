@@ -72,11 +72,11 @@ exports.getWhiteLabel = async function (req, res) {
 
         if (Object.keys(whiteLabel).length) {
             let whiteLabelAPKQ = ''
-            console.log(req.body);
+            // console.log(req.body);
             if (req.body.byod_status) {
-                whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND is_byod = 1`;
+                whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND byod_type = 'BYOD'`;
             } else {
-                whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND is_byod != 1`;
+                whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND byod_type != 'BYOD' AND byod_type != 'BYOD7' `;
             }
             console.log(whiteLabelAPKQ);
             // let whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id}`;
@@ -275,13 +275,13 @@ async function newDevice(dvcInfo, res) {
     let whitelabelId = await sql.query(whitelabelQ);
     if (whitelabelId.length) {
         let device_id = await general_helpers.getOfflineDvcId(dvcInfo.serial_number, dvcInfo.mac);
-        
+
         // get expiry dates
         let start_date = moment();
         let expiry_date = moment(start_date).add(1, 'M');
         start_date = moment(start_date).format('YYYY-MM-DD hh:mm:ss')
         expiry_date = moment(expiry_date).format('YYYY-MM-DD hh:mm:ss');
-        
+
         let addDeviceQ = `INSERT into devices (fl_dvc_id, whitelabel_id, mac_address, serial_number, ip_address, simno, imei, simno2, imei2, start_date, expiry_date, remaining_days) VALUES ('${device_id}', ${whitelabelId[0].id}, '${dvcInfo.mac}', '${dvcInfo.serial_number}', '${dvcInfo.ip}', '', '', '', '', '${start_date}', '${expiry_date}', '30')`;
         let device = await sql.query(addDeviceQ);
 
@@ -290,17 +290,17 @@ async function newDevice(dvcInfo, res) {
             let dvcQ = `SELECT * FROM devices WHERE id=${device.insertId} limit 1`;
             let dvcRes = await sql.query(dvcQ);
 
-            if(dvcRes.length){
+            if (dvcRes.length) {
 
                 let deviceStatus = device_helpers.checkStatus(dvcRes);
-    
+
                 res.send({
                     status: true,
                     device_status: deviceStatus,
                     of_device_id: dvcRes[0].fl_dvc_id
                 });
                 return;
-            }else {
+            } else {
                 res.send({
                     status: false,
                     msg: "hello"

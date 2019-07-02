@@ -62,7 +62,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
         let model_id = req.body.model_id;
         let command_name = req.body.command_name;
         let apk_files = req.body.apk_files;
-        let byod_type = req.body.byod_type ? req.body.byod_type : 'BYOD';
+        let byod_type = req.body.byod_type ? req.body.byod_type : '';
         let is_byod = req.body.is_byod ? 1 : 0
 
         if (!empty(model_id)) {
@@ -122,9 +122,9 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                 // let where = (is_byod == 1) ? 'AND is_byod = 1' : ''
                                 let query = ''
                                 if (is_byod == 1) {
-                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = ${is_byod}, version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND is_byod = '1' AND byod_type='${byod_type}'`
+                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND byod_type='${byod_type}'`
                                 } else {
-                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , is_byod = ${is_byod}, version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
+                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
                                 }
                                 // console.log(query)
 
@@ -140,7 +140,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                     // console.log(sResult.affectedRows)
 
                                     if (sResult && !sResult.affectedRows) {
-                                        sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , is_byod, byod_type) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , ${is_byod}, '${byod_type}')`);
+                                        sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , byod_type) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , '${byod_type}')`);
                                     }
                                 });
                             } else {
@@ -929,27 +929,27 @@ exports.restartWhitelabel = async function (req, res) {
 
     let whitelabel = await sql.query(whitelabelQ);
     if (whitelabel.length) {
-            
-            ssh.connect({
-                host: whitelabel[0].ip_address,
-                username: whitelabel[0].ssh_user,
-                port: whitelabel[0].ssh_port,
-                password: whitelabel[0].ssh_pass
-                // privateKey: '/home/steel/.ssh/id_rsa'
-            })
+
+        ssh.connect({
+            host: whitelabel[0].ip_address,
+            username: whitelabel[0].ssh_user,
+            port: whitelabel[0].ssh_port,
+            password: whitelabel[0].ssh_pass
+            // privateKey: '/home/steel/.ssh/id_rsa'
+        })
             .then(function () {
-                
+
                 ssh.execCommand('ls'
-                , { cwd: '/var/www/html/' }
+                    , { cwd: '/var/www/html/' }
                 ).then(function (result) {
-                    if(result.stderr){
+                    if (result.stderr) {
                         res.send({
                             status: false,
                             msg: "Invalid Credentials"
                         })
                     }
-                    
-                    if(result.stdout){
+
+                    if (result.stdout) {
                         res.send({
                             status: true,
                             msg: "Server Rebooted"
@@ -961,13 +961,13 @@ exports.restartWhitelabel = async function (req, res) {
                         })
                     }
                 })
-            }).catch(function(error){
+            }).catch(function (error) {
                 res.send({
                     status: false,
                     msg: "Invalid Credentials"
-                })        
+                })
             });
-        
+
     } else {
         res.send({
             status: false,
