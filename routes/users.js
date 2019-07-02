@@ -15,7 +15,7 @@ router.post('/check_component', acl.checkComponent);
 /* GET users listing. */
 router.get('/white-labels/:type', whitelabel.getWhiteLabels);
 
-router.get('/white-labels/:labelId', whitelabel.getWhiteLabelInfo);
+router.get('/get-white-labels/:labelId', whitelabel.getWhiteLabelInfo);
 
 router.put('/update-white-label', whitelabel.updateWhiteLabelInfo);
 
