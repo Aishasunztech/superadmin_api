@@ -1032,23 +1032,20 @@ async function rebootServer(host, sshUser, sshPort, sshPass, whitelabel, res) {
                     status: true,
                     msg: "Server Rebooted"
                 });
-                // } else {
-                //     res.send({
-                //         status: false,
-                //         msg: "Invalid Credentials"
-                //     })
-                // }
+                return;
             });
         }).catch(function (error) {
             res.send({
                 status: false,
                 msg: "Invalid Credentials"
             });
+            return;
         });
     } else {
         res.send({
             status: false,
             msg: "Invalid Credentials"
         });
+        return;
     }
 }
