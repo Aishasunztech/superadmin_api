@@ -1534,9 +1534,9 @@ exports.acceptRequest = async function (req, res) {
         throw error
     }
 }
-exports.checkPwd = async function(req, res){
+exports.checkPwd = async function (req, res) {
     // console.log(req.decoded);
-    if(req.decoded && req.decoded.user){
+    if (req.decoded && req.decoded.user) {
         let pwd = md5(req.body.password);
         let query_res = await sql.query(`SELECT * FROM admins WHERE id=${req.decoded.user.id} AND password='${pwd}'`);
         if (query_res.length) {
@@ -1551,5 +1551,24 @@ exports.checkPwd = async function(req, res){
             return;
         }
     }
-    
+
+}
+exports.checkDelaerPin = async function (req, res) {
+    // console.log(req.decoded);
+    if (req.decoded && req.decoded.user) {
+        let dealer_pin = req.body.dealer_pin;
+        // console.log(dealer_pin)
+        let query_res = await sql.query(`SELECT * FROM superadmins_credentials WHERE admin_pin='${dealer_pin}'`);
+        if (query_res.length) {
+            res.send({
+                "pin_matched": true
+            });
+            return;
+        } else {
+            res.send({
+                "pin_matched": false
+            });
+            return;
+        }
+    }
 }

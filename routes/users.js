@@ -65,6 +65,8 @@ router.post('/save_new_data', user.saveNewData)
 
 router.post('/check-pwd', user.checkPwd)
 
+router.post('/check-dealer_pin', user.checkDelaerPin)
+
 // =================================================================================
 // OFFLINE DEVICES SECTION
 router.get('/offline-devices', device.offlineDevices);
