@@ -1572,3 +1572,210 @@ exports.checkDelaerPin = async function (req, res) {
         }
     }
 }
+exports.deleteCSVids = async function (req, res) {
+    try {
+        var fieldName = req.params.fieldName
+        var ids = req.body.ids
+        var idsKeys = req.body.ids.map((item) => {
+            return item.id
+        })
+        // console.log(ids[0]);
+        let labelID = ids[0].whitelabel_id;
+        let WHITE_LABEL_BASE_URL = '';
+
+        if (ids.length) {
+            let getApiURL = await sql.query(`SELECT * from white_labels where id = ${labelID}`)
+            if (getApiURL.length) {
+                if (getApiURL[0].api_url) {
+                    WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                    // console.log(WHITE_LABEL_BASE_URL);
+                    axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                        if (response.data.status) {
+                            loginResponse = response.data;
+                            // console.log(response.data);
+                            await axios.post(WHITE_LABEL_BASE_URL + '/users/delete_CSV_ids/' + fieldName, { ids }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                                if (response.data.status) {
+                                    if (fieldName === 'pgp_email') {
+                                        let query = "delete from pgp_emails where id IN (" + idsKeys.join() + ")";
+                                        sql.query(query, (error, resp) => {
+                                            if (error) throw error
+                                            if (resp.affectedRows) {
+                                                let query = `SELECT pgp_emails.*, wl.name FROM pgp_emails JOIN white_labels as wl on (wl.id = pgp_emails.whitelabel_id )`;
+                                                sql.query(query, (error, resp) => {
+                                                    res.send({
+                                                        status: true,
+                                                        type: 'pgp',
+                                                        msg: "CSV Deleted Successfully From White Label.",
+                                                        data: resp
+                                                    });
+                                                    return
+                                                });
+                                            } else {
+                                                res.send({
+                                                    status: false,
+                                                    msg: "CSV Not Deleted Please Try Again.",
+                                                });
+                                                return
+                                            }
+                                        });
+                                    }
+                                    else if (fieldName === 'sim_id') {
+                                        let query = "DELETE FROM sim_ids where id IN (" + idsKeys.join() + ")";
+                                        // console.log(query);
+                                        sql.query(query, (error, resp) => {
+                                            if (error) throw error
+                                            if (resp.affectedRows) {
+                                                let query = `SELECT sim_ids.*, wl.name FROM sim_ids JOIN white_labels as wl on (wl.id = sim_ids.whitelabel_id )`
+                                                sql.query(query, (error, resp) => {
+                                                    res.send({
+                                                        status: true,
+                                                        type: 'sim',
+                                                        msg: "CSV Deleted Successfully From White Label.",
+                                                        data: resp
+                                                    });
+                                                    return
+                                                });
+                                            } else {
+                                                res.send({
+                                                    status: true,
+                                                    msg: "CSV Not Deleted Please Try Again.",
+                                                });
+                                                return
+                                            }
+                                        });
+                                    }
+                                    else if (fieldName === 'chat_id') {
+                                        let query = "DELETE FROM chat_ids where id IN (" + idsKeys.join() + ")";
+                                        // console.log(query);
+                                        sql.query(query, (error, resp) => {
+                                            if (error) throw error
+                                            if (resp.affectedRows) {
+
+                                                let query = `SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id )`
+                                                sql.query(query, (error, resp) => {
+                                                    console.log(resp);
+                                                    res.send({
+                                                        status: true,
+                                                        type: 'chat',
+                                                        msg: "CSV Deleted Successfully From White Label.",
+                                                        data: resp
+                                                    });
+                                                    return
+                                                });
+                                            } else {
+                                                res.send({
+                                                    status: false,
+                                                    msg: "CSV Not Deleted Please Try Again.",
+                                                });
+                                                return
+                                            }
+                                        });
+                                    }
+                                }
+                                else {
+                                    res.send({
+                                        status: false,
+                                        msg: "CSV Not Deleted Please Try Again.",
+                                    });
+                                    return
+                                }
+                            });
+                        }
+                        else {
+                            res.send({
+                                status: false,
+                                msg: "Not allowed to perform this action.",
+                            })
+                            return
+                        }
+                    });
+                }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "White Label credentials not found.",
+                    })
+                    return
+                }
+            }
+            else {
+                res.send({
+                    status: false,
+                    msg: "White Label Data not found.",
+                })
+                return
+            }
+        }
+    } catch (error) {
+        console.log(error);
+        res.send({
+            status: false,
+            msg: "Error: CSV not deleted. Please try again",
+        })
+        return
+    }
+}
+exports.syncCSVIds = async function (req, res) {
+    try {
+        let allChat_ids = [];
+        let allSim_ids = [];
+        let allPgp_emials = [];
+        let WHITE_LABEL_BASE_URL = '';
+        let getApiURL = await sql.query(`SELECT * from white_labels where status = 1`)
+        if (getApiURL.length) {
+            for (let i = 0; i < getApiURL.length; i++) {
+                if (getApiURL[i].api_url) {
+                    WHITE_LABEL_BASE_URL = getApiURL[i].api_url;
+                    await axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                        if (response.data.status) {
+                            loginResponse = response.data;
+                            await axios.get(WHITE_LABEL_BASE_URL + '/users/get_csv_ids', { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                                if (response.data.status) {
+                                    let data = response.data
+                                    let sim_ids = data.sim_ids;
+                                    let chat_ids = data.chat_ids;
+                                    let pgp_emails = data.pgp_emails;
+                                    allChat_ids = [...allChat_ids, ...chat_ids]
+                                    allSim_ids = [...allSim_ids, ...sim_ids]
+                                    allPgp_emials = [...allPgp_emials, ...pgp_emails]
+                                }
+                            });
+                        }
+                    });
+                }
+            }
+
+
+            for (let i = 0; i < allChat_ids.length; i++) {
+                await sql.query(`UPDATE chat_ids set used = ${allChat_ids[i].used} where chat_id = ${allChat_ids[i].chat_id}`)
+            }
+            for (let i = 0; i < allSim_ids.length; i++) {
+                await sql.query(`UPDATE sim_ids set used = ${allSim_ids[i].used} where sim_id = ${allSim_ids[i].sim_id}`)
+            }
+            for (let i = 0; i < allPgp_emials.length; i++) {
+                await sql.query(`UPDATE pgp_emails set used = ${allPgp_emials[i].used} where pgp_email = ${allPgp_emials[i].pgp_email}`)
+            }
+            let SA_chat_ids = await sql.query("SELECT * FROM chat_ids")
+            let SA_sim_ids = await sql.query("SELECT * FROM sim_ids")
+            let SA_pgp_emails = await sql.query("SELECT * FROM pgp_emails")
+            res.send({
+                status: true,
+                chat_ids: SA_chat_ids,
+                sim_ids: SA_sim_ids,
+                pgp_emails: SA_pgp_emails,
+            })
+        }
+        else {
+            res.send({
+                status: false,
+            })
+            return
+        }
+    } catch (error) {
+        console.log(error);
+        res.send({
+            status: false,
+        })
+        return
+    }
+}

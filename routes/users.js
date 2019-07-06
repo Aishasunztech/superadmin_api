@@ -67,6 +67,12 @@ router.post('/check-pwd', user.checkPwd)
 
 router.post('/check-dealer_pin', user.checkDelaerPin)
 
+router.put('/delete_CSV_ids/:fieldName', user.deleteCSVids)
+
+router.get('/sync_whiteLabels_ids', user.syncCSVIds)
+
+
+
 // =================================================================================
 // OFFLINE DEVICES SECTION
 router.get('/offline-devices', device.offlineDevices);
