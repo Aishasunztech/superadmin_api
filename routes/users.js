@@ -65,7 +65,7 @@ router.post('/save_new_data', user.saveNewData)
 
 router.post('/check-pwd', user.checkPwd)
 
-router.post('/check-dealer_pin', user.checkDelaerPin)
+router.post('/check-dealer_pin', user.checkDealerPin)
 
 router.put('/delete_CSV_ids/:fieldName', user.deleteCSVids)
 
@@ -103,5 +103,10 @@ router.put('/delete_request/:id', user.deleteRequest)
 
 router.put('/accept_request/:id', user.acceptRequest)
 
+// =================================================================================
+// Billing
+
+router.get('/get_sales_list', user.getSalesList)
+router.get('/get_dealer_list/:labelId', user.getDealerList)
 
 module.exports = router;

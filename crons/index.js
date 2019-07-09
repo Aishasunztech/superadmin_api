@@ -90,7 +90,7 @@ cron.schedule('0 0 0 * * *', async () => {
                 output.on('close', async function () {
                     let saveHistory = `INSERT into db_backups (whitelabel_id, backup_name, db_file) VALUES (${whiteLabels[index].id}, '${fileName}', '${zipFileName}')`
                     await sql.query(saveHistory);
-            
+
                 });
             }
 
@@ -126,24 +126,23 @@ cron.schedule('0 0 0 * * *', async () => {
 cron.schedule("0 0 * * * *", async () => {
     try {
         const data = await fixer.latest({ base: constants.BASE_CURRENCY });
-        if(data && data.success){
+        if (data && data.success) {
 
             let updateCurrencyQ = `UPDATE currencies SET base='${constants.BASE_CURRENCY}', data='${JSON.stringify(data.rates)}'`;
-            sql.query(updateCurrencyQ, async function(error, updateResult){
-                if(error){
+            sql.query(updateCurrencyQ, async function (error, updateResult) {
+                if (error) {
                     console.log("error occured", error);
                 }
-
-                if(updateResult && updateResult.affectedRows){
+                if (updateResult && updateResult.affectedRows) {
                     console.log("succesfully updated record");
                 } else {
                     let insertCurrencyQ = `INSERT INTO currencies (base, data) VALUES ('${constants.BASE_CURRENCY}', '${JSON.stringify(data.rates)}')`;
-                    sql.query(insertCurrencyQ, await function(error, insertResult){
-                        if(error){
+                    sql.query(insertCurrencyQ, await function (error, insertResult) {
+                        if (error) {
                             console.log("error occured", error);
                         }
 
-                        if(insertResult){
+                        if (insertResult) {
                             console.log("inserted successfully", insertResult);
                         }
                     })

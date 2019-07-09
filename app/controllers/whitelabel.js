@@ -315,7 +315,14 @@ exports.importCSV = async function (req, res) {
                                                 error = true;
                                             }
                                         }
-                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/sim_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } });
+                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/sim_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
+                                            data = {
+                                                "status": false,
+                                                "msg": "White Label server not responding. PLease try again later"
+                                            };
+                                            res.send(data);
+                                            return
+                                        });;
                                         // InsertInWL = await axios.post(WHITE_LABEL_BASE_URL + '/users/import/sim_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } });
                                         // if (InsertInWL.data.status) {
                                         //     InsertInWL = true
@@ -408,7 +415,14 @@ exports.importCSV = async function (req, res) {
                                                 error = true;
                                             }
                                         }
-                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/chat_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } });
+                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/chat_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
+                                            data = {
+                                                "status": false,
+                                                "msg": "White Label server not responding. PLease try again later"
+                                            };
+                                            res.send(data);
+                                            return
+                                        });;
                                     }
 
                                     // console.log('duplicate data is', duplicatedChat_ids)
@@ -490,7 +504,14 @@ exports.importCSV = async function (req, res) {
                                                 error = true;
                                             }
                                         }
-                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/pgp_emails', { parsedData }, { headers: { 'authorization': loginResponse.token } });
+                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/pgp_emails', { parsedData }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
+                                            data = {
+                                                "status": false,
+                                                "msg": "White Label server not responding. PLease try again later"
+                                            };
+                                            res.send(data);
+                                            return
+                                        });;
                                     }
 
                                     // console.log('duplicate data is', duplicatedPgp_emails)
@@ -542,7 +563,14 @@ exports.importCSV = async function (req, res) {
                     })
                     return
                 }
-            });
+            }).catch((error) => {
+                data = {
+                    "status": false,
+                    "msg": "White Label server not responding. PLease try again later"
+                };
+                res.send(data);
+                return
+            });;
         }
         else {
             res.send({
@@ -736,10 +764,9 @@ exports.saveIdPrices = async function (req, res) {
                             })
                         }
                     }
-
                 }
             }
-            console.log('errors are ', error)
+            // console.log('errors are ', error)
 
             if (error == 0) {
                 res.send({
