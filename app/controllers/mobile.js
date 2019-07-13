@@ -74,11 +74,12 @@ exports.getWhiteLabel = async function (req, res) {
             let whiteLabelAPKQ = ''
             // console.log(req.body);
             if (req.body.byod_status) {
-                whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND byod_type = 'BYOD'`;
+                let byod_type = req.body.byod_type;
+                whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND byod_type = '${byod_type}'`;
             } else {
                 whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND byod_type != 'BYOD' AND byod_type != 'BYOD7' `;
             }
-            // console.log(whiteLabelAPKQ);
+            console.log(whiteLabelAPKQ);
             // let whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id}`;
             let whiteLabelAPKS = await sql.query(whiteLabelAPKQ);
             // console.log("hello", whiteLabelAPKS);
