@@ -2,3 +2,5 @@
 #/_DB
 /config/constants.js
 /db_backup
+uploads/*
+!uploads/.gitkeep
