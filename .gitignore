@@ -1,4 +1,7 @@
 /node_modules
 #/_DB
 /config/constants.js
-/db_backup
+db_backup/*
+!db_backup/.gitkeep
+uploads/*
+!uploads/.gitkeep
