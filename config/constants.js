@@ -1,5 +1,5 @@
 module.exports = {
-	PROJECT_NAME: 'SuperAdmin',
+	APP_TITLE: 'SuperAdmin',
 	HOST: "http://localhost:8042",
 	SECRET: 'kepitsecretwithauth!@#',
   	EXPIRES_IN: '86400s',
