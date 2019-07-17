@@ -14,88 +14,11 @@ const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
 const moment = require('moment')
 // const fs = require("fs");
-const PDFDocument = require("pdfkit");
 
+const { createInvoice } = require('../../helpers/CreateInvoice')
 
 const smtpTransport = require('../../helpers/mail')
 
-function createInvoice(invoice, path) {
-    let doc = new PDFDocument({ margin: 50 });
-
-    generateHeader(doc);
-    generateCustomerInformation(doc, invoice);
-    generateInvoiceTable(doc, invoice);
-    generateFooter(doc);
-
-    doc.end();
-    doc.pipe(fs.createWriteStream(path));
-}
-function generateHeader(doc) {
-    doc
-        // .image("logo.png", 50, 45, { width: 50 })
-        .fillColor("#444444")
-        .fontSize(20)
-        .text("HAMZA DAWOOD Inc.", 110, 57)
-        .fontSize(10)
-        .text("123 Main Street", 200, 65, { align: "right" })
-        .text("New York, NY, 10025", 200, 80, { align: "right" })
-        .moveDown();
-}
-
-function generateFooter(doc) {
-    doc
-        .fontSize(10)
-        .text(
-            "Payment is due within 15 days. Thank you for your business.",
-            50,
-            780,
-            { align: "center", width: 500 }
-        );
-}
-function generateCustomerInformation(doc, invoice) {
-    const shipping = invoice.shipping;
-
-    doc
-        .text(`Invoice Number: ${invoice.invoice_nr}`, 50, 200)
-        .text(`Invoice Date: ${new Date()}`, 50, 215)
-        .text(`Balance Due: ${invoice.subtotal - invoice.paid}`, 50, 130)
-
-        .text(shipping.name, 300, 200)
-        .text(shipping.address, 300, 215)
-        .text(
-            `${shipping.city}, ${shipping.state}, ${shipping.country}`,
-            300,
-            130
-        )
-        .moveDown();
-}
-function generateTableRow(doc, y, c1, c2, c3, c4, c5) {
-    doc
-        .fontSize(10)
-        .text(c1, 50, y)
-        .text(c2, 150, y)
-        .text(c3, 280, y, { width: 90, align: "right" })
-        .text(c4, 370, y, { width: 90, align: "right" })
-        .text(c5, 0, y, { align: "right" });
-}
-function generateInvoiceTable(doc, invoice) {
-    let i,
-        invoiceTableTop = 330;
-
-    for (i = 0; i < invoice.items.length; i++) {
-        const item = invoice.items[i];
-        const position = invoiceTableTop + (i + 1) * 30;
-        generateTableRow(
-            doc,
-            position,
-            item.item,
-            item.description,
-            item.amount / item.quantity,
-            item.quantity,
-            item.amount
-        );
-    }
-}
 function sendEmail(subject, message, to, callback) {
     let cb = callback;
     subject = "Super Admin Team - " + subject
@@ -528,7 +451,9 @@ exports.importCSV = async function (req, res) {
                                                 // }
                                                 // let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
                                                 let insertQ = `INSERT INTO sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ( '${row.sim_id}', '${labelID}', '${row.start_date}', '${row.expiry_date}')`;
-                                                let result = await sql.query(insertQ);
+                                                let result = await sql.query(insertQ).catch((err) => {
+                                                    error = true
+                                                });
                                             } else {
                                                 error = true;
                                             }
@@ -536,14 +461,16 @@ exports.importCSV = async function (req, res) {
                                         await axios.post(WHITE_LABEL_BASE_URL + '/users/import/sim_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
                                             data = {
                                                 "status": false,
-                                                "msg": "White Label server not responding. PLease try again later"
+                                                "msg": "White Label server not responding. PLease try again later",
+                                                "type": "sim_id",
+                                                "duplicateData": [],
                                             };
                                             res.send(data);
                                             return
                                         });;
                                     }
 
-                                    // console.log('duplicate data is here', duplicatedSimIds)
+                                    console.log('duplicate data is here', duplicatedSimIds)
                                     // if (InsertInWL) {
 
                                     if (!error && duplicatedSimIds.length === 0) {
@@ -594,7 +521,7 @@ exports.importCSV = async function (req, res) {
 
                                     let chat_ids = []
                                     for (let row of parsedData) {
-                                        chat_ids.push(row.chat_id.toString())
+                                        chat_ids.push(`"${row.chat_id.toString()}"`)
                                     }
                                     let slctQ = "SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id ) WHERE chat_id IN (" + chat_ids + ")";
                                     let dataof = await sql.query(slctQ);
@@ -622,7 +549,9 @@ exports.importCSV = async function (req, res) {
                                                 //     await corsConnection.query(corsInsertQ);
                                                 // }
 
-                                                let result = await sql.query(`INSERT INTO chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${labelID}')`);
+                                                let result = await sql.query(`INSERT INTO chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${labelID}')`).catch((err) => {
+                                                    error = true
+                                                });;
                                             } else {
                                                 error = true;
                                             }
@@ -630,13 +559,15 @@ exports.importCSV = async function (req, res) {
                                         await axios.post(WHITE_LABEL_BASE_URL + '/users/import/chat_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
                                             data = {
                                                 "status": false,
-                                                "msg": "White Label server not responding. PLease try again later"
+                                                "msg": "White Label server not responding. PLease try again later",
+                                                "type": "chat_id",
+                                                "duplicateData": [],
                                             };
+                                            // console.log(data);
                                             res.send(data);
                                             return
-                                        });;
+                                        });
                                     }
-
 
                                     if (!error && duplicatedChat_ids.length === 0) {
                                         res.send({
@@ -709,8 +640,10 @@ exports.importCSV = async function (req, res) {
 
                                                 // }
 
-
-                                                let result = await sql.query(`INSERT INTO pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${labelID}')`);
+                                                // console.log("working");
+                                                await sql.query(`INSERT INTO pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${labelID}')`).catch((err) => {
+                                                    error = true
+                                                });
                                             } else {
                                                 error = true;
                                             }
@@ -718,7 +651,9 @@ exports.importCSV = async function (req, res) {
                                         await axios.post(WHITE_LABEL_BASE_URL + '/users/import/pgp_emails', { parsedData }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
                                             data = {
                                                 "status": false,
-                                                "msg": "White Label server not responding. PLease try again later"
+                                                "msg": "White Label server not responding. PLease try again later",
+                                                "type": "pgp_email",
+                                                "duplicateData": [],
                                             };
                                             res.send(data);
                                             return
@@ -748,13 +683,14 @@ exports.importCSV = async function (req, res) {
                                     return;
                                 }
 
-                            });
+                            })
                         } else {
                             res.send({
                                 status: false,
                                 msg: "Incorrect file data",
                                 "duplicateData": [],
                             })
+                            return
                             // corsConnection.end()
                         }
                     } else {
@@ -763,6 +699,7 @@ exports.importCSV = async function (req, res) {
                             msg: "Incorrect file data",
                             "duplicateData": [],
                         })
+                        return
                         // corsConnection.end()
                     }
                 }
@@ -775,10 +712,13 @@ exports.importCSV = async function (req, res) {
                     return
                 }
             }).catch((error) => {
+                console.log("error", error);
                 data = {
                     "status": false,
-                    "msg": "White Label server not responding. PLease try again later"
+                    "msg": "White Label server not responding. PLease try again later",
+                    "duplicateData": [],
                 };
+                // console.log("response send 1");
                 res.send(data);
                 return
             });;
@@ -822,7 +762,7 @@ exports.saveNewData = async function (req, res) {
                                 error += 1;
                             }
                         }
-                        await axios.post(WHITE_LABEL_BASE_URL + '/users//save_new_data', { newData: req.body.newData, type: 'sim_id' }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
+                        await axios.post(WHITE_LABEL_BASE_URL + '/users/save_new_data', { newData: req.body.newData, type: 'sim_id' }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
                             data = {
                                 "status": false,
                                 "msg": "White Label server not responding. PLease try again later"
@@ -840,11 +780,12 @@ exports.saveNewData = async function (req, res) {
                                 error += 1;
                             }
                         }
-                        await axios.post(WHITE_LABEL_BASE_URL + '/users//save_new_data', { newData: req.body.newData, type: 'chat_id' }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
+                        await axios.post(WHITE_LABEL_BASE_URL + '/users/save_new_data', { newData: req.body.newData, type: 'chat_id' }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
                             data = {
                                 "status": false,
                                 "msg": "White Label server not responding. PLease try again later"
                             };
+                            // console.log("response send 2");
                             res.send(data);
                             return
                         });;
@@ -860,7 +801,7 @@ exports.saveNewData = async function (req, res) {
                                 error += 1;
                             }
                         }
-                        await axios.post(WHITE_LABEL_BASE_URL + '/users//save_new_data', { newData: req.body.newData, type: 'pgp_email' }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
+                        await axios.post(WHITE_LABEL_BASE_URL + '/users/save_new_data', { newData: req.body.newData, type: 'pgp_email' }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
                             data = {
                                 "status": false,
                                 "msg": "White Label server not responding. PLease try again later"
@@ -1747,34 +1688,28 @@ exports.checkDealerPin = async function (req, res) {
     // console.log(req.decoded);
     const invoice = {
         shipping: {
-            name: "John Doe",
-            address: "1234 Main Street",
-            city: "San Francisco",
-            state: "CA",
-            country: "US",
-            postal_code: 94111
+            name: "Hamza Dawood",
+            // address: "1234 Main Street",
+            // city: "San Francisco",
+            // state: "CA",
+            // country: "US",
+            // postal_code: 94111
         },
         items: [
             {
-                item: "TC 100",
-                description: "Toner Cartridge",
-                quantity: 2,
-                amount: 6000
+                item: "Credits",
+                description: "Credits puchased on cash ",
+                quantity: 1000,
+                amount: 100000
             },
-            {
-                item: "USB_EXT",
-                description: "USB Cable Extender",
-                quantity: 1,
-                amount: 2000
-            }
         ],
-        // subtotal: 8000,
-        paid: 0,
-        invoice_nr: 1234
+        subtotal: 100000,
+        paid: 100000,
+        invoice_nr: 'PI123456'
     };
-    let filePath = path.join(__dirname, "../../uploads/invoice.pdf")
+    let filePath = path.join(__dirname, "../../uploads/invoice" + Date.now() + ".pdf")
     createInvoice(invoice, filePath)
-
+    return
 
     if (req.decoded && req.decoded.user) {
         // console.log(req.body);
