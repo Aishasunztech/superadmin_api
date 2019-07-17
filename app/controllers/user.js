@@ -1685,32 +1685,7 @@ exports.checkPwd = async function (req, res) {
 
 }
 exports.checkDealerPin = async function (req, res) {
-    // console.log(req.decoded);
-    const invoice = {
-        shipping: {
-            name: "Hamza Dawood",
-            // address: "1234 Main Street",
-            // city: "San Francisco",
-            // state: "CA",
-            // country: "US",
-            // postal_code: 94111
-        },
-        items: [
-            {
-                item: "Credits",
-                description: "Credits puchased on cash ",
-                quantity: 1000,
-                amount: 100000
-            },
-        ],
-        subtotal: 100000,
-        paid: 100000,
-        invoice_nr: 'PI123456'
-    };
-    let filePath = path.join(__dirname, "../../uploads/invoice" + Date.now() + ".pdf")
-    createInvoice(invoice, filePath)
-    return
-
+    
     if (req.decoded && req.decoded.user) {
         // console.log(req.body);
         let dealer_pin = req.body.dealer_pin;
