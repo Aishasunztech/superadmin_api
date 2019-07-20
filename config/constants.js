@@ -29,7 +29,7 @@ if (HOST_NAME) {
 			DB_PASSWORD = 'Alibaba@40C#'
 
 			// Email
-			SMTP_FROM_EMAIL = "admin@meshguard.co";
+			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "SuperAdmin";
 			break;
 		case 'SuperAdmin Dev':
@@ -42,7 +42,7 @@ if (HOST_NAME) {
 
 			
 			// Email
-			SMTP_FROM_EMAIL = "admin@dev.meshguard.co";
+			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "SuperAdmin";
 			break;
 		default:
