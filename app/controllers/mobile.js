@@ -74,7 +74,8 @@ exports.getWhiteLabel = async function (req, res) {
             let whiteLabelAPKQ = ''
             // console.log(req.body);
             if (req.body.byod_status) {
-                whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND byod_type = 'BYOD'`;
+                let byod_type = req.body.byod_type;
+                whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND byod_type = '${byod_type}'`;
             } else {
                 whiteLabelAPKQ = `SELECT apk_file, package_name FROM whitelabel_apks WHERE whitelabel_id = ${whiteLabel[0].id} AND byod_type != 'BYOD' AND byod_type != 'BYOD7' `;
             }
@@ -105,7 +106,7 @@ exports.getUpdate = async (req, res) => {
     let versionName = req.params.version;
     let uniqueName = req.params.uniqueName;
     let label = req.params.label;
-    console.log(label);
+    // console.log(label);
 
     let query = `SELECT * FROM apk_details WHERE package_name = '${uniqueName}' AND ( label = '${label}' ) AND apk_type = 'permanent' AND delete_status = 0`;
 

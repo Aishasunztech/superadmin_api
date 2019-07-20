@@ -13,6 +13,9 @@ const Constants = require('../../constants/application');
 const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
 const moment = require('moment')
+// const fs = require("fs");
+
+const { createInvoice } = require('../../helpers/CreateInvoice')
 
 const smtpTransport = require('../../helpers/mail')
 
@@ -448,21 +451,26 @@ exports.importCSV = async function (req, res) {
                                                 // }
                                                 // let result = await sql.query("INSERT sim_ids (sim_id, start_date, expiry_date) value ('" + row.sim_id + "', '" + row.start_date + "', '" + row.expiry_date + "')");
                                                 let insertQ = `INSERT INTO sim_ids (sim_id, whitelabel_id, start_date, expiry_date) value ( '${row.sim_id}', '${labelID}', '${row.start_date}', '${row.expiry_date}')`;
-                                                let result = await sql.query(insertQ);
+                                                let result = await sql.query(insertQ).catch((err) => {
+                                                    error = true
+                                                });
                                             } else {
                                                 error = true;
                                             }
                                         }
-                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/sim_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } });
-                                        // InsertInWL = await axios.post(WHITE_LABEL_BASE_URL + '/users/import/sim_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } });
-                                        // if (InsertInWL.data.status) {
-                                        //     InsertInWL = true
-                                        // } else {
-                                        //     InsertInWL = false
-                                        // }
+                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/sim_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
+                                            data = {
+                                                "status": false,
+                                                "msg": "White Label server not responding. PLease try again later",
+                                                "type": "sim_id",
+                                                "duplicateData": [],
+                                            };
+                                            res.send(data);
+                                            return
+                                        });;
                                     }
 
-                                    // console.log('duplicate data is here', duplicatedSimIds)
+                                    console.log('duplicate data is here', duplicatedSimIds)
                                     // if (InsertInWL) {
 
                                     if (!error && duplicatedSimIds.length === 0) {
@@ -513,7 +521,7 @@ exports.importCSV = async function (req, res) {
 
                                     let chat_ids = []
                                     for (let row of parsedData) {
-                                        chat_ids.push(row.chat_id.toString())
+                                        chat_ids.push(`"${row.chat_id.toString()}"`)
                                     }
                                     let slctQ = "SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id ) WHERE chat_id IN (" + chat_ids + ")";
                                     let dataof = await sql.query(slctQ);
@@ -541,15 +549,25 @@ exports.importCSV = async function (req, res) {
                                                 //     await corsConnection.query(corsInsertQ);
                                                 // }
 
-                                                let result = await sql.query(`INSERT INTO chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${labelID}')`);
+                                                let result = await sql.query(`INSERT INTO chat_ids (chat_id, whitelabel_id) value ('${row.chat_id}', '${labelID}')`).catch((err) => {
+                                                    error = true
+                                                });;
                                             } else {
                                                 error = true;
                                             }
                                         }
-                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/chat_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } });
+                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/chat_ids', { parsedData }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
+                                            data = {
+                                                "status": false,
+                                                "msg": "White Label server not responding. PLease try again later",
+                                                "type": "chat_id",
+                                                "duplicateData": [],
+                                            };
+                                            // console.log(data);
+                                            res.send(data);
+                                            return
+                                        });
                                     }
-
-                                    // console.log('duplicate data is', duplicatedChat_ids)
 
                                     if (!error && duplicatedChat_ids.length === 0) {
                                         res.send({
@@ -622,13 +640,24 @@ exports.importCSV = async function (req, res) {
 
                                                 // }
 
-
-                                                let result = await sql.query(`INSERT INTO pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${labelID}')`);
+                                                // console.log("working");
+                                                await sql.query(`INSERT INTO pgp_emails (pgp_email, whitelabel_id) value ('${row.pgp_email}', '${labelID}')`).catch((err) => {
+                                                    error = true
+                                                });
                                             } else {
                                                 error = true;
                                             }
                                         }
-                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/pgp_emails', { parsedData }, { headers: { 'authorization': loginResponse.token } });
+                                        await axios.post(WHITE_LABEL_BASE_URL + '/users/import/pgp_emails', { parsedData }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
+                                            data = {
+                                                "status": false,
+                                                "msg": "White Label server not responding. PLease try again later",
+                                                "type": "pgp_email",
+                                                "duplicateData": [],
+                                            };
+                                            res.send(data);
+                                            return
+                                        });;
                                     }
 
                                     // console.log('duplicate data is', duplicatedPgp_emails)
@@ -654,13 +683,14 @@ exports.importCSV = async function (req, res) {
                                     return;
                                 }
 
-                            });
+                            })
                         } else {
                             res.send({
                                 status: false,
                                 msg: "Incorrect file data",
                                 "duplicateData": [],
                             })
+                            return
                             // corsConnection.end()
                         }
                     } else {
@@ -669,6 +699,7 @@ exports.importCSV = async function (req, res) {
                             msg: "Incorrect file data",
                             "duplicateData": [],
                         })
+                        return
                         // corsConnection.end()
                     }
                 }
@@ -680,7 +711,17 @@ exports.importCSV = async function (req, res) {
                     })
                     return
                 }
-            });
+            }).catch((error) => {
+                console.log("error", error);
+                data = {
+                    "status": false,
+                    "msg": "White Label server not responding. PLease try again later",
+                    "duplicateData": [],
+                };
+                // console.log("response send 1");
+                res.send(data);
+                return
+            });;
         }
         else {
             res.send({
@@ -721,7 +762,14 @@ exports.saveNewData = async function (req, res) {
                                 error += 1;
                             }
                         }
-                        await axios.post(WHITE_LABEL_BASE_URL + '/users//save_new_data', { newData: req.body.newData, type: 'sim_id' }, { headers: { 'authorization': loginResponse.token } });
+                        await axios.post(WHITE_LABEL_BASE_URL + '/users/save_new_data', { newData: req.body.newData, type: 'sim_id' }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later"
+                            };
+                            res.send(data);
+                            return
+                        });;
                     } else if (req.body.type == 'chat_id') {
                         for (let row of req.body.newData) {
                             // if (corsConnection != '') {
@@ -732,7 +780,15 @@ exports.saveNewData = async function (req, res) {
                                 error += 1;
                             }
                         }
-                        await axios.post(WHITE_LABEL_BASE_URL + '/users//save_new_data', { newData: req.body.newData, type: 'chat_id' }, { headers: { 'authorization': loginResponse.token } });
+                        await axios.post(WHITE_LABEL_BASE_URL + '/users/save_new_data', { newData: req.body.newData, type: 'chat_id' }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later"
+                            };
+                            // console.log("response send 2");
+                            res.send(data);
+                            return
+                        });;
 
                     } else if (req.body.type == 'pgp_email') {
                         for (let row of req.body.newData) {
@@ -745,7 +801,14 @@ exports.saveNewData = async function (req, res) {
                                 error += 1;
                             }
                         }
-                        await axios.post(WHITE_LABEL_BASE_URL + '/users//save_new_data', { newData: req.body.newData, type: 'pgp_email' }, { headers: { 'authorization': loginResponse.token } });
+                        await axios.post(WHITE_LABEL_BASE_URL + '/users/save_new_data', { newData: req.body.newData, type: 'pgp_email' }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later"
+                            };
+                            res.send(data);
+                            return
+                        });;
 
                     }
 
@@ -770,7 +833,14 @@ exports.saveNewData = async function (req, res) {
                     })
                     return
                 }
-            });
+            }).catch((error) => {
+                data = {
+                    "status": false,
+                    "msg": "White Label server not responding. PLease try again later"
+                };
+                res.send(data);
+                return
+            });;
         }
         else {
             res.send({
@@ -793,12 +863,12 @@ exports.saveNewData = async function (req, res) {
 
 exports.getSimIds = async function (req, res) {
     // let query = "select * from sim_ids where used=0";
-    let query = `SELECT sim_ids.*, wl.name FROM sim_ids JOIN white_labels as wl on (wl.id = sim_ids.whitelabel_id )`;
+    let query = `SELECT sim_ids.*, wl.name FROM sim_ids JOIN white_labels as wl on (wl.id = sim_ids.whitelabel_id) WHERE wl.status = 1`;
     sql.query(query, (error, resp) => {
-        console.log(resp, 'is response')
+        // console.log(resp, 'is response')
         if (error) throw error
         if (resp.length) {
-            console.log(resp, 'is response')
+            // console.log(resp, 'is response')
             res.send({
                 status: true,
                 msg: "data success",
@@ -821,12 +891,12 @@ exports.getChatIds = async function (req, res) {
     // console.log('-------------------------------------------')
 
     // let query = "select * from chat_ids where used=0";
-    let query = `SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id)`;
+    let query = `SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id) WHERE wl.status = 1`;
     sql.query(query, (error, resp) => {
         // console.log(resp, 'is response')
         if (error) throw error
         if (resp.length) {
-            console.log(resp, 'is response')
+            // console.log(resp, 'is response')
             res.send({
                 status: true,
                 msg: "data success",
@@ -844,12 +914,12 @@ exports.getChatIds = async function (req, res) {
 
 exports.getPgpEmails = async function (req, res) {
     // let query = "select * from pgp_emails where used=0";
-    let query = `SELECT pgp_emails.*, wl.name FROM pgp_emails JOIN white_labels as wl on (wl.id = pgp_emails.whitelabel_id)`;
+    let query = `SELECT pgp_emails.*, wl.name FROM pgp_emails JOIN white_labels as wl on (wl.id = pgp_emails.whitelabel_id) WHERE wl.status = 1`;
     sql.query(query, (error, resp) => {
-        console.log(resp, 'is response')
+        // console.log(resp, 'is response')
         if (error) throw error
         if (resp.length) {
-            console.log(resp, 'is response')
+            // console.log(resp, 'is response')
             res.send({
                 status: true,
                 msg: "data success",
@@ -1329,9 +1399,11 @@ exports.requestCredits = async function (req, res) {
         let dealer_email = req.body.dealer_email
         let label = req.body.label
         let credits = req.body.credits
+        let dealer_pin = req.body.dealer_pin
+        // console.log(dealer_pin);
         if (dealer_id != '' && label != '' && credits != '') {
 
-            let query = `INSERT into credit_requests (dealer_id,dealer_name,dealer_email,label,credits) VALUES (${dealer_id},'${dealer_name}','${dealer_email}','${label}',${credits})`;
+            let query = `INSERT into credit_requests (dealer_id,dealer_pin,dealer_name,dealer_email,label,credits) VALUES (${dealer_id},'${dealer_pin}','${dealer_name}','${dealer_email}','${label}',${credits})`;
             sql.query(query, function (err, result) {
                 if (err) throw err
                 if (result && result.affectedRows > 0) {
@@ -1432,7 +1504,7 @@ exports.deleteRequest = async function (req, res) {
 
             } else {
                 data = {
-                    "status": false,
+                    status: false,
                     msg: "Request is already deleted"
                 };
                 res.send(data);
@@ -1440,103 +1512,162 @@ exports.deleteRequest = async function (req, res) {
             }
         })
     } catch (error) {
-        throw error
+        console.log(error)
+        data = {
+            status: false,
+            msg: "Request not deleted please try again."
+        };
+        res.send(data);
+        return
     }
 }
 exports.acceptRequest = async function (req, res) {
     try {
         let id = req.params.id
-        let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
-        console.log(query);
-        sql.query(query, async function (err, result) {
-            if (err) throw err
+        let password = req.body.pass
+        let requestData = req.body.request
+        let order_date = moment(requestData.created_at).format('YYYY-MM-DD hh:mm:ss');
+        let dealer_pin = req.body.dealer_pin
+        // expiry_date = moment(expiry_date).format('YYYY-MM-DD hh:mm:ss');
+        // console.log("Accept Request API", password, requestData , order_date);
+        // return
+        let checkPassQ = `SELECT * FROM credit_requests WHERE id = ${id} AND password = '${password}'`
+        sql.query(checkPassQ, function (err, result) {
+            if (err) {
+                data = {
+                    "status": false,
+                    "msg": "Error: Request not accepted. Please try again."
+                };
+                res.send(data);
+                return
+            }
             if (result.length) {
-                let labelID = await general_helpers.getlabelIdByName(result[0].label)
-                // console.log(labelID);
-                let getApiURL = await sql.query(`SELECT * from white_labels where id = ${labelID}`)
-                if (getApiURL.length) {
-                    if (getApiURL[0].api_url) {
-                        var WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
-                        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
-                            if (response.data.status) {
-                                let loginResponse = response.data
-                                let data = {
-                                    credits: result[0].credits,
-                                    dealer_id: result[0].dealer_id
-                                }
-
-                                axios.post(WHITE_LABEL_BASE_URL + '/users/update_credit', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                let query = "SELECT * FROM credit_requests WHERE id = " + id + " and  status = '0'"
+                // console.log(query);
+                sql.query(query, async function (err, result) {
+                    if (err) throw err
+                    if (result.length) {
+                        let labelID = await general_helpers.getlabelIdByName(result[0].label)
+                        // console.log(labelID);
+                        let getApiURL = await sql.query(`SELECT * FROM white_labels WHERE id = ${labelID}`)
+                        if (getApiURL.length) {
+                            if (getApiURL[0].api_url) {
+                                var WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                                axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                                    console.log(response);
                                     if (response.data.status) {
-                                        let updateQuery = "update credit_requests set status = 1 where id= " + id
-                                        sql.query(updateQuery, function (err, result) {
-                                            if (err) throw err
-                                            if (result && result.affectedRows > 0) {
+                                        let loginResponse = response.data
+                                        let data = {
+                                            credits: result[0].credits,
+                                            dealer_id: result[0].dealer_id
+                                        }
+
+                                        axios.post(WHITE_LABEL_BASE_URL + '/users/update_credit', { data }, { headers: { 'authorization': loginResponse.token } }).then(async (response) => {
+                                            if (response.data.status) {
+                                                let inv_no = "PI123456"
+                                                let dealerQ = `SELECT * FROM superadmins_credentials WHERE dealer_pin = ${dealer_pin}`
+                                                let dealerData = await sql.query(dealerQ);
+
+                                                let acceptRequestQ = `INSERT INTO sales (dealer_id,dealer_pin,dealer_name,credits,label, accepted_by,inv_no,order_date,account_type,status,pay_type) VALUES(${requestData.dealer_id},'${requestData.dealer_pin}','${requestData.dealer_name}',${requestData.credits},'${requestData.label}','${dealerData[0].dealer_name}','${inv_no}','${order_date}','admin' ,'UNPAID' ,'CASH')`
+                                                sql.query(acceptRequestQ)
+                                                console.log(acceptRequestQ);
+                                                let updateQuery = "update credit_requests set status = 1 where id= " + id
+                                                sql.query(updateQuery, function (err, result) {
+                                                    if (err) throw err
+                                                    if (result && result.affectedRows > 0) {
+                                                        data = {
+                                                            "status": true,
+                                                            "msg": response.data.msg
+                                                        };
+                                                        res.send(data);
+                                                        return
+                                                    }
+                                                })
+                                            } else {
                                                 data = {
-                                                    "status": true,
-                                                    "msg": response.data.msg
+                                                    "status": false,
+                                                    "msg": "Credits not added to user please try again."
                                                 };
                                                 res.send(data);
                                                 return
                                             }
-                                        })
-                                    } else {
+                                        }).catch((error) => {
+                                            data = {
+                                                "status": false,
+                                                "msg": "White Label server not responding. PLease try again later"
+                                            };
+                                            res.send(data);
+                                            return
+                                        });
+                                    }
+                                    else {
                                         data = {
                                             "status": false,
-                                            "msg": "Credits not added to user please try again."
+                                            "msg": "User authentication failed.You are not allowed to perform this action."
                                         };
                                         res.send(data);
                                         return
                                     }
+                                }).catch((error) => {
+                                    data = {
+                                        "status": false,
+                                        "msg": "White Label server not responding. PLease try again later"
+                                    };
+                                    res.send(data);
+                                    return
                                 });
                             }
                             else {
-                                data = {
-                                    "status": false,
-                                    "msg": "User authentication failed.You are not allowed to perform this action."
-                                };
-                                res.send(data);
+                                res.send({
+                                    status: false,
+                                    msg: "White Label credentials not found.",
+                                    "duplicateData": []
+                                })
                                 return
                             }
-                        })
+
+                        }
+                        else {
+                            res.send({
+                                status: false,
+                                msg: "White Label Data not found.",
+                                // "duplicateData": []
+                            })
+                            return
+                        }
 
 
-                    }
-                    else {
-                        res.send({
-                            status: false,
-                            msg: "White Label credentials not found.",
-                            "duplicateData": []
-                        })
+                    } else {
+                        data = {
+                            "status": true,
+                            msg: "Request is already deleted"
+                        };
+                        res.send(data);
                         return
                     }
-
-                }
-                else {
-                    res.send({
-                        status: false,
-                        msg: "White Label Data not found.",
-                        // "duplicateData": []
-                    })
-                    return
-                }
-
-
+                })
             } else {
                 data = {
-                    "status": true,
-                    msg: "Request is already deleted"
+                    "status": false,
+                    "msg": "Password does not Match. Please enter a valid password."
                 };
                 res.send(data);
                 return
             }
         })
     } catch (error) {
-        throw error
+        // console.log(error)
+        data = {
+            "status": false,
+            "msg": "Error: Request not accepted. Please try again."
+        };
+        res.send(data);
+        return
     }
 }
-exports.checkPwd = async function(req, res){
+exports.checkPwd = async function (req, res) {
     // console.log(req.decoded);
-    if(req.decoded && req.decoded.user){
+    if (req.decoded && req.decoded.user) {
         let pwd = md5(req.body.password);
         let query_res = await sql.query(`SELECT * FROM admins WHERE id=${req.decoded.user.id} AND password='${pwd}'`);
         if (query_res.length) {
@@ -1551,5 +1682,357 @@ exports.checkPwd = async function(req, res){
             return;
         }
     }
+
+}
+exports.checkDealerPin = async function (req, res) {
     
+    if (req.decoded && req.decoded.user) {
+        // console.log(req.body);
+        let dealer_pin = req.body.dealer_pin;
+        let requestData = req.body.requestData
+        let enc_pass = md5(requestData.dealer_name + requestData.dealer_email + requestData.id + Date.now())
+        // console.log(enc_pass);
+        let query_res = await sql.query(`SELECT * FROM superadmins_credentials WHERE dealer_pin='${dealer_pin}' limit 1`);
+        if (query_res.length) {
+
+            let html = "<b> You are accepting a following request:<br>  Dealer Name : " + requestData.dealer_name + "<br> White Label : " + requestData.label + "<br> No. of Credits : " + requestData.credits + "<br> Your password to accept a CASH REQUEST is " + enc_pass + " </b>";
+            // console.log(query_res[0].admin_email);
+            try {
+                sendEmail("ACCEPT CASH REQUEST", html, query_res[0].dealer_email);
+            }
+            catch (err) {
+                console.log(err);
+            }
+            sql.query(`UPDATE credit_requests set password = '${enc_pass}' WHERE id = ${requestData.id}`);
+            res.send({
+                "pin_matched": true
+            });
+            return;
+        } else {
+            res.send({
+                "pin_matched": false
+            });
+            return;
+        }
+    }
+}
+exports.deleteCSVids = async function (req, res) {
+    try {
+        var fieldName = req.params.fieldName
+        var ids = req.body.ids
+        var idsKeys = req.body.ids.map((item) => {
+            return item.id
+        })
+        // console.log(ids[0]);
+        let labelID = ids[0].whitelabel_id;
+        let WHITE_LABEL_BASE_URL = '';
+
+        if (ids.length) {
+            let getApiURL = await sql.query(`SELECT * from white_labels where id = ${labelID}`)
+            if (getApiURL.length) {
+                if (getApiURL[0].api_url) {
+                    WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                    // console.log(WHITE_LABEL_BASE_URL);
+                    axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                        if (response.data.status) {
+                            loginResponse = response.data;
+                            // console.log(response.data);
+                            await axios.post(WHITE_LABEL_BASE_URL + '/users/delete_CSV_ids/' + fieldName, { ids }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                                if (response.data.status) {
+                                    if (fieldName === 'pgp_email') {
+                                        let query = "delete from pgp_emails where id IN (" + idsKeys.join() + ")";
+                                        sql.query(query, (error, resp) => {
+                                            if (error) throw error
+                                            if (resp.affectedRows) {
+                                                let query = `SELECT pgp_emails.*, wl.name FROM pgp_emails JOIN white_labels as wl on (wl.id = pgp_emails.whitelabel_id )`;
+                                                sql.query(query, (error, resp) => {
+                                                    res.send({
+                                                        status: true,
+                                                        type: 'pgp',
+                                                        msg: "CSV Deleted Successfully From White Label.",
+                                                        data: resp
+                                                    });
+                                                    return
+                                                });
+                                            } else {
+                                                res.send({
+                                                    status: false,
+                                                    msg: "CSV Not Deleted Please Try Again.",
+                                                });
+                                                return
+                                            }
+                                        });
+                                    }
+                                    else if (fieldName === 'sim_id') {
+                                        let query = "DELETE FROM sim_ids where id IN (" + idsKeys.join() + ")";
+                                        // console.log(query);
+                                        sql.query(query, (error, resp) => {
+                                            if (error) throw error
+                                            if (resp.affectedRows) {
+                                                let query = `SELECT sim_ids.*, wl.name FROM sim_ids JOIN white_labels as wl on (wl.id = sim_ids.whitelabel_id )`
+                                                sql.query(query, (error, resp) => {
+                                                    res.send({
+                                                        status: true,
+                                                        type: 'sim',
+                                                        msg: "CSV Deleted Successfully From White Label.",
+                                                        data: resp
+                                                    });
+                                                    return
+                                                });
+                                            } else {
+                                                res.send({
+                                                    status: true,
+                                                    msg: "CSV Not Deleted Please Try Again.",
+                                                });
+                                                return
+                                            }
+                                        });
+                                    }
+                                    else if (fieldName === 'chat_id') {
+                                        let query = "DELETE FROM chat_ids where id IN (" + idsKeys.join() + ")";
+                                        // console.log(query);
+                                        sql.query(query, (error, resp) => {
+                                            if (error) throw error
+                                            if (resp.affectedRows) {
+
+                                                let query = `SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id )`
+                                                sql.query(query, (error, resp) => {
+                                                    console.log(resp);
+                                                    res.send({
+                                                        status: true,
+                                                        type: 'chat',
+                                                        msg: "CSV Deleted Successfully From White Label.",
+                                                        data: resp
+                                                    });
+                                                    return
+                                                });
+                                            } else {
+                                                res.send({
+                                                    status: false,
+                                                    msg: "CSV Not Deleted Please Try Again.",
+                                                });
+                                                return
+                                            }
+                                        });
+                                    }
+                                }
+                                else {
+                                    res.send({
+                                        status: false,
+                                        msg: "CSV Not Deleted Please Try Again.",
+                                    });
+                                    return
+                                }
+                            }).catch((error) => {
+                                data = {
+                                    "status": false,
+                                    "msg": "White Label server not responding. PLease try again later"
+                                };
+                                res.send(data);
+                                return
+                            });;
+                        }
+                        else {
+                            res.send({
+                                status: false,
+                                msg: "Not allowed to perform this action.",
+                            })
+                            return
+                        }
+                    }).catch((error) => {
+                        data = {
+                            "status": false,
+                            "msg": "White Label server not responding. PLease try again later"
+                        };
+                        res.send(data);
+                        return
+                    });
+                }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "White Label credentials not found.",
+                    })
+                    return
+                }
+            }
+            else {
+                res.send({
+                    status: false,
+                    msg: "White Label Data not found.",
+                })
+                return
+            }
+        }
+    } catch (error) {
+        console.log(error);
+        res.send({
+            status: false,
+            msg: "Error: CSV not deleted. Please try again",
+        })
+        return
+    }
+}
+exports.syncCSVIds = async function (req, res) {
+    try {
+        let allChat_ids = [];
+        let allSim_ids = [];
+        let allPgp_emials = [];
+        let WHITE_LABEL_BASE_URL = '';
+        let servererror = false;
+        let getApiURL = await sql.query(`SELECT * from white_labels where status = 1`)
+        if (getApiURL.length) {
+            for (let i = 0; i < getApiURL.length; i++) {
+                if (getApiURL[i].api_url) {
+                    WHITE_LABEL_BASE_URL = getApiURL[i].api_url;
+                    await axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                        if (response.data.status) {
+                            loginResponse = response.data;
+                            await axios.get(WHITE_LABEL_BASE_URL + '/users/get_csv_ids', { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                                if (response.data.status) {
+                                    let data = response.data
+                                    let sim_ids = data.sim_ids;
+                                    let chat_ids = data.chat_ids;
+                                    let pgp_emails = data.pgp_emails;
+                                    allChat_ids = [...allChat_ids, ...chat_ids]
+                                    allSim_ids = [...allSim_ids, ...sim_ids]
+                                    allPgp_emials = [...allPgp_emials, ...pgp_emails]
+                                }
+                            }).catch((error) => {
+                                console.log("White Label server not responding. PLease try again later");
+                            });
+                        }
+                    }).catch((error) => {
+                        servererror = true
+                        console.log("White Label server not responding. PLease try again later");
+                    });;
+                }
+            }
+
+            if (!servererror) {
+                for (let i = 0; i < allChat_ids.length; i++) {
+                    await sql.query(`UPDATE chat_ids set used = ${allChat_ids[i].used} where chat_id = ${allChat_ids[i].chat_id}`)
+                }
+                for (let i = 0; i < allSim_ids.length; i++) {
+                    await sql.query(`UPDATE sim_ids set used = ${allSim_ids[i].used} where sim_id = ${allSim_ids[i].sim_id}`)
+                }
+                for (let i = 0; i < allPgp_emials.length; i++) {
+                    await sql.query(`UPDATE pgp_emails set used = ${allPgp_emials[i].used} where pgp_email = ${allPgp_emials[i].pgp_email}`)
+                }
+                let SA_chat_ids = await sql.query("SELECT * FROM chat_ids")
+                let SA_sim_ids = await sql.query("SELECT * FROM sim_ids")
+                let SA_pgp_emails = await sql.query("SELECT * FROM pgp_emails")
+                res.send({
+                    status: true,
+                    chat_ids: SA_chat_ids,
+                    sim_ids: SA_sim_ids,
+                    pgp_emails: SA_pgp_emails,
+                })
+                return
+            } else {
+                res.send({
+                    status: false,
+                })
+                return
+            }
+        }
+        else {
+            res.send({
+                status: false,
+            })
+            return
+        }
+    } catch (error) {
+        console.log(error);
+        res.send({
+            status: false,
+        })
+        return
+    }
+}
+exports.getSalesList = async function (req, res) {
+    // let query = "select * from pgp_emails where used=0";
+    let query = `SELECT * FROM sales`;
+    sql.query(query, (error, resp) => {
+        // console.log(resp, 'is response')
+        if (error) throw error
+        if (resp.length) {
+            // console.log(resp, 'is response')
+            res.send({
+                status: true,
+                msg: "data success",
+                data: resp
+            });
+        } else {
+            res.send({
+                status: false,
+                msg: "error",
+                data: []
+            });
+        }
+    });
+}
+exports.getDealerList = async function (req, res) {
+    try {
+        let labelId = req.params.labelId;
+        let WHITE_LABEL_BASE_URL = '';
+        console.log(labelId);
+        let getApiURL = await sql.query(`SELECT * from white_labels WHERE id= ${labelId}`)
+        if (getApiURL.length) {
+            if (getApiURL[0].api_url) {
+                WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                // console.log(WHITE_LABEL_BASE_URL + '/users/super_admin_login');
+                axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                    if (response.data.status) {
+                        loginResponse = response.data;
+                        axios.get(WHITE_LABEL_BASE_URL + '/users/get_dealer_list', { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                            if (response.data.status) {
+                                res.send({
+                                    status: false,
+                                    msg: "error",
+                                    data: response.data.data
+                                });
+                                return
+                            }
+                        }).catch((error) => {
+                            console.log("White Label server not responding. PLease try again later");
+                        });
+                    }
+                }).catch((error) => {
+                    console.log(error);
+                    console.log("White Label server not responding. PLease try again later");
+                    res.send({
+                        status: false,
+                        msg: "error",
+                        data: []
+                    });
+                    return
+                });;
+            } else {
+                res.send({
+                    status: false,
+                    msg: "error",
+                    data: []
+                });
+                return
+            }
+        } else {
+            res.send({
+                status: false,
+                msg: "error",
+                data: []
+            });
+            return
+        }
+    }
+    catch (err) {
+        console.log(err);
+        res.send({
+            status: false,
+            msg: "error",
+            data: []
+        });
+        return
+
+    }
 }
