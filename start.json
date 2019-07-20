@@ -2,7 +2,7 @@
     "apps" : [
         {
             "name": "myapp",
-            "script": "./bin/www.js",
+            "script": "./app.js",
             "watch": false,
             "env": {
                 "HOST_NAME": "localhost"
