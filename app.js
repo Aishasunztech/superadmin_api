@@ -19,6 +19,7 @@ var swaggerUi = require('swagger-ui-express'),
 	swaggerDocument = require('./swagger.json');
 
 
+var stackify = require('stackify-logger');
 var serverEnv = "localhost";
 if (process.env.HOST_NAME) serverEnv = process.env.HOST_NAME;
 stackify.start({
