@@ -24,13 +24,6 @@ module.exports = function (app) {
         res.send("Express Js");
     });
 
-    app.get("/itest", function (req, res) {
-        console.log("iTest failed successfully!!");
-        stackify.log("info", "hey! - iTest failed successfully!!");
-        throw new Error("throw new Error - iTest failed successfully!!");
-        res.send("iTest failed successfully!!");
-    });
-
     app.group('/api/v1', function (router) {
         router.use('/auth', authRoutes);
         router.use('/mobile', mobileRoutes);
