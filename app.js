@@ -68,16 +68,6 @@ app.use(function (req, res, next) {
 	next();
 });
 // routes ======================================================================
-
-app.get("/itest", function (req, res) {
-	console.log("iTest failed successfully!!");
-	stackify.log("info", "hey! - iTest failed successfully!!");
-	throw new Error("throw new Error - iTest failed successfully!!");
-	res.send("iTest failed successfully!!");
-});
-
-
-
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 // app.set(express_group);
 require('./routes/index.js')(app);
