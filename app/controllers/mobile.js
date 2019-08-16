@@ -106,6 +106,7 @@ exports.getUpdate = async (req, res) => {
     let versionName = req.params.version;
     let uniqueName = req.params.uniqueName;
     let label = req.params.label;
+    let apk_url = null
     // console.log(label);
 
     let query = `SELECT * FROM apk_details WHERE package_name = '${uniqueName}' AND ( label = '${label}' ) AND apk_type = 'permanent' AND delete_status = 0`;
@@ -130,12 +131,7 @@ exports.getUpdate = async (req, res) => {
                 if (Number(response[i].version_code) > Number(versionName)) {
                     console.log("update available");
                     isAvail = true;
-                    res.send({
-                        apk_status: true,
-                        success: true,
-                        apk_url: response[i].apk_file
-                    });
-
+                    apk_url = response[i].apk_file
                     break;
                 }
             }
@@ -143,6 +139,12 @@ exports.getUpdate = async (req, res) => {
                 res.send({
                     apk_status: false,
                     success: true,
+                });
+            } else {
+                res.send({
+                    apk_status: true,
+                    success: true,
+                    apk_url: apk_url
                 });
             }
 
