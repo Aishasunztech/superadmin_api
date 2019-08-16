@@ -1,0 +1,18 @@
+{
+    "apps" : [
+        {
+            "name": "SuperAdmin",
+            "script": "./app.js",
+            "watch": false,
+            "env": {
+                "HOST_NAME": "localhost"
+            },
+            "env_superadmin": {
+                "HOST_NAME": "SuperAdmin"
+            },
+            "env_dev_superadmin": {
+                "HOST_NAME": "SuperAdmin Dev"
+            }
+       }
+    ]
+}

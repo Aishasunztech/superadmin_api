@@ -21,14 +21,14 @@ var user = require('../app/controllers/user');
 
 module.exports = function (app) {
     app.get('/', async function (req, res) {
-    
         res.send("Express Js");
     });
+
     app.group('/api/v1', function (router) {
         router.use('/auth', authRoutes);
         router.use('/mobile', mobileRoutes);
         router.use('/pub', pub);
-        router.get('/users/getFile/:file', user.getFile);   
+        router.get('/users/getFile/:file', user.getFile);
         router.use('/users',
             [
                 authMiddleware,
@@ -36,7 +36,7 @@ module.exports = function (app) {
             ]
             , userRoutes
         );
-        
+
 
 
 
