@@ -1087,90 +1087,164 @@ exports.saveIdPrices = async function (req, res) {
         // console.log(data, 'data')
         let whitelabel_id = req.body.whitelabel_id;
         if (whitelabel_id) {
-            // console.log(whitelabel_id, 'whitelableid');
-            let error = 0;
+            let WHITE_LABEL_BASE_URL = '';
+            let getApiURL = await sql.query(`SELECT * from white_labels where id = ${whitelabel_id}`)
+            if (getApiURL.length) {
+                if (getApiURL[0].api_url) {
+                    WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                    let error = 0;
+                    let month = ''
+                    axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                        if (response.data.status) {
+                            loginResponse = response.data;
+                            axios.patch(WHITE_LABEL_BASE_URL + '/users/save-sa-prices', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                                // console.log(response.data.status);
+                                if (response.data.status) {
+                                    for (var key in data) {
+                                        if (data.hasOwnProperty(key)) {
+                                            // console.log(key + " -> " + data[key]);
+                                            let outerKey = key;
 
-            let month = ''
-            for (var key in data) {
-                if (data.hasOwnProperty(key)) {
-                    // console.log(key + " -> " + data[key]);
-                    let outerKey = key;
+                                            let innerObject = data[key];
+                                            // console.log('iner object is', innerObject)
+                                            for (var innerKey in innerObject) {
+                                                if (innerObject.hasOwnProperty(innerKey)) {
+                                                    let days = 0;
+                                                    // console.log(innerKey + " -> " + innerObject[innerKey]);
+                                                    if (innerObject[innerKey]) {
 
-                    let innerObject = data[key];
-                    // console.log('iner object is', innerObject)
-                    for (var innerKey in innerObject) {
-                        if (innerObject.hasOwnProperty(innerKey)) {
-                            let days = 0;
-                            // console.log(innerKey + " -> " + innerObject[innerKey]);
-                            if (innerObject[innerKey]) {
+                                                        // console.log('is string', string)
+                                                        let stringarray = [];
 
-                                // console.log('is string', string)
-                                let stringarray = [];
-
-                                stringarray = innerKey.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
-                                if (stringarray) {
-                                    // console.log(stringarray,'is string lenth', stringarray.length)
-                                    if (stringarray.length) {
-                                        month = stringarray[0];
-                                        // console.log('is month', month, stringarray[1])
-                                        if (month && stringarray[1]) {
-                                            // console.log('sring[1]', stringarray[1])
-                                            if (stringarray[1] == 'month') {
-                                                days = parseInt(month) * 30
-                                            } else if (string[1] == 'year') {
-                                                days = parseInt(month) * 365
-                                            } else {
-                                                days = 30
+                                                        stringarray = innerKey.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                                                        if (stringarray) {
+                                                            // console.log(stringarray,'is string lenth', stringarray.length)
+                                                            if (stringarray.length) {
+                                                                month = stringarray[0];
+                                                                // console.log('is month', month, stringarray[1])
+                                                                if (month && stringarray[1]) {
+                                                                    // console.log('sring[1]', stringarray[1])
+                                                                    if (stringarray[1] == 'month') {
+                                                                        days = parseInt(month) * 30
+                                                                    } else if (string[1] == 'year') {
+                                                                        days = parseInt(month) * 365
+                                                                    } else {
+                                                                        days = 30
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    // console.log(days, 'days are')
+                                                    let unit_price = innerKey;
+                                                    let updateQuery = "UPDATE prices SET unit_price='" + innerObject[innerKey] + "', price_expiry='" + days + "', whitelabel_id='" + whitelabel_id + "' WHERE price_term='" + innerKey + "' AND price_for='" + key + "'";
+                                                    sql.query(updateQuery, async function (err, result) {
+                                                        if (err) throw err;
+                                                        if (result) {
+                                                            // console.log('outerKey', outerKey)
+                                                            if (!result.affectedRows) {
+                                                                let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, whitelabel_id) VALUES('" + outerKey + "', '" + innerObject[innerKey] + "', '" + unit_price + "', '" + days + "', '" + whitelabel_id + "')";
+                                                                // console.log('insert query', insertQuery)
+                                                                let rslt = await sql.query(insertQuery);
+                                                                if (rslt) {
+                                                                    if (rslt.affectedRows == 0) {
+                                                                        error++;
+                                                                    }
+                                                                }
+                                                                // console.log(rslt, 'inner rslt')
+                                                            }
+                                                        }
+                                                    })
+                                                    if (error == 0) {
+                                                        res.send({
+                                                            status: true,
+                                                            msg: 'Prices Set Successfully'
+                                                        })
+                                                    } else {
+                                                        res.send({
+                                                            status: false,
+                                                            msg: 'ERROR: Error occurred while setting Prices. please try agian'
+                                                        })
+                                                    }
+                                                }
                                             }
+
                                         }
                                     }
+
                                 }
-                            }
-                            // console.log(days, 'days are')
-                            let unit_price = innerKey;
-                            let updateQuery = "UPDATE prices SET unit_price='" + innerObject[innerKey] + "', price_expiry='" + days + "', whitelabel_id='" + whitelabel_id + "' WHERE price_term='" + innerKey + "' AND price_for='" + key + "'";
-                            // console.log(updateQuery, 'query')
-                            sql.query(updateQuery, async function (err, result) {
-                                if (err) throw err;
-                                if (result) {
-                                    // console.log('outerKey', outerKey)
-                                    if (!result.affectedRows) {
-                                        let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, whitelabel_id) VALUES('" + outerKey + "', '" + innerObject[innerKey] + "', '" + unit_price + "', '" + days + "', '" + whitelabel_id + "')";
-                                        // console.log('insert query', insertQuery)
-                                        let rslt = await sql.query(insertQuery);
-                                        if (rslt) {
-                                            if (rslt.affectedRows == 0) {
-                                                error++;
-                                            }
-                                        }
-                                        // console.log(rslt, 'inner rslt')
-                                    }
+                                else {
+                                    res.send({
+                                        status: false,
+                                        msg: 'ERROR: White label server error and Package not saved. please try again.'
+                                    })
+                                    err = true
+                                    return
+
+                                }
+                            }).catch((error) => {
+                                if (error) {
+                                    console.log("ERROR");
+                                    // console.log(error);
+                                    data = {
+                                        "status": false,
+                                        "msg": "White Label server not responding. PLease try again later",
+                                    };
+                                    res.send(data);
+                                    err = true
+                                    return
                                 }
                             })
+
                         }
-                    }
+                        else {
+                            res.send({
+                                status: false,
+                                msg: "you are not allowed to perform this action.",
+                            })
+                            err = true
+                            return
+                        }
+                    }).catch((error) => {
+                        console.log("error", error);
+                        data = {
+                            "status": false,
+                            "msg": "White Label server not responding. PLease try again later",
+                        };
+                        // console.log("response send 1");
+                        res.send(data);
+                        err = true
+                        return
+                    });
+
+                    // console.log('errors are ', error)
 
                 }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "White Label credentials not found.",
+                        "duplicateData": []
+                    })
+                    return
+                }
             }
-            // console.log('errors are ', error)
-
-            if (error == 0) {
-                res.send({
-                    status: true,
-                    msg: 'Prices Set Successfully'
-                })
-            } else {
+            else {
                 res.send({
                     status: false,
-                    msg: 'Some Error Accured'
+                    msg: "White Label Data not found.",
                 })
+                return
             }
+
+
 
         } else {
             res.send({
                 status: false,
-                msg: 'Invalid WhiteLabel'
+                msg: "White Label Data not found.",
             })
+            return
         }
 
     } else {
@@ -1178,6 +1252,7 @@ exports.saveIdPrices = async function (req, res) {
             status: false,
             msg: 'Invalid Data'
         })
+        return
     }
 }
 
@@ -1186,59 +1261,120 @@ exports.savePackage = async function (req, res) {
     console.log('data is', req.body)
 
     let data = req.body.data;
+    let err = false
     if (data) {
         // console.log(data, 'data')
         let whitelabel_id = req.body.data.whitelabel_id;
-        if (whitelabel_id) {
-            // console.log(whitelabel_id, 'whitelableid');
-            let days = 0;
-            if (data.pkgTerm) {
-                stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
-                if (stringarray) {
-                    // console.log(stringarray,'is string lenth', stringarray.length)
-                    if (stringarray.length) {
-                        month = stringarray[0];
-                        // console.log('is month', month, stringarray[1])
-                        if (month && stringarray[1]) {
-                            // console.log('sring[1]', stringarray[1])
-                            if (stringarray[1] == 'month') {
-                                days = parseInt(month) * 30
-                            } else if (string[1] == 'year') {
-                                days = parseInt(month) * 365
-                            } else {
-                                days = 30
+        let WHITE_LABEL_BASE_URL = '';
+        let getApiURL = await sql.query(`SELECT * from white_labels where id = ${whitelabel_id}`)
+        if (getApiURL.length) {
+            if (getApiURL[0].api_url) {
+                WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                let days = 0;
+                if (data.pkgTerm) {
+                    stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                    if (stringarray) {
+                        // console.log(stringarray,'is string lenth', stringarray.length)
+                        if (stringarray.length) {
+                            month = stringarray[0];
+                            // console.log('is month', month, stringarray[1])
+                            if (month && stringarray[1]) {
+                                // console.log('sring[1]', stringarray[1])
+                                if (stringarray[1] == 'month') {
+                                    days = parseInt(month) * 30
+                                } else if (string[1] == 'year') {
+                                    days = parseInt(month) * 365
+                                } else {
+                                    days = 30
+                                }
                             }
                         }
                     }
                 }
-            }
-            let pkg_features = JSON.stringify(data.pkgFeatures)
-            let insertQuery = "INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id) VALUES('" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "', '" + whitelabel_id + "')";
-            sql.query(insertQuery, async (err, rslt) => {
-                if (err) throw err;
-                if (rslt) {
-                    if (rslt.affectedRows) {
-                        insertedRecord = await sql.query("SELECT * FROM packages WHERE whitelabel_id='" + whitelabel_id + "' AND id='" + rslt.insertId + "'")
-                        res.send({
-                            status: true,
-                            msg: 'Package Saved Successfully',
-                            data: insertedRecord
-                        })
-                    }
-                }
-            })
+                let pkg_features = JSON.stringify(data.pkgFeatures)
 
-        } else {
+                axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                    if (response.data.status) {
+                        loginResponse = response.data;
+                        axios.post(WHITE_LABEL_BASE_URL + '/users/save-sa-package', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                            if (response.data.status) {
+                                let insertQuery = "INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id) VALUES('" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "', '" + whitelabel_id + "')";
+                                sql.query(insertQuery, async (err, rslt) => {
+                                    if (err) throw err;
+                                    if (rslt) {
+                                        if (rslt.affectedRows) {
+                                            insertedRecord = await sql.query("SELECT * FROM packages WHERE whitelabel_id='" + whitelabel_id + "' AND id='" + rslt.insertId + "'")
+                                            res.send({
+                                                status: true,
+                                                msg: 'Package Saved Successfully',
+                                                data: insertedRecord
+                                            })
+                                        }
+                                    }
+                                })
+
+                            } else {
+                                res.send({
+                                    status: false,
+                                    msg: 'ERROR: White label server error and Package not saved. please try again.'
+                                })
+                                err = true
+                                return
+
+                            }
+                        }).catch((error) => {
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later",
+                            };
+                            res.send(data);
+                            err = true
+                            return
+                        });;
+
+                    }
+                    else {
+                        res.send({
+                            status: false,
+                            msg: "you are not allowed to perform this action.",
+                        })
+                        err = true
+                        return
+                    }
+                }).catch((error) => {
+                    console.log("error", error);
+                    data = {
+                        "status": false,
+                        "msg": "White Label server not responding. PLease try again later",
+                    };
+                    // console.log("response send 1");
+                    res.send(data);
+                    err = true
+                    return
+                });
+            }
+            else {
+                res.send({
+                    status: false,
+                    msg: "White Label credentials not found.",
+                    "duplicateData": []
+                })
+                return
+            }
+        }
+        else {
             res.send({
                 status: false,
-                msg: 'Invalid Whitelabel'
+                msg: "White Label Data not found.",
             })
+            return
         }
     } else {
         res.send({
             status: false,
             msg: 'Invalid Data'
         })
+        return
     }
 }
 
@@ -1686,30 +1822,30 @@ exports.checkPwd = async function (req, res) {
 }
 exports.checkDealerPin = async function (req, res) {
     // console.log(req.decoded);
-    const invoice = {
-        shipping: {
-            name: "Hamza Dawood",
-            // address: "1234 Main Street",
-            // city: "San Francisco",
-            // state: "CA",
-            // country: "US",
-            // postal_code: 94111
-        },
-        items: [
-            {
-                item: "Credits",
-                description: "Credits puchased on cash ",
-                quantity: 1000,
-                amount: 100000
-            },
-        ],
-        subtotal: 100000,
-        paid: 100000,
-        invoice_nr: 'PI123456'
-    };
-    let filePath = path.join(__dirname, "../../uploads/invoice" + Date.now() + ".pdf")
-    createInvoice(invoice, filePath)
-    return
+    // const invoice = {
+    //     shipping: {
+    //         name: "Hamza Dawood",
+    //         // address: "1234 Main Street",
+    //         // city: "San Francisco",
+    //         // state: "CA",
+    //         // country: "US",
+    //         // postal_code: 94111
+    //     },
+    //     items: [
+    //         {
+    //             item: "Credits",
+    //             description: "Credits puchased on cash ",
+    //             quantity: 1000,
+    //             amount: 100000
+    //         },
+    //     ],
+    //     subtotal: 100000,
+    //     paid: 100000,
+    //     invoice_nr: 'PI123456'
+    // };
+    // let filePath = path.join(__dirname, "../../uploads/invoice" + Date.now() + ".pdf")
+    // createInvoice(invoice, filePath)
+    // return
 
     if (req.decoded && req.decoded.user) {
         // console.log(req.body);
@@ -1942,21 +2078,24 @@ exports.syncCSVIds = async function (req, res) {
                     await sql.query(`UPDATE sim_ids set used = ${allSim_ids[i].used} where sim_id = ${allSim_ids[i].sim_id}`)
                 }
                 for (let i = 0; i < allPgp_emials.length; i++) {
-                    await sql.query(`UPDATE pgp_emails set used = ${allPgp_emials[i].used} where pgp_email = ${allPgp_emials[i].pgp_email}`)
+                    await sql.query(`UPDATE pgp_emails set used = ${allPgp_emials[i].used} where pgp_email = '${allPgp_emials[i].pgp_email}'`)
                 }
-                let SA_chat_ids = await sql.query("SELECT * FROM chat_ids")
-                let SA_sim_ids = await sql.query("SELECT * FROM sim_ids")
-                let SA_pgp_emails = await sql.query("SELECT * FROM pgp_emails")
+                let SA_chat_ids = await sql.query(`SELECT chat_ids.*, wl.name FROM chat_ids JOIN white_labels as wl on (wl.id = chat_ids.whitelabel_id) WHERE wl.status = 1`)
+                let SA_pgp_emails = await sql.query(`SELECT pgp_emails.*, wl.name FROM pgp_emails JOIN white_labels as wl on (wl.id = pgp_emails.whitelabel_id) WHERE wl.status = 1`)
+                let SA_sim_ids = await sql.query(`SELECT sim_ids.*, wl.name FROM sim_ids JOIN white_labels as wl on (wl.id = sim_ids.whitelabel_id) WHERE wl.status = 1`)
                 res.send({
                     status: true,
                     chat_ids: SA_chat_ids,
                     sim_ids: SA_sim_ids,
                     pgp_emails: SA_pgp_emails,
+                    msg: "White Label ID's Sync Successfully."
                 })
                 return
+
             } else {
                 res.send({
                     status: false,
+                    msg: "ERROR: White Label server not responding. Please again later"
                 })
                 return
             }
@@ -1964,6 +2103,7 @@ exports.syncCSVIds = async function (req, res) {
         else {
             res.send({
                 status: false,
+                msg: "ERROR: White Label credentials not found."
             })
             return
         }
@@ -1971,6 +2111,7 @@ exports.syncCSVIds = async function (req, res) {
         console.log(error);
         res.send({
             status: false,
+            msg: "ERROR: Error while syncing white label."
         })
         return
     }
