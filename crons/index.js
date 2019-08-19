@@ -14,7 +14,7 @@ const device_helpers = require('../helpers/device_helpers');
 const general_helpers = require('../helpers/general_helpers');
 
 cron.schedule('0 0 0 * * *', async () => {
-    let whiteLabelQ = `SELECT * FROM white_labels`;
+    let whiteLabelQ = `SELECT * FROM white_labels WHERE status=1`;
     let whiteLabels = await sql.query(whiteLabelQ);
     for (let index = 0; index < whiteLabels.length; index++) {
         let host = whiteLabels[index].ip_address;
