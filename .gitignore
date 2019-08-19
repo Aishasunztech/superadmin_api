@@ -5,3 +5,4 @@ db_backup/*
 !db_backup/.gitkeep
 uploads/*
 !uploads/.gitkeep
+package-lock.json

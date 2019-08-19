@@ -89,25 +89,15 @@ module.exports = {
         return status;
 
     },
-    checkRemainDays: async (createDate, validity) => {
-        var createdDateTime, today, days;
-        if (validity != null) {
+    getRemainingDays: (start_date, end_date) => {
+        var startDate = new Date(start_date);
+        var endDate = new Date(end_date);
 
-            createdDateTime = new Date(createDate);
-            createdDateTime.setDate(createdDateTime.getDate() + validity);
-            today = new Date();
-            var difference_ms = createdDateTime.getTime() - today.getTime();
+        // To calculate the time difference of two dates 
+        var Difference_In_Time = endDate.getTime() - startDate.getTime();
 
-            //Get 1 day in milliseconds
-            var one_day = 1000 * 60 * 60 * 24;
-
-            // Convert back to days and return
-            days = Math.round(difference_ms / one_day);
-        } else {
-            days = validity
-        }
-
-        if (days > 0) return days; else if (days <= 0 && days !== null) return "Expired"; else return "Not Announced";
+        // To calculate the no. of days between two dates 
+        var Difference_In_Days = Difference_In_Time / (1000 * 3600 * 24);
+        return Difference_In_Days;
     },
-
 }

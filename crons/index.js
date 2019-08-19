@@ -131,7 +131,7 @@ cron.schedule("0 0 * * * *", async () => {
             let updateCurrencyQ = `UPDATE currencies SET base='${constants.BASE_CURRENCY}', data='${JSON.stringify(data.rates)}'`;
             sql.query(updateCurrencyQ, async function (error, updateResult) {
                 if (error) {
-                    console.log("error occured", error);
+                    console.log("error occurred", error);
                 }
                 if (updateResult && updateResult.affectedRows) {
                     console.log("succesfully updated record");

@@ -200,6 +200,9 @@ exports.checkExpiry = async (req, res) => {
         var deviceQ = `SELECT * FROM devices WHERE  serial_number= '${serial_number}' `;
         var device = await sql.query(deviceQ);
         if (device.length) {
+            let remainingDays = device_helpers.getRemainingDays(device[0].start_date, device[0].expiry_date)
+            console.log("remainingDays: ", remainingDays);
+
             let deviceStatus = device_helpers.checkStatus(device);
             res.send({
                 status: true,
@@ -215,6 +218,8 @@ exports.checkExpiry = async (req, res) => {
         var deviceQ = `SELECT * FROM devices WHERE  mac_address= '${mac}' `;
         var device = await sql.query(deviceQ);
         if (device.length) {
+            let remainingDays = device_helpers.getRemainingDays(device[0].start_date, device[0].expiry_date)
+            console.log("remainingDays: ", remainingDays);
 
             let deviceStatus = device_helpers.checkStatus(device);
             res.send({
@@ -233,6 +238,9 @@ exports.checkExpiry = async (req, res) => {
         let device = await sql.query(deviceQuery);
 
         if (device.length > 0) {
+            let remainingDays = device_helpers.getRemainingDays(device[0].start_date, device[0].expiry_date)
+            console.log("remainingDays: ", remainingDays);
+
             let deviceStatus = device_helpers.checkStatus(device);
             res.send({
                 status: true,
@@ -293,18 +301,22 @@ async function newDevice(dvcInfo, res) {
 
             if (dvcRes.length) {
 
+                let remainingDays = device_helpers.getRemainingDays(dvcRes[0].start_date, dvcRes[0].expiry_date)
+                console.log("remainingDays: ", remainingDays);
+
                 let deviceStatus = device_helpers.checkStatus(dvcRes);
 
                 res.send({
                     status: true,
                     device_status: deviceStatus,
-                    of_device_id: dvcRes[0].fl_dvc_id
+                    of_device_id: dvcRes[0].fl_dvc_id,
+                    msg: ""
                 });
                 return;
             } else {
                 res.send({
                     status: false,
-                    msg: "hello"
+                    msg: "device not found"
                 });
                 return;
             }
