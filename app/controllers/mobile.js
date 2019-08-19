@@ -67,7 +67,7 @@ exports.getWhiteLabel = async function (req, res) {
     // console.log(req.decoded);
 
     if (req.decoded) {
-        let whiteLabelQ = `SELECT id, model_id, name, command_name FROM white_labels WHERE command_name='${req.body.model_id}'`;
+        let whiteLabelQ = `SELECT id, model_id, name, command_name FROM white_labels WHERE lower(command_name)='${req.body.model_id.toLowerCase()}'`;
         let whiteLabel = await sql.query(whiteLabelQ);
 
         if (Object.keys(whiteLabel).length) {
