@@ -34,7 +34,7 @@
     "moment-strftime": "^0.5.0",
     "mongoose": "latest",
     "morgan": "^1.9.1",
-    "multer": "latest",
+    "multer": "^1.4.2",
     "mysql": "latest",
     "mysql-import": "^2.0.2",
     "mysql2": "^1.6.5",

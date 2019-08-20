@@ -1035,6 +1035,31 @@ exports.restartWhitelabel = async function (req, res) {
         })
     }
 }
+exports.saveBackup = async function (req, res) {
+
+    let id = req.body.id;
+    if (!empty(id)) {
+
+        let whitelabelQ = `SELECT * FROM white_labels WHERE id =${id}`;
+
+        let whitelabel = await sql.query(whitelabelQ);
+        if (whitelabel.length) {
+
+
+        } else {
+            res.send({
+                status: false,
+                msg: "Invalid Credentials"
+            })
+        }
+
+    } else {
+        res.send({
+            status: false,
+            msg: "whitelabel not defined"
+        })
+    }
+}
 
 async function rebootServer(host, sshUser, sshPort, sshPass, whitelabel, res) {
     if (!empty(whitelabel[0].api_cmd)) {
