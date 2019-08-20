@@ -12,6 +12,8 @@ const Constants = require('../../constants/application');
 const device_helpers = require('../../helpers/device_helpers');
 const general_helpers = require('../../helpers/general_helpers');
 const moment = require('moment')
+var mysqldump = require('mysqldump')
+var archiver = require('archiver');
 
 var node_ssh = require('node-ssh')
 ssh = new node_ssh()
@@ -1035,6 +1037,8 @@ exports.restartWhitelabel = async function (req, res) {
         })
     }
 }
+
+
 exports.saveBackup = async function (req, res) {
 
     let id = req.body.id;
@@ -1042,10 +1046,98 @@ exports.saveBackup = async function (req, res) {
 
         let whitelabelQ = `SELECT * FROM white_labels WHERE id =${id}`;
 
-        let whitelabel = await sql.query(whitelabelQ);
-        if (whitelabel.length) {
+        let whiteLabels = await sql.query(whitelabelQ);
+        if (whiteLabels.length) {
+            let host = whiteLabels[0].ip_address;
+            let dbUser = whiteLabels[0].db_user;
+            let dbPass = whiteLabels[0].db_pass;
+            let dbName = whiteLabels[0].db_name;
+            if (!empty(host) && !empty(dbUser) && !empty(dbPass) && !empty(dbName)) {
+
+                let host_db_conn = await general_helpers.getDBCon(host, dbUser, dbPass, dbName);
+                if (host_db_conn) {
+                    // console.log(host_db_conn);
+                    // console.log("Working");
+                    let miliSeconds = Date.now();
+                    let fileName = 'dump_' + dbName + '_' + miliSeconds
+                    // let filePath = path.join(__dirname, "../db_backup/"  + file_name);
+                    let dumpFileName = fileName + '.sql';
+                    let file = path.join(__dirname, "../../db_backup/" + dumpFileName)
+                    console.log(file);
+                    await mysqldump({
+                        connection: {
+                            host: host,
+                            user: dbUser,
+                            password: dbPass,
+                            database: dbName,
+                        },
+                        dumpToFile: file,
+                    });
+                    console.log("CHECKing");
+
+                    let allTables = await host_db_conn.query(`SELECT TABLE_NAME AS _table FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '${dbName}'`)
+                    let tables = allTables.map(function (item) {
+                        return item._table
+                    })
+                    let ws;
+                    let wb = XLSX.utils.book_new();
+
+                    for (let i = 0; i < tables.length; i++) {
+                        let tableDate = await host_db_conn.query(`SELECT * from ${tables[i]}`)
+                        if (tableDate.length) {
+                            /* make the worksheet */
+                            ws = XLSX.utils.json_to_sheet(tableDate);
+
+                            /* add to workbook */
+                            XLSX.utils.book_append_sheet(wb, ws, tables[i]);
+                        }
+                    }
+                    let fileNameCSV = fileName + '.xlsx';
+                    console.log(path.join(__dirname, "../../db_backup/" + fileNameCSV));
+                    await XLSX.writeFile(wb, path.join(__dirname, "../../db_backup/" + fileNameCSV));
+                    var archive = archiver('zip', {
+                        gzip: true,
+                        zlib: { level: 9 },
+                        forceLocalTime: true,
+                        // password: 'test'
+                    });
+
+                    let zipFileName = fileName + ".zip"
+
+                    var output = fs.createWriteStream(path.join(__dirname, "../../db_backup/" + zipFileName));
 
 
+                    archive.on('error', function (err) {
+                        throw err;
+                    });
+
+                    // pipe archive data to the output file
+                    archive.pipe(output);
+
+                    // append files
+                    archive.file(path.join(__dirname, "../../db_backup/" + fileNameCSV), { name: 'DataBase_Backup_excel.xlsx' });
+                    archive.file(path.join(__dirname, "../../db_backup/" + dumpFileName), { name: 'DataBase_Backup_sql.sql' });
+
+                    //
+                    archive.finalize();
+
+                    output.on('close', async function () {
+                        console.log("archive closed");
+                        let saveHistory = `INSERT into db_backups (whitelabel_id, backup_name, db_file) VALUES (${whiteLabels[0].id}, '${fileName}', '${zipFileName}')`
+                        let result = await sql.query(saveHistory);
+                        if (result.affectedRows > 0) {
+                            console.log(result.insertId)
+                            let data = await sql.query("SELECT * from db_backups where id = " + result.insertId)
+                            res.send({
+                                status: true,
+                                msg: "Database backup created successfullly.",
+                                data: data[0]
+                            })
+                        }
+                    });
+
+                }
+            }
         } else {
             res.send({
                 status: false,

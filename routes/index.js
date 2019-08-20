@@ -29,6 +29,7 @@ module.exports = function (app) {
         router.use('/mobile', mobileRoutes);
         router.use('/pub', pub);
         router.get('/users/getFile/:file', user.getFile);
+        router.get('/users/getBackupFile/:file', user.getBackupFile);
         router.use('/users',
             [
                 authMiddleware,
