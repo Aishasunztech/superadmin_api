@@ -960,6 +960,31 @@ exports.getFile = async function (req, res) {
     }
 
 }
+exports.getBackupFile = async function (req, res) {
+
+
+    if (fs.existsSync(path.join(__dirname, "../../db_backup/" + req.params.file))) {
+        let file = path.join(__dirname, "../../db_backup/" + req.params.file);
+        let fileMimeType = mime.getType(file);
+        // let filetypes = /jpeg|jpg|apk|png/;
+        // Do something
+        // if (filetypes.test(fileMimeType)) {
+        res.set('Content-Type', fileMimeType); // mimeType eg. 'image/bmp'
+        res.sendFile(path.join(__dirname, "../../db_backup/" + req.params.file));
+        // } else {
+        //     res.send({
+        //         "status": false,
+        //         "msg": "file not found"
+        //     })
+        // }
+    } else {
+        res.send({
+            "status": false,
+            "msg": "file not found"
+        })
+    }
+
+}
 
 exports.deviceStatus = async function (req, res) {
     // console.log('deviceStatus at server: ', req.body);

@@ -29,6 +29,8 @@ router.post('/get_label_pgp_emails', whitelabel.getLabelPgpEmails)
 
 router.post('/restart-whitelabel', whitelabel.restartWhitelabel);
 
+router.post('/save_backup', whitelabel.saveBackup);
+
 
 // ==============================================================================
 // apk file
