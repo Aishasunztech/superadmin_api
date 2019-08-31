@@ -72,7 +72,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
         let model_id = req.body.model_id;
         let command_name = req.body.command_name;
         let apk_files = req.body.apk_files;
-        let byod_type = req.body.byod_type ? req.body.byod_type : '';
+        // let apk_type = req.body.apk_type ? req.body.apk_type : '';
         let is_byod = req.body.is_byod ? 1 : 0
 
         if (!empty(model_id)) {
@@ -86,7 +86,9 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                 } else {
                     // console.log(rslts,'reslts are');
                     if (apk_files.length) {
-                        for (let apk of apk_files) {
+                        for (let item of apk_files) {
+                            let apk = item.apk;
+                            let apk_type = item.apk_type;
                             let file = path.join(__dirname, "../../uploads/" + apk);
 
                             if (fs.existsSync(file)) {
@@ -131,11 +133,11 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                 let whiteLabelId = req.body.id;
                                 // let where = (is_byod == 1) ? 'AND is_byod = 1' : ''
                                 let query = ''
-                                if (is_byod == 1) {
-                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND byod_type='${byod_type}'`
-                                } else {
-                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
-                                }
+                                // if (is_byod == 1) {
+                                    query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND apk_type='${apk_type}'`
+                                // } else {
+                                    // query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
+                                // } 
                                 // console.log(query)
 
                                 sql.query(query, (error, sResult) => {
@@ -150,7 +152,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                     // console.log(sResult.affectedRows)
 
                                     if (sResult && !sResult.affectedRows) {
-                                        sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , byod_type) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , '${byod_type}')`);
+                                        sql.query(`INSERT INTO whitelabel_apks (apk_file, whitelabel_id, package_name, apk_size, label, version_name, version_code , apk_type) VALUES ('${apk}', ${whiteLabelId}, '${packageName}', '${formatByte}', '${label}', '${versionName}', '${versionCode}' , '${apk_type}')`);
                                     }
                                 });
                             } else {
@@ -202,7 +204,6 @@ exports.updateWhiteLabelInfo = async function (req, res) {
         return;
     }
 }
-
 
 exports.importCSV = async function (req, res) {
     // console.log('lable is: ', req.body.labelID)
