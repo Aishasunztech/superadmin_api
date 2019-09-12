@@ -60,35 +60,37 @@ exports.deviceStatus = async function (req, res) {
                 status = 'active';
             }
             // console.log('status is: ', status);
-
+            // start_date = moment(start_date);
+            // expiry_date = moment(expiry_date);
+            
+            start_date = moment(start_date).format('YYYY-MM-DD hh:mm:ss')
+            expiry_date = moment(expiry_date).format('YYYY-MM-DD hh:mm:ss');
             updateQ = `UPDATE devices SET start_date= '${start_date}', status = '${status}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
         } else if (id && requiredStatus == Constants.DEVICE_ACTIVATED) {
             updateQ = `UPDATE devices SET account_status= '', status='active' WHERE id = ${id}`;
         } else if (id && requiredStatus == Constants.DEVICE_SUSPENDED) {
             updateQ = `UPDATE devices SET account_status= 'suspended' WHERE id = ${id}`;
         } else {
-            res.send({
+            return res.send({
                 status: false,
                 msg: "No data found"
             })
         }
         if (updateQ != '') {
-            console.log('deviceStatus update query is: ', updateQ);
-            await sql.query(updateQ, async function (err, rslts) {
+            sql.query(updateQ, async function (err, rslts) {
                 if (err) {
                     console.log(err);
-                    res.send({
+                    return res.send({
                         status: false,
                         msg: "Error occur"
                     });
                 } else {
                     let selectQuery = `SELECT devices.*, white_labels.name as whitelabel FROM devices LEFT JOIN white_labels ON (devices.whitelabel_id = white_labels.id) WHERE devices.id = ${id}`;
-                    console.log('select query: ', selectQuery);
-                    await sql.query(selectQuery, async function (err, devices) {
-                        console.log('selectQuery result is: ', devices);
+                    
+                    sql.query(selectQuery, async function (err, devices) {
                         if (err) {
                             console.log(err);
-                            res.send({
+                            return res.send({
                                 status: false,
                                 msg: "Error occur"
                             });
@@ -103,13 +105,13 @@ exports.deviceStatus = async function (req, res) {
                                 device.mac_address = general_helpers.checkValue(device.mac_address)
                                 device.serial_number = general_helpers.checkValue(device.serial_number);
                             })
-                            res.send({
+                            return res.send({
                                 status: true,
                                 devices: devices,
-                                msg: "Offline Device Status Successfully Updated!"
+                                msg: "Device Status Successfully Updated!"
                             })
                         } else {
-                            res.send({
+                            return res.send({
                                 status: false,
                                 devices: [],
                                 msg: "Failed to update Offline Device Status!",

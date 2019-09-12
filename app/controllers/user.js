@@ -150,23 +150,57 @@ exports.uploadFile = async function (req, res) {
             fileName = fieldName + '-' + Date.now() + '.apk';
             let target_path = path.join(__dirname, "../../uploads/" + fileName);
 
-            general_helpers.move(filePath, target_path, function (error) {
-                console.log(error);
-                if (error) {
+            let packageName = await general_helpers.getAPKPackageName(filePath);
+            packageName = packageName.toString().replace(/(\r\n|\n|\r)/gm, "").replace(/['"]+/g, '');
+            // console.log("Package Name: ", packageName);
+            if (fieldName == 'launcher_apk') {
+                if (packageName == Constants.LAUNCHER_PKG_NAME) {
+                    general_helpers.move(filePath, target_path, function (error) {
+                        console.log(error);
+                        if (error) {
+                            res.send({
+                                status: false,
+                                msg: "Error while uploading"
+                            })
+                        }
+
+                        res.send({
+                            msg: 'Uploaded Successfully',
+                            status: true,
+                            fileName: fileName,
+                            size: formatByte
+                        })
+                        return
+                    });
+                } else {
                     res.send({
                         status: false,
-                        msg: "Error while uploading"
+                        msg: "Invalid Apk"
                     })
+                    return
                 }
+            } else {
+                general_helpers.move(filePath, target_path, function (error) {
+                    console.log(error);
+                    if (error) {
+                        res.send({
+                            status: false,
+                            msg: "Error while uploading"
+                        })
+                    }
 
-                res.send({
-                    msg: 'Uploaded Successfully',
-                    status: true,
-                    fileName: fileName,
-                    size: formatByte
-                })
-                return
-            });
+                    res.send({
+                        msg: 'Uploaded Successfully',
+                        status: true,
+                        fileName: fileName,
+                        size: formatByte
+                    })
+                    return
+                });
+            }
+
+
+
         } else {
             res.send({
                 status: false,
