@@ -1,0 +1,23 @@
+{
+  "development": {
+      "host": "localhost",
+      "username": "root",
+      "password": "",
+      "database": "lockmesh_db",
+      "dialect": "mysql"
+  },
+  "superadmin": {
+      "host": "localhost",
+      "username": "web",
+      "password": "Alibaba@40C#",
+      "database": "lockmesh_db",
+      "dialect": "mysql"
+  },
+  "dev_superadmin": {
+      "host": "localhost",
+      "username": "web",
+      "password": "Alibaba@40C#",
+      "database": "lockmesh_db",
+      "dialect": "mysql"
+  }
+}
