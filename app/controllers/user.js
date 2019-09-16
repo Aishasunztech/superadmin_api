@@ -147,7 +147,9 @@ exports.uploadFile = async function (req, res) {
     if (mimeType === "application/vnd.android.package-archive" || mimeType === "application/octet-stream") {
         versionCode = await general_helpers.getAPKVersionCode(filePath);
         if (versionCode) {
-            fileName = fieldName + '-' + Date.now() + '.apk';
+            let current_date = moment().format("YYYYMMDDHHmmss")
+            fileName = fieldName + '-' + current_date + '-v' + versionCode + '.apk';
+            console.log(fileName);
             let target_path = path.join(__dirname, "../../uploads/" + fileName);
 
             let packageName = await general_helpers.getAPKPackageName(filePath);
@@ -162,6 +164,8 @@ exports.uploadFile = async function (req, res) {
                                 status: false,
                                 msg: "Error while uploading"
                             })
+                            console.log("ERROR", error);
+                            return
                         }
 
                         res.send({
@@ -173,9 +177,10 @@ exports.uploadFile = async function (req, res) {
                         return
                     });
                 } else {
+                    console.log("HERE");
                     res.send({
                         status: false,
-                        msg: "Invalid Apk"
+                        msg: "Error: Apk not uploaded. Please ensure that your uploaded apk is Launcher Apk."
                     })
                     return
                 }
@@ -210,7 +215,9 @@ exports.uploadFile = async function (req, res) {
         }
 
     } else if (fieldName === Constants.LOGO) {
-
+        let current_date = moment().format("YYYYMMDDHHmmss")
+        fileName = fieldName + '-' + current_date + '.jpg';
+        console.log(fileName);
         fileName = fieldName + '-' + Date.now() + '.jpg';
         let target_path = path.join(__dirname, "../../uploads/" + fileName);
 
