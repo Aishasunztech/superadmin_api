@@ -1146,11 +1146,9 @@ exports.updateDeviceStatus = async function (req, res) {
 
 
 exports.saveIdPrices = async function (req, res) {
-    // console.log('data is', req.body)
 
     let data = req.body.data;
     if (data) {
-        // console.log(data, 'data')
         let whitelabel_id = req.body.whitelabel_id;
         if (whitelabel_id) {
             let WHITE_LABEL_BASE_URL = '';
@@ -1162,28 +1160,21 @@ exports.saveIdPrices = async function (req, res) {
                     let month = ''
                     for (var key in data) {
                         if (data.hasOwnProperty(key)) {
-                            // console.log(key + " -> " + data[key]);
                             let outerKey = key;
 
                             let innerObject = data[key];
-                            // console.log('iner object is', innerObject)
                             for (var innerKey in innerObject) {
                                 if (innerObject.hasOwnProperty(innerKey)) {
                                     let days = 0;
-                                    // console.log(innerKey + " -> " + innerObject[innerKey]);
+                                    let priceTerm = innerKey;
                                     if (innerObject[innerKey]) {
-
-                                        // console.log('is string', string)
                                         let stringarray = [];
 
                                         stringarray = innerKey.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
                                         if (stringarray) {
-                                            // console.log(stringarray,'is string lenth', stringarray.length)
                                             if (stringarray.length) {
                                                 month = stringarray[0];
-                                                // console.log('is month', month, stringarray[1])
                                                 if (month && stringarray[1]) {
-                                                    // console.log('sring[1]', stringarray[1])
                                                     if (stringarray[1] == 'month') {
                                                         days = parseInt(month) * 30
                                                     } else if (string[1] == 'year') {
@@ -1195,15 +1186,14 @@ exports.saveIdPrices = async function (req, res) {
                                             }
                                         }
                                     }
-                                    // console.log(days, 'days are')
-                                    let unit_price = innerKey;
-                                    let updateQuery = "UPDATE prices SET unit_price='" + innerObject[innerKey] + "', price_expiry='" + days + "', whitelabel_id='" + whitelabel_id + "' WHERE price_term='" + innerKey + "' AND price_for='" + key + "'";
+
+                                    let updateQuery = "UPDATE prices SET unit_price='" + innerObject[priceTerm] + "', price_expiry='" + days + "' WHERE whitelabel_id='" + whitelabel_id + "' AND price_term='" + priceTerm + "' AND price_for='" + outerKey + "'";
+                                    // console.log(updateQuery, 'update query')
                                     sql.query(updateQuery, async function (err, result) {
                                         if (err) throw err;
                                         if (result) {
-                                            // console.log('outerKey', outerKey)
                                             if (!result.affectedRows) {
-                                                let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, whitelabel_id) VALUES('" + outerKey + "', '" + innerObject[innerKey] + "', '" + unit_price + "', '" + days + "', '" + whitelabel_id + "')";
+                                                let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, whitelabel_id) VALUES('" + outerKey + "', '" + innerObject[priceTerm] + "', '" + priceTerm + "', '" + days + "', '" + whitelabel_id + "')";
                                                 // console.log('insert query', insertQuery)
                                                 let rslt = await sql.query(insertQuery);
                                                 if (rslt) {
@@ -1211,25 +1201,27 @@ exports.saveIdPrices = async function (req, res) {
                                                         error++;
                                                     }
                                                 }
-                                                // console.log(rslt, 'inner rslt')
                                             }
                                         }
                                     })
-                                    if (error == 0) {
-                                        res.send({
-                                            status: true,
-                                            msg: 'Prices Set Successfully'
-                                        })
-                                    } else {
-                                        res.send({
-                                            status: false,
-                                            msg: 'ERROR: Error occurred while setting Prices. please try agian'
-                                        })
-                                    }
+
                                 }
                             }
 
                         }
+                    }
+                    if (error == 0) {
+                        res.send({
+                            status: true,
+                            msg: 'Prices Set Successfully'
+                        })
+                        return
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: 'ERROR: Error occurred while setting Prices. please try agian'
+                        })
+                        return
                     }
                     // axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
                     //     if (response.data.status) {
@@ -1302,8 +1294,6 @@ exports.saveIdPrices = async function (req, res) {
                 return
             }
 
-
-
         } else {
             res.send({
                 status: false,
@@ -1323,7 +1313,7 @@ exports.saveIdPrices = async function (req, res) {
 
 
 exports.savePackage = async function (req, res) {
-    console.log('data is', req.body)
+    // console.log('data is', req.body)
 
     let data = req.body.data;
     let err = false
@@ -1458,13 +1448,13 @@ exports.getPrices = async function (req, res) {
     let chat_id = {};
     let pgp_email = {};
     let vpn = {};
-    console.log(whitelebel_id, 'whitelebel aid')
+    // console.log(whitelebel_id, 'whitelebel aid')
     if (whitelebel_id) {
         let selectQuery = "SELECT * FROM prices WHERE whitelabel_id='" + whitelebel_id + "'";
         sql.query(selectQuery, async (err, reslt) => {
             if (err) throw err;
             if (reslt) {
-                console.log('result for get prices are is ', reslt);
+                // console.log('result for get prices are is ', reslt);
 
                 if (reslt.length) {
                     for (let item of reslt) {
@@ -1533,10 +1523,10 @@ exports.getPackages = async function (req, res) {
         sql.query(selectQuery, async (err, reslt) => {
             if (err) throw err;
             if (reslt) {
-                console.log('result for get packages are is ', reslt);
+                // console.log('result for get packages are is ', reslt);
 
                 if (reslt.length) {
-                    console.log(reslt, 'reslt data of prices')
+                    // console.log(reslt, 'reslt data of prices')
                     res.send({
                         status: true,
                         msg: "Data found",
