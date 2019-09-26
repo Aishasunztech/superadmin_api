@@ -1158,132 +1158,131 @@ exports.saveIdPrices = async function (req, res) {
             if (getApiURL.length) {
                 if (getApiURL[0].api_url) {
                     WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
-                    let error = 0;
-                    let month = ''
-                    for (var key in data) {
-                        if (data.hasOwnProperty(key)) {
-                            // console.log(key + " -> " + data[key]);
-                            let outerKey = key;
+                    axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                        if (response.data.status) {
+                            loginResponse = response.data;
+                            axios.patch(WHITE_LABEL_BASE_URL + '/users/save-sa-prices', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                                // console.log(response.data.status);
+                                if (response.data.status) {
+                                    let error = 0;
+                                    let month = ''
+                                    for (var key in data) {
+                                        if (data.hasOwnProperty(key)) {
+                                            // console.log(key + " -> " + data[key]);
+                                            let outerKey = key;
 
-                            let innerObject = data[key];
-                            // console.log('iner object is', innerObject)
-                            for (var innerKey in innerObject) {
-                                if (innerObject.hasOwnProperty(innerKey)) {
-                                    let days = 0;
-                                    // console.log(innerKey + " -> " + innerObject[innerKey]);
-                                    if (innerObject[innerKey]) {
+                                            let innerObject = data[key];
+                                            // console.log('iner object is', innerObject)
+                                            for (var innerKey in innerObject) {
+                                                if (innerObject.hasOwnProperty(innerKey)) {
+                                                    let days = 0;
+                                                    // console.log(innerKey + " -> " + innerObject[innerKey]);
+                                                    if (innerObject[innerKey]) {
 
-                                        // console.log('is string', string)
-                                        let stringarray = [];
+                                                        // console.log('is string', string)
+                                                        let stringarray = [];
 
-                                        stringarray = innerKey.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
-                                        if (stringarray) {
-                                            // console.log(stringarray,'is string lenth', stringarray.length)
-                                            if (stringarray.length) {
-                                                month = stringarray[0];
-                                                // console.log('is month', month, stringarray[1])
-                                                if (month && stringarray[1]) {
-                                                    // console.log('sring[1]', stringarray[1])
-                                                    if (stringarray[1] == 'month') {
-                                                        days = parseInt(month) * 30
-                                                    } else if (string[1] == 'year') {
-                                                        days = parseInt(month) * 365
+                                                        stringarray = innerKey.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                                                        if (stringarray) {
+                                                            // console.log(stringarray,'is string lenth', stringarray.length)
+                                                            if (stringarray.length) {
+                                                                month = stringarray[0];
+                                                                // console.log('is month', month, stringarray[1])
+                                                                if (month && stringarray[1]) {
+                                                                    // console.log('sring[1]', stringarray[1])
+                                                                    if (stringarray[1] == 'month') {
+                                                                        days = parseInt(month) * 30
+                                                                    } else if (string[1] == 'year') {
+                                                                        days = parseInt(month) * 365
+                                                                    } else {
+                                                                        days = 30
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                    // console.log(days, 'days are')
+                                                    let unit_price = innerKey;
+                                                    let updateQuery = "UPDATE prices SET unit_price='" + innerObject[innerKey] + "', price_expiry='" + days + "', whitelabel_id='" + whitelabel_id + "' WHERE price_term='" + innerKey + "' AND price_for='" + key + "'";
+                                                    sql.query(updateQuery, async function (err, result) {
+                                                        if (err) throw err;
+                                                        if (result) {
+                                                            // console.log('outerKey', outerKey)
+                                                            if (!result.affectedRows) {
+                                                                let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, whitelabel_id) VALUES('" + outerKey + "', '" + innerObject[innerKey] + "', '" + unit_price + "', '" + days + "', '" + whitelabel_id + "')";
+                                                                // console.log('insert query', insertQuery)
+                                                                let rslt = await sql.query(insertQuery);
+                                                                if (rslt) {
+                                                                    if (rslt.affectedRows == 0) {
+                                                                        error++;
+                                                                    }
+                                                                }
+                                                                // console.log(rslt, 'inner rslt')
+                                                            }
+                                                        }
+                                                    })
+                                                    if (error == 0) {
+                                                        res.send({
+                                                            status: true,
+                                                            msg: 'Prices Set Successfully'
+                                                        })
                                                     } else {
-                                                        days = 30
+                                                        res.send({
+                                                            status: false,
+                                                            msg: 'ERROR: Error occurred while setting Prices. please try agian'
+                                                        })
                                                     }
                                                 }
                                             }
+
                                         }
-                                    }
-                                    // console.log(days, 'days are')
-                                    let unit_price = innerKey;
-                                    let updateQuery = "UPDATE prices SET unit_price='" + innerObject[innerKey] + "', price_expiry='" + days + "', whitelabel_id='" + whitelabel_id + "' WHERE price_term='" + innerKey + "' AND price_for='" + key + "'";
-                                    sql.query(updateQuery, async function (err, result) {
-                                        if (err) throw err;
-                                        if (result) {
-                                            // console.log('outerKey', outerKey)
-                                            if (!result.affectedRows) {
-                                                let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, whitelabel_id) VALUES('" + outerKey + "', '" + innerObject[innerKey] + "', '" + unit_price + "', '" + days + "', '" + whitelabel_id + "')";
-                                                // console.log('insert query', insertQuery)
-                                                let rslt = await sql.query(insertQuery);
-                                                if (rslt) {
-                                                    if (rslt.affectedRows == 0) {
-                                                        error++;
-                                                    }
-                                                }
-                                                // console.log(rslt, 'inner rslt')
-                                            }
-                                        }
-                                    })
-                                    if (error == 0) {
-                                        res.send({
-                                            status: true,
-                                            msg: 'Prices Set Successfully'
-                                        })
-                                    } else {
-                                        res.send({
-                                            status: false,
-                                            msg: 'ERROR: Error occurred while setting Prices. please try agian'
-                                        })
                                     }
                                 }
-                            }
+                                else {
+                                    res.send({
+                                        status: false,
+                                        msg: 'ERROR: White label server error and Package not saved. please try again.'
+                                    })
+                                    err = true
+                                    return
+
+                                }
+                            }).catch((error) => {
+                                if (error) {
+                                    console.log("ERROR");
+                                    // console.log(error);
+                                    data = {
+                                        "status": false,
+                                        "msg": "White Label server not responding. PLease try again later",
+                                    };
+                                    res.send(data);
+                                    err = true
+                                    return
+                                }
+                            })
 
                         }
-                    }
-                    // axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
-                    //     if (response.data.status) {
-                    //         loginResponse = response.data;
-                    //         axios.patch(WHITE_LABEL_BASE_URL + '/users/save-sa-prices', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
-                    //             // console.log(response.data.status);
-                    //             if (response.data.status) {
+                        else {
+                            res.send({
+                                status: false,
+                                msg: "you are not allowed to perform this action.",
+                            })
+                            err = true
+                            return
+                        }
+                    }).catch((error) => {
+                        console.log("error", error);
+                        data = {
+                            "status": false,
+                            "msg": "White Label server not responding. PLease try again later",
+                        };
+                        // console.log("response send 1");
+                        res.send(data);
+                        err = true
+                        return
+                    });
 
-                    //             }
-                    //             else {
-                    //                 res.send({
-                    //                     status: false,
-                    //                     msg: 'ERROR: White label server error and Package not saved. please try again.'
-                    //                 })
-                    //                 err = true
-                    //                 return
-
-                    //             }
-                    //         }).catch((error) => {
-                    //             if (error) {
-                    //                 console.log("ERROR");
-                    //                 // console.log(error);
-                    //                 data = {
-                    //                     "status": false,
-                    //                     "msg": "White Label server not responding. PLease try again later",
-                    //                 };
-                    //                 res.send(data);
-                    //                 err = true
-                    //                 return
-                    //             }
-                    //         })
-
-                    //     }
-                    //     else {
-                    //         res.send({
-                    //             status: false,
-                    //             msg: "you are not allowed to perform this action.",
-                    //         })
-                    //         err = true
-                    //         return
-                    //     }
-                    // }).catch((error) => {
-                    //     console.log("error", error);
-                    //     data = {
-                    //         "status": false,
-                    //         "msg": "White Label server not responding. PLease try again later",
-                    //     };
-                    //     // console.log("response send 1");
-                    //     res.send(data);
-                    //     err = true
-                    //     return
-                    // });
-
-                    // console.log('errors are ', error)
+                    console.log('errors are ', error)
                 }
                 else {
                     res.send({
@@ -1335,96 +1334,95 @@ exports.savePackage = async function (req, res) {
         if (getApiURL.length) {
             if (getApiURL[0].api_url) {
                 WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
-                let days = 0;
-                if (data.pkgTerm) {
-                    stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
-                    if (stringarray) {
-                        // console.log(stringarray,'is string lenth', stringarray.length)
-                        if (stringarray.length) {
-                            month = stringarray[0];
-                            // console.log('is month', month, stringarray[1])
-                            if (month && stringarray[1]) {
-                                // console.log('sring[1]', stringarray[1])
-                                if (stringarray[1] == 'month') {
-                                    days = parseInt(month) * 30
-                                } else if (string[1] == 'year') {
-                                    days = parseInt(month) * 365
-                                } else {
-                                    days = 30
+                axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                    if (response.data.status) {
+                        loginResponse = response.data;
+                        axios.post(WHITE_LABEL_BASE_URL + '/users/save-sa-package', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                            if (response.data.status) {
+                                let days = 0;
+                                if (data.pkgTerm) {
+                                    stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                                    if (stringarray) {
+                                        // console.log(stringarray,'is string lenth', stringarray.length)
+                                        if (stringarray.length) {
+                                            month = stringarray[0];
+                                            // console.log('is month', month, stringarray[1])
+                                            if (month && stringarray[1]) {
+                                                // console.log('sring[1]', stringarray[1])
+                                                if (stringarray[1] == 'month') {
+                                                    days = parseInt(month) * 30
+                                                } else if (string[1] == 'year') {
+                                                    days = parseInt(month) * 365
+                                                } else {
+                                                    days = 30
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
+                                let pkg_features = JSON.stringify(data.pkgFeatures)
+                                let insertQuery = "INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id) VALUES('" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "', '" + whitelabel_id + "')";
+                                sql.query(insertQuery, async (err, rslt) => {
+                                    if (err) throw err;
+                                    if (rslt) {
+                                        if (rslt.affectedRows) {
+                                            insertedRecord = await sql.query("SELECT * FROM packages WHERE whitelabel_id='" + whitelabel_id + "' AND id='" + rslt.insertId + "'")
+                                            res.send({
+                                                status: true,
+                                                msg: 'Package Saved Successfully.',
+                                                data: insertedRecord
+                                            })
+                                            return
+                                        } else {
+                                            res.send({
+                                                status: true,
+                                                msg: 'Package Not Saved.Please try again',
+                                                data: insertedRecord
+                                            })
+                                            return
+                                        }
+                                    }
+                                })
+                            } else {
+                                res.send({
+                                    status: false,
+                                    msg: 'ERROR: White label server error and Package not saved. please try again.'
+                                })
+                                err = true
+                                return
+
                             }
-                        }
-                    }
-                }
-                let pkg_features = JSON.stringify(data.pkgFeatures)
-                let insertQuery = "INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id) VALUES('" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "', '" + whitelabel_id + "')";
-                sql.query(insertQuery, async (err, rslt) => {
-                    if (err) throw err;
-                    if (rslt) {
-                        if (rslt.affectedRows) {
-                            insertedRecord = await sql.query("SELECT * FROM packages WHERE whitelabel_id='" + whitelabel_id + "' AND id='" + rslt.insertId + "'")
-                            res.send({
-                                status: true,
-                                msg: 'Package Saved Successfully.',
-                                data: insertedRecord
-                            })
+                        }).catch((error) => {
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later",
+                            };
+                            res.send(data);
+                            err = true
                             return
-                        } else {
-                            res.send({
-                                status: true,
-                                msg: 'Package Not Saved.Please try again',
-                                data: insertedRecord
-                            })
-                            return
-                        }
+                        });;
+
                     }
-                })
+                    else {
+                        res.send({
+                            status: false,
+                            msg: "you are not allowed to perform this action.",
+                        })
+                        err = true
+                        return
+                    }
+                }).catch((error) => {
+                    console.log("error", error);
+                    data = {
+                        "status": false,
+                        "msg": "White Label server not responding. PLease try again later",
+                    };
+                    // console.log("response send 1");
+                    res.send(data);
+                    err = true
+                    return
+                });
 
-                // axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
-                //     if (response.data.status) {
-                //         loginResponse = response.data;
-                //         axios.post(WHITE_LABEL_BASE_URL + '/users/save-sa-package', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
-                //             if (response.data.status) {
-
-                //             } else {
-                //                 res.send({
-                //                     status: false,
-                //                     msg: 'ERROR: White label server error and Package not saved. please try again.'
-                //                 })
-                //                 err = true
-                //                 return
-
-                //             }
-                //         }).catch((error) => {
-                //             data = {
-                //                 "status": false,
-                //                 "msg": "White Label server not responding. PLease try again later",
-                //             };
-                //             res.send(data);
-                //             err = true
-                //             return
-                //         });;
-
-                //     }
-                //     else {
-                //         res.send({
-                //             status: false,
-                //             msg: "you are not allowed to perform this action.",
-                //         })
-                //         err = true
-                //         return
-                //     }
-                // }).catch((error) => {
-                //     console.log("error", error);
-                //     data = {
-                //         "status": false,
-                //         "msg": "White Label server not responding. PLease try again later",
-                //     };
-                //     // console.log("response send 1");
-                //     res.send(data);
-                //     err = true
-                //     return
-                // });
             }
             else {
                 res.send({
@@ -1609,10 +1607,11 @@ exports.requestCredits = async function (req, res) {
         let label = req.body.label
         let credits = req.body.credits
         let dealer_pin = req.body.dealer_pin
+        let request_id = req.body.request_id
         // console.log(dealer_pin);
         if (dealer_id != '' && label != '' && credits != '') {
 
-            let query = `INSERT into credit_requests (dealer_id,dealer_pin,dealer_name,dealer_email,label,credits) VALUES (${dealer_id},'${dealer_pin}','${dealer_name}','${dealer_email}','${label}',${credits})`;
+            let query = `INSERT into credit_requests (dealer_id,dealer_pin,dealer_name,dealer_email,label,request_id ,credits) VALUES (${dealer_id},'${dealer_pin}','${dealer_name}','${dealer_email}','${label}','${request_id}',${credits})`;
             sql.query(query, function (err, result) {
                 if (err) throw err
                 if (result && result.affectedRows > 0) {
@@ -1687,30 +1686,99 @@ exports.deleteRequest = async function (req, res) {
         let id = req.params.id
         let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
         console.log(query);
-        sql.query(query, function (err, result) {
+        sql.query(query, async function (err, result) {
             if (err) throw err
             if (result.length) {
+                let labelID = await general_helpers.getlabelIdByName(result[0].label)
+                // console.log(labelID);
+                let getApiURL = await sql.query(`SELECT * FROM white_labels WHERE id = ${labelID}`)
+                if (getApiURL.length) {
+                    if (getApiURL[0].api_url) {
+                        var WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                            // console.log(response);
+                            if (response.data.status) {
+                                let loginResponse = response.data
+                                let data = {
+                                    credits: result[0].credits,
+                                    dealer_id: result[0].dealer_id,
+                                    request_id: result[0].request_id,
+                                    type: "rejected"
+                                }
 
-                let updateQuery = "update credit_requests set status = 1 , del_status = 1 where id= " + id
-                sql.query(updateQuery, function (err, result) {
-                    if (err) throw err
-                    if (result && result.affectedRows > 0) {
-                        data = {
-                            "status": true,
-                            "msg": "Request deleted successfully."
-                        };
-                        res.send(data);
-                        return
-                    } else {
-                        data = {
-                            "status": false,
-                            "msg": "Request not deleted please try again."
-                        };
-                        res.send(data);
+                                axios.post(WHITE_LABEL_BASE_URL + '/users/credit-request-ack', { data }, { headers: { 'authorization': loginResponse.token } }).then(async (response) => {
+                                    if (response.data.status) {
+                                        let updateQuery = "update credit_requests set status = 1 , del_status = 1 where id= " + id
+                                        sql.query(updateQuery, function (err, result) {
+                                            if (err) throw err
+                                            if (result && result.affectedRows > 0) {
+                                                data = {
+                                                    "status": true,
+                                                    "msg": "Request deleted successfully."
+                                                };
+                                                res.send(data);
+                                                return
+                                            } else {
+                                                data = {
+                                                    "status": false,
+                                                    "msg": "Request not deleted please try again."
+                                                };
+                                                res.send(data);
+                                                return
+                                            }
+                                        })
+                                    } else {
+                                        data = {
+                                            "status": false,
+                                            "msg": response.data.msg
+                                        };
+                                        res.send(data);
+                                        return
+                                    }
+                                }).catch((error) => {
+                                    data = {
+                                        "status": false,
+                                        "msg": "White Label server not responding. PLease try again later"
+                                    };
+                                    res.send(data);
+                                    return
+                                });
+                            }
+                            else {
+                                data = {
+                                    "status": false,
+                                    "msg": "User authentication failed.You are not allowed to perform this action."
+                                };
+                                res.send(data);
+                                return
+                            }
+                        }).catch((error) => {
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later"
+                            };
+                            res.send(data);
+                            return
+                        });
+                    }
+                    else {
+                        res.send({
+                            status: false,
+                            msg: "White Label credentials not found.",
+                            "duplicateData": []
+                        })
                         return
                     }
-                })
 
+                }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "White Label Data not found.",
+                        // "duplicateData": []
+                    })
+                    return
+                }
             } else {
                 data = {
                     status: false,
@@ -1733,7 +1801,8 @@ exports.deleteRequest = async function (req, res) {
 exports.acceptRequest = async function (req, res) {
     try {
         let id = req.params.id
-        let password = req.body.pass
+        let pass = req.body.pass
+        let password = md5(req.body.pass)
         let requestData = req.body.request
         let order_date = moment(requestData.created_at).format('YYYY-MM-DD hh:mm:ss');
         let dealer_pin = req.body.dealer_pin
@@ -1763,15 +1832,17 @@ exports.acceptRequest = async function (req, res) {
                             if (getApiURL[0].api_url) {
                                 var WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
                                 axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
-                                    console.log(response);
+                                    // console.log(response);
                                     if (response.data.status) {
                                         let loginResponse = response.data
                                         let data = {
                                             credits: result[0].credits,
-                                            dealer_id: result[0].dealer_id
+                                            dealer_id: result[0].dealer_id,
+                                            request_id: result[0].request_id,
+                                            type: "accepted"
                                         }
 
-                                        axios.post(WHITE_LABEL_BASE_URL + '/users/update_credit', { data }, { headers: { 'authorization': loginResponse.token } }).then(async (response) => {
+                                        axios.post(WHITE_LABEL_BASE_URL + '/users/credit-request-ack', { data }, { headers: { 'authorization': loginResponse.token } }).then(async (response) => {
                                             if (response.data.status) {
                                                 let inv_no = "PI123456"
                                                 let dealerQ = `SELECT * FROM superadmins_credentials WHERE dealer_pin = ${dealer_pin}`
@@ -1795,7 +1866,7 @@ exports.acceptRequest = async function (req, res) {
                                             } else {
                                                 data = {
                                                     "status": false,
-                                                    "msg": "Credits not added to user please try again."
+                                                    "msg": response.data.msg
                                                 };
                                                 res.send(data);
                                                 return
@@ -1926,6 +1997,7 @@ exports.checkDealerPin = async function (req, res) {
         let requestData = req.body.requestData
         let enc_pass = md5(requestData.dealer_name + requestData.dealer_email + requestData.id + Date.now())
         // console.log(enc_pass);
+        let dbPass = md5(enc_pass);
         let query_res = await sql.query(`SELECT * FROM superadmins_credentials WHERE dealer_pin='${dealer_pin}' limit 1`);
         if (query_res.length) {
 
@@ -1937,7 +2009,7 @@ exports.checkDealerPin = async function (req, res) {
             catch (err) {
                 console.log(err);
             }
-            sql.query(`UPDATE credit_requests set password = '${enc_pass}' WHERE id = ${requestData.id}`);
+            sql.query(`UPDATE credit_requests set password = '${dbPass}' WHERE id = ${requestData.id}`);
             res.send({
                 "pin_matched": true
             });
