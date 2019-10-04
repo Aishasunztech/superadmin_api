@@ -2297,10 +2297,11 @@ exports.getDealerList = async function (req, res) {
                     if (response.data.status) {
                         loginResponse = response.data;
                         axios.get(WHITE_LABEL_BASE_URL + '/users/get_dealer_list', { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                            console.log(response.data);
                             if (response.data.status) {
                                 res.send({
-                                    status: false,
-                                    msg: "error",
+                                    status: true,
+                                    msg: "DATA FOUND",
                                     data: response.data.data
                                 });
                                 return
