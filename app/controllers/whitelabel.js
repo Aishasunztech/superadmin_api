@@ -810,7 +810,7 @@ exports.saveIdPrices = async function (req, res) {
 
 
 exports.savePackage = async function (req, res) {
-    console.log('data is', req.body)
+    // console.log('data is', req.body)
 
     let data = req.body.data;
     if (data) {
