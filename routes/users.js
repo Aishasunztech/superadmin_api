@@ -105,6 +105,8 @@ router.put('/delete_request/:id', user.deleteRequest)
 
 router.put('/accept_request/:id', user.acceptRequest)
 
+router.post('/add_credits_sale_record', user.addCreditsSaleRecord)
+
 // =================================================================================
 // Billing
 

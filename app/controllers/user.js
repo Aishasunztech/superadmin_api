@@ -1598,10 +1598,11 @@ exports.requestCredits = async function (req, res) {
         let credits = req.body.credits
         let dealer_pin = req.body.dealer_pin
         let request_id = req.body.request_id
+        let account_type = req.body.account_type
         // console.log(dealer_pin);
         if (dealer_id != '' && label != '' && credits != '') {
 
-            let query = `INSERT into credit_requests (dealer_id,dealer_pin,dealer_name,dealer_email,label,request_id ,credits) VALUES (${dealer_id},'${dealer_pin}','${dealer_name}','${dealer_email}','${label}','${request_id}',${credits})`;
+            let query = `INSERT into credit_requests (dealer_id,dealer_pin,dealer_name,dealer_email,label,request_id ,credits , account_type) VALUES (${dealer_id},'${dealer_pin}','${dealer_name}','${dealer_email}','${label}','${request_id}',${credits} , '${account_type}')`;
             sql.query(query, function (err, result) {
                 if (err) throw err
                 if (result && result.affectedRows > 0) {
@@ -1838,7 +1839,7 @@ exports.acceptRequest = async function (req, res) {
                                                 let dealerQ = `SELECT * FROM superadmins_credentials WHERE dealer_pin = ${dealer_pin}`
                                                 let dealerData = await sql.query(dealerQ);
 
-                                                let acceptRequestQ = `INSERT INTO sales (dealer_id,dealer_pin,dealer_name,credits,label, accepted_by,inv_no,order_date,account_type,status,pay_type) VALUES(${requestData.dealer_id},'${requestData.dealer_pin}','${requestData.dealer_name}',${requestData.credits},'${requestData.label}','${dealerData[0].dealer_name}','${inv_no}','${order_date}','admin' ,'UNPAID' ,'CASH')`
+                                                let acceptRequestQ = `INSERT INTO sales (dealer_id,dealer_pin,dealer_name,credits,label, accepted_by,inv_no,order_date,account_type,status,pay_type) VALUES(${requestData.dealer_id},'${requestData.dealer_pin}','${requestData.dealer_name}',${requestData.credits},'${requestData.label}','${dealerData[0].dealer_name}','${inv_no}','${order_date}','${requestData.account_type}' ,'UNPAID' ,'CASH')`
                                                 sql.query(acceptRequestQ)
                                                 console.log(acceptRequestQ);
                                                 let updateQuery = "update credit_requests set status = 1 where id= " + id
@@ -1933,6 +1934,90 @@ exports.acceptRequest = async function (req, res) {
         data = {
             "status": false,
             "msg": "Error: Request not accepted. Please try again."
+        };
+        res.send(data);
+        return
+    }
+}
+exports.addCreditsSaleRecord = async function (req, res) {
+
+    try {
+        let dealer_id = req.body.dealer_id
+        let dealer_pin = req.body.dealer_pin
+        let dealer_name = req.body.dealer_name
+        let credits = req.body.credits
+        let label = req.body.label
+        let accepted_by = "Online Transfer"
+        let inv_no = await general_helpers.getInvoiceId()
+        let order_date = moment().format("YYYY/MM/DD")
+        let account_type = req.body.dealer_type
+        let status = 'PAID'
+        let payment_type = req.body.payment_type
+        let dealer_email = req.body.dealer_email
+        if (dealer_name && dealer_pin && dealer_id && credits && label && account_type && payment_type && dealer_email) {
+            let acceptRequestQ = `INSERT INTO sales (dealer_id,dealer_pin,dealer_name,credits,label, accepted_by,inv_no,order_date,account_type,status,pay_type, paid_date) VALUES(${dealer_id},'${dealer_pin}','${dealer_name}',${credits},'${label}','${accepted_by}','${inv_no}','${order_date}','${account_type}' ,'${status}' ,'${payment_type}' , '${order_date}')`
+            sql.query(acceptRequestQ, async function (err, result) {
+                if (err) {
+                    data = {
+                        "status": false,
+                        "msg": "ERROR: server Query error."
+                    };
+                    res.send(data);
+                    return
+                }
+
+                if (result.affectedRows) {
+                    const invoice = {
+                        shipping: {
+                            name: dealer_name.toUpperCase() + ` (${label})`,
+                            dealer_id: dealer_id,
+                            dealer_pin: dealer_pin,
+                        },
+                        items: [
+                            {
+                                item: "Credits",
+                                description: "Credits puchased on cash",
+                                quantity: credits,
+                                amount: credits * 100
+                            },
+                        ],
+                        subtotal: credits * 100,
+                        paid: credits * 100,
+                        invoice_nr: inv_no
+                    };
+                    let fileName = "invoice-" + Date.now() + dealer_name + dealer_id + ".pdf"
+                    let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                    createInvoice(invoice, filePath)
+
+                    await sql.query(`INSERT INTO invoices (inv_no , dealer_id, inv_file_path) VALUES('${inv_no}', ${dealer_id} , '${fileName}')`)
+                    data = {
+                        "status": true,
+                        "msg": "Record added successfully."
+                    };
+                    res.send(data);
+                    return
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": "ERROR: DATA NOT INSERTED."
+                    };
+                    res.send(data);
+                    return
+                }
+            })
+        } else {
+            data = {
+                "status": false,
+                "msg": "ERROR: REQUEST DATA NOT FOUND"
+            };
+            res.send(data);
+            return
+        }
+    } catch (error) {
+        // console.log(error)
+        data = {
+            "status": false,
+            "msg": "ERROR: server Query error."
         };
         res.send(data);
         return

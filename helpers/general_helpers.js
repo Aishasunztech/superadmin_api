@@ -305,6 +305,7 @@ module.exports = {
 		var deviceId = str.toUpperCase() + num;
 		return deviceId;
 	},
+
 	getOfflineDvcId: async function (sn, mac) {
 
 		var key = md5(sn + mac);
@@ -726,5 +727,18 @@ module.exports = {
 			labelID = data[0].id
 		}
 		return labelID
-	}
+	},
+	getInvoiceId: async function () {
+		let invoiceId = "" + 1
+		var max = "000000"
+		let lastInvoice = "SELECT id from invoices ORDER BY id DESC LIMIT 1"
+		let result = await sql.query(lastInvoice)
+		if (result && result.length) {
+			invoiceId = invoiceId + result[0].id
+			invoiceId = max.substring(0, max.length - invoiceId.length) + invoiceId
+		} else {	
+			
+		}
+		return 'PI' + invoiceId;
+	},
 }
