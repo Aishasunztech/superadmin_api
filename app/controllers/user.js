@@ -1823,7 +1823,7 @@ exports.acceptRequest = async function (req, res) {
                             if (getApiURL[0].api_url) {
                                 var WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
                                 axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
-                                    // console.log(response);
+                                    // console.log(response.data);
                                     if (response.data.status) {
                                         let loginResponse = response.data
                                         let data = {
@@ -1835,13 +1835,36 @@ exports.acceptRequest = async function (req, res) {
 
                                         axios.post(WHITE_LABEL_BASE_URL + '/users/credit-request-ack', { data }, { headers: { 'authorization': loginResponse.token } }).then(async (response) => {
                                             if (response.data.status) {
-                                                let inv_no = "PI123456"
-                                                let dealerQ = `SELECT * FROM superadmins_credentials WHERE dealer_pin = ${dealer_pin}`
+                                                let inv_no = await general_helpers.getInvoiceId();
+                                                let dealerQ = `SELECT * FROM superadmins_credentials WHERE dealer_pin = ${requestData.dealer_pin}`
                                                 let dealerData = await sql.query(dealerQ);
 
                                                 let acceptRequestQ = `INSERT INTO sales (dealer_id,dealer_pin,dealer_name,credits,label, accepted_by,inv_no,order_date,account_type,status,pay_type) VALUES(${requestData.dealer_id},'${requestData.dealer_pin}','${requestData.dealer_name}',${requestData.credits},'${requestData.label}','${dealerData[0].dealer_name}','${inv_no}','${order_date}','${requestData.account_type}' ,'UNPAID' ,'CASH')`
-                                                sql.query(acceptRequestQ)
-                                                console.log(acceptRequestQ);
+                                                // console.log(acceptRequestQ);
+                                                await sql.query(acceptRequestQ)
+                                                const invoice = {
+                                                    shipping: {
+                                                        name: requestData.dealer_name.toUpperCase() + ` (${requestData.label})`,
+                                                        dealer_id: requestData.dealer_id,
+                                                        dealer_pin: requestData.dealer_pin,
+                                                    },
+                                                    items: [
+                                                        {
+                                                            item: "Credits",
+                                                            description: "Credits puchased on cash",
+                                                            quantity: requestData.credits,
+                                                            amount: requestData.credits * 100
+                                                        },
+                                                    ],
+                                                    subtotal: requestData.credits * 100,
+                                                    paid: 0,
+                                                    invoice_nr: inv_no
+                                                };
+                                                let fileName = "invoice-" + Date.now() + requestData.dealer_name + requestData.dealer_id + ".pdf"
+                                                let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                                                createInvoice(invoice, filePath, 'credits')
+                                                await sql.query(`INSERT INTO invoices (inv_no , dealer_id, inv_file_path) VALUES('${inv_no}', ${requestData.dealer_id} ,'${fileName}')`)
+
                                                 let updateQuery = "update credit_requests set status = 1 where id= " + id
                                                 sql.query(updateQuery, function (err, result) {
                                                     if (err) throw err
@@ -1863,6 +1886,7 @@ exports.acceptRequest = async function (req, res) {
                                                 return
                                             }
                                         }).catch((error) => {
+                                            console.log(error);
                                             data = {
                                                 "status": false,
                                                 "msg": "White Label server not responding. PLease try again later"
@@ -1987,7 +2011,7 @@ exports.addCreditsSaleRecord = async function (req, res) {
                     };
                     let fileName = "invoice-" + Date.now() + dealer_name + dealer_id + ".pdf"
                     let filePath = path.join(__dirname, "../../uploads/" + fileName)
-                    createInvoice(invoice, filePath)
+                    createInvoice(invoice, filePath, 'credits')
 
                     await sql.query(`INSERT INTO invoices (inv_no , dealer_id, inv_file_path) VALUES('${inv_no}', ${dealer_id} , '${fileName}')`)
                     data = {
