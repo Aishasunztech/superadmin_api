@@ -20,5 +20,4 @@
         "database": "lm_superadmin",
         "dialect": "mysql"
     }
-  }
-  
+}
