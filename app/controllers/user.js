@@ -2498,7 +2498,7 @@ exports.syncCSVIds = async function (req, res) {
 
             if (!servererror) {
                 for (let i = 0; i < allChat_ids.length; i++) {
-                    await sql.query(`UPDATE chat_ids set used = ${allChat_ids[i].used} where chat_id = ${allChat_ids[i].chat_id}`)
+                    await sql.query(`UPDATE chat_ids set used = ${allChat_ids[i].used} where chat_id = '${allChat_ids[i].chat_id}'`)
                 }
                 for (let i = 0; i < allSim_ids.length; i++) {
                     await sql.query(`UPDATE sim_ids set used = ${allSim_ids[i].used} where sim_id = ${allSim_ids[i].sim_id}`)
