@@ -1440,6 +1440,114 @@ exports.savePackage = async function (req, res) {
 }
 
 
+exports.saveHardware = async function (req, res) {
+    // console.log('data is', req.body)
+
+    let data = req.body.data;
+    let err = false
+    if (data) {
+        // console.log(data, 'data')
+        let whitelabel_id = req.body.data.whitelabel_id;
+        let WHITE_LABEL_BASE_URL = '';
+        let getApiURL = await sql.query(`SELECT * from white_labels where id = ${whitelabel_id}`)
+        if (getApiURL.length) {
+            if (getApiURL[0].api_url) {
+                WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                    if (response.data.status) {
+                        loginResponse = response.data;
+                        axios.post(WHITE_LABEL_BASE_URL + '/users/save-sa-hardware', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                            if (response.data.status) {
+
+                                let insertQuery = "INSERT INTO hardwares (name,price, whitelabel_id) VALUES('" + data.hardwareName + "', '" + data.hardwarePrice + "', '" + whitelabel_id + "')";
+                                sql.query(insertQuery, async (err, rslt) => {
+                                    if (err) throw err;
+                                    if (rslt) {
+                                        if (rslt.affectedRows) {
+                                            insertedRecord = await sql.query("SELECT * FROM hardwares WHERE whitelabel_id='" + whitelabel_id + "' AND id='" + rslt.insertId + "'")
+                                            res.send({
+                                                status: true,
+                                                msg: 'Hardware Saved Successfully.',
+                                                data: insertedRecord
+                                            })
+                                            return
+                                        } else {
+                                            res.send({
+                                                status: true,
+                                                msg: 'Hardware Not Saved.Please try again',
+                                                data: insertedRecord
+                                            })
+                                            return
+                                        }
+                                    }
+                                })
+                            } else {
+                                res.send({
+                                    status: false,
+                                    msg: 'ERROR: White label server error and Hardware not saved. please try again.'
+                                })
+                                err = true
+                                return
+
+                            }
+                        }).catch((error) => {
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later",
+                            };
+                            res.send(data);
+                            err = true
+                            return
+                        });;
+
+                    }
+                    else {
+                        res.send({
+                            status: false,
+                            msg: "you are not allowed to perform this action.",
+                        })
+                        err = true
+                        return
+                    }
+                }).catch((error) => {
+                    console.log("error", error);
+                    data = {
+                        "status": false,
+                        "msg": "White Label server not responding. PLease try again later",
+                    };
+                    // console.log("response send 1");
+                    res.send(data);
+                    err = true
+                    return
+                });
+
+            }
+            else {
+                res.send({
+                    status: false,
+                    msg: "White Label credentials not found.",
+                    "duplicateData": []
+                })
+                return
+            }
+        }
+        else {
+            res.send({
+                status: false,
+                msg: "White Label Data not found.",
+            })
+            return
+        }
+    } else {
+        res.send({
+            status: false,
+            msg: 'Invalid Data'
+        })
+        return
+    }
+}
+
+
 exports.getPrices = async function (req, res) {
     let whitelebel_id = req.params.whitelabel_id;
     let sim_id = {};
@@ -1559,6 +1667,48 @@ exports.getPackages = async function (req, res) {
         })
     }
 }
+exports.getHardwares = async function (req, res) {
+    let whitelebel_id = req.params.whitelabel_id;
+    if (whitelebel_id) {
+        let selectQuery = "SELECT * FROM hardwares WHERE whitelabel_id='" + whitelebel_id + "'";
+        sql.query(selectQuery, async (err, reslt) => {
+            if (err) throw err;
+            if (reslt) {
+
+                if (reslt.length) {
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: reslt
+
+                    })
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: []
+
+                    })
+                }
+
+            } else {
+
+                res.send({
+                    status: true,
+                    msg: "Data found",
+                    data: []
+                })
+            }
+        })
+    } else {
+        res.send({
+            status: false,
+            msg: 'Invalid Whitelabel_id',
+            data: []
+
+        })
+    }
+}
 
 exports.checkPackageName = async function (req, res) {
 
@@ -1569,6 +1719,35 @@ exports.checkPackageName = async function (req, res) {
 
         let checkExisting = await sql.query(checkExistingQ);
         console.log(checkExistingQ, 'query is')
+        if (checkExisting.length) {
+            data = {
+                status: false,
+            };
+            res.send(data);
+            return;
+        }
+        else {
+            data = {
+                status: true,
+            };
+            res.send(data);
+            return;
+        }
+    } catch (error) {
+        throw error
+    }
+
+}
+
+exports.checkHardwareName = async function (req, res) {
+
+    try {
+        let name = req.body.name !== undefined ? req.body.name : null;
+
+        let checkExistingQ = "SELECT name FROM hardwares WHERE name='" + name + "'";
+
+        let checkExisting = await sql.query(checkExistingQ);
+        // console.log(checkExistingQ, 'query is')
         if (checkExisting.length) {
             data = {
                 status: false,
