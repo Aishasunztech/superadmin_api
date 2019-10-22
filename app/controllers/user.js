@@ -1440,6 +1440,123 @@ exports.savePackage = async function (req, res) {
 }
 
 
+exports.deletePackage = async function (req, res) {
+    // console.log('data is', req.body)
+
+    let pkg_id = req.params.pkg_id;
+    let Qupdate = `UPDATE packages SET delete_status = 1 WHERE id = ${pkg_id}`;
+
+    let result = await sql.query(Qupdate);
+
+    if (result.affectedRows) {
+
+        let pkg_detail = await sql.query(`SELECT * FROM packages WHERE id = ${pkg_id}`);
+
+        // console.log('pkg_detail: ', pkg_detail);
+        let getApiURL = await sql.query(`SELECT api_url FROM white_labels WHERE id = ${pkg_detail[0].whitelabel_id}`);
+        // console.log("getApiURL ==> ", getApiURL[0].api_url)
+
+        let WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+            if (response.data.status) {
+                loginResponse = response.data;
+
+                let data = {
+                    pkg_name: pkg_detail[0].pkg_name,
+                }
+
+                axios.post(WHITE_LABEL_BASE_URL + '/users/delete-sa-package', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                    if (response.data.status) {
+                        console.log("delete from Lockmesh");
+
+                        res.send({
+                            status: true,
+                            msg: 'Package deleted successfully'
+                        })
+                    } else {
+                        res.send({
+                            status: true,
+                            msg: 'Package deleted successfully only for Superadmin'
+                        })
+                    }
+                })
+
+            } else {
+                res.send({
+                    status: true,
+                    msg: 'Package deleted successfully only for Superadmin'
+                })
+            }
+        })
+
+    } else {
+        res.send({
+            status: false,
+            msg: 'Failed to delete Package'
+        })
+    }
+}
+
+exports.deleteHardware = async function (req, res) {
+    // console.log('data is', req.body)
+
+    let hardware_id = req.params.id;
+    console.log("hardware_id ", hardware_id);
+    let Qupdate = `UPDATE hardwares SET delete_status = 1 WHERE id = ${hardware_id}`;
+
+    let result = await sql.query(Qupdate);
+
+    if (result.affectedRows) {
+
+        let hdw_detail = await sql.query(`SELECT * FROM hardwares WHERE id = ${hardware_id}`);
+
+        // console.log('hdw_detail: ', hdw_detail);
+        let getApiURL = await sql.query(`SELECT api_url FROM white_labels WHERE id = ${hdw_detail[0].whitelabel_id}`);
+        // console.log("getApiURL ==> ", getApiURL[0].api_url)
+
+        let WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+            if (response.data.status) {
+                loginResponse = response.data;
+
+                let data = {
+                    name: hdw_detail[0].name,
+                }
+
+                axios.post(WHITE_LABEL_BASE_URL + '/users/delete-sa-hardware', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                    if (response.data.status) {
+                        console.log("delete from Lockmesh");
+
+                        res.send({
+                            status: true,
+                            msg: 'Hardware deleted successfully'
+                        })
+                    } else {
+                        res.send({
+                            status: true,
+                            msg: 'Hardware deleted successfully only for Superadmin'
+                        })
+                    }
+                })
+
+            } else {
+                res.send({
+                    status: true,
+                    msg: 'Hardware deleted successfully only for Superadmin'
+                })
+            }
+        })
+
+
+
+    } else {
+        res.send({
+            status: false,
+            msg: 'Failed to delete Hardware'
+        })
+    }
+}
+
 exports.saveHardware = async function (req, res) {
     // console.log('data is', req.body)
 
@@ -1625,7 +1742,7 @@ exports.getPrices = async function (req, res) {
 exports.getPackages = async function (req, res) {
     let whitelebel_id = req.params.whitelabel_id;
     if (whitelebel_id) {
-        let selectQuery = "SELECT * FROM packages WHERE whitelabel_id='" + whitelebel_id + "'";
+        let selectQuery = `SELECT * FROM packages WHERE whitelabel_id='${whitelebel_id}' AND delete_status = 0`;
         sql.query(selectQuery, async (err, reslt) => {
             if (err) throw err;
             if (reslt) {
@@ -1667,10 +1784,75 @@ exports.getPackages = async function (req, res) {
         })
     }
 }
+exports.editHardware = async function (req, res) {
+    let updateData = req.body.data;
+    console.log('editHardwares api ', updateData);
+
+    let updateQuery = `UPDATE hardwares SET name= '${updateData.new_name}', price = ${updateData.new_price}  WHERE id = ${updateData.id}`;
+    console.log("updateQuery ", updateQuery);
+
+    sql.query(updateQuery, async (err, result) => {
+        if (err) {
+            console.log(err);
+            res.send({
+                status: false,
+                msg: "Error: Hardware not found",
+            })
+            return;
+        }
+
+        if (result && result.affectedRows) {
+
+
+            let getApiURL = await sql.query(`SELECT api_url FROM white_labels WHERE id = ${updateData.whitelabel_id}`);
+            console.log("getApiURL ==> ", getApiURL[0].api_url)
+
+            let WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+            axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                if (response.data.status) {
+                    loginResponse = response.data;
+
+                    axios.post(WHITE_LABEL_BASE_URL + '/users/edit-sa-hardware', { data: updateData }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                        if (response.data.status) {
+                            console.log("update from Lockmesh");
+                            res.send({
+                                status: true,
+                                msg: "Hardware Update Successfully",
+                            })
+                            return;
+                        } else {
+                            res.send({
+                                status: true,
+                                msg: "Hardware Update Successfully only for Superadmin",
+
+                            })
+                            return;
+                        }
+                    })
+
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "Hardware Update Successfully only for Superadmin",
+                    })
+                    return;
+                }
+            })
+
+
+        } else {
+            res.send({
+                status: false,
+                msg: "Hardware not found",
+            })
+        }
+    })
+}
+
 exports.getHardwares = async function (req, res) {
     let whitelebel_id = req.params.whitelabel_id;
     if (whitelebel_id) {
-        let selectQuery = "SELECT * FROM hardwares WHERE whitelabel_id='" + whitelebel_id + "'";
+        let selectQuery = `SELECT * FROM hardwares WHERE whitelabel_id='${whitelebel_id}' AND delete_status = 0`;
         sql.query(selectQuery, async (err, reslt) => {
             if (err) throw err;
             if (reslt) {
@@ -1709,6 +1891,7 @@ exports.getHardwares = async function (req, res) {
         })
     }
 }
+
 
 exports.checkPackageName = async function (req, res) {
 
