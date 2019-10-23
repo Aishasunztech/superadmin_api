@@ -1440,6 +1440,114 @@ exports.savePackage = async function (req, res) {
 }
 
 
+exports.saveHardware = async function (req, res) {
+    // console.log('data is', req.body)
+
+    let data = req.body.data;
+    let err = false
+    if (data) {
+        // console.log(data, 'data')
+        let whitelabel_id = req.body.data.whitelabel_id;
+        let WHITE_LABEL_BASE_URL = '';
+        let getApiURL = await sql.query(`SELECT * from white_labels where id = ${whitelabel_id}`)
+        if (getApiURL.length) {
+            if (getApiURL[0].api_url) {
+                WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                    if (response.data.status) {
+                        loginResponse = response.data;
+                        axios.post(WHITE_LABEL_BASE_URL + '/users/save-sa-hardware', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                            if (response.data.status) {
+
+                                let insertQuery = "INSERT INTO hardwares (name,price, whitelabel_id) VALUES('" + data.hardwareName + "', '" + data.hardwarePrice + "', '" + whitelabel_id + "')";
+                                sql.query(insertQuery, async (err, rslt) => {
+                                    if (err) throw err;
+                                    if (rslt) {
+                                        if (rslt.affectedRows) {
+                                            insertedRecord = await sql.query("SELECT * FROM hardwares WHERE whitelabel_id='" + whitelabel_id + "' AND id='" + rslt.insertId + "'")
+                                            res.send({
+                                                status: true,
+                                                msg: 'Hardware Saved Successfully.',
+                                                data: insertedRecord
+                                            })
+                                            return
+                                        } else {
+                                            res.send({
+                                                status: true,
+                                                msg: 'Hardware Not Saved.Please try again',
+                                                data: insertedRecord
+                                            })
+                                            return
+                                        }
+                                    }
+                                })
+                            } else {
+                                res.send({
+                                    status: false,
+                                    msg: 'ERROR: White label server error and Hardware not saved. please try again.'
+                                })
+                                err = true
+                                return
+
+                            }
+                        }).catch((error) => {
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later",
+                            };
+                            res.send(data);
+                            err = true
+                            return
+                        });;
+
+                    }
+                    else {
+                        res.send({
+                            status: false,
+                            msg: "you are not allowed to perform this action.",
+                        })
+                        err = true
+                        return
+                    }
+                }).catch((error) => {
+                    console.log("error", error);
+                    data = {
+                        "status": false,
+                        "msg": "White Label server not responding. PLease try again later",
+                    };
+                    // console.log("response send 1");
+                    res.send(data);
+                    err = true
+                    return
+                });
+
+            }
+            else {
+                res.send({
+                    status: false,
+                    msg: "White Label credentials not found.",
+                    "duplicateData": []
+                })
+                return
+            }
+        }
+        else {
+            res.send({
+                status: false,
+                msg: "White Label Data not found.",
+            })
+            return
+        }
+    } else {
+        res.send({
+            status: false,
+            msg: 'Invalid Data'
+        })
+        return
+    }
+}
+
+
 exports.getPrices = async function (req, res) {
     let whitelebel_id = req.params.whitelabel_id;
     let sim_id = {};
@@ -1559,6 +1667,48 @@ exports.getPackages = async function (req, res) {
         })
     }
 }
+exports.getHardwares = async function (req, res) {
+    let whitelebel_id = req.params.whitelabel_id;
+    if (whitelebel_id) {
+        let selectQuery = "SELECT * FROM hardwares WHERE whitelabel_id='" + whitelebel_id + "'";
+        sql.query(selectQuery, async (err, reslt) => {
+            if (err) throw err;
+            if (reslt) {
+
+                if (reslt.length) {
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: reslt
+
+                    })
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: []
+
+                    })
+                }
+
+            } else {
+
+                res.send({
+                    status: true,
+                    msg: "Data found",
+                    data: []
+                })
+            }
+        })
+    } else {
+        res.send({
+            status: false,
+            msg: 'Invalid Whitelabel_id',
+            data: []
+
+        })
+    }
+}
 
 exports.checkPackageName = async function (req, res) {
 
@@ -1588,6 +1738,35 @@ exports.checkPackageName = async function (req, res) {
     }
 
 }
+
+exports.checkHardwareName = async function (req, res) {
+
+    try {
+        let name = req.body.name !== undefined ? req.body.name : null;
+
+        let checkExistingQ = "SELECT name FROM hardwares WHERE name='" + name + "'";
+
+        let checkExisting = await sql.query(checkExistingQ);
+        // console.log(checkExistingQ, 'query is')
+        if (checkExisting.length) {
+            data = {
+                status: false,
+            };
+            res.send(data);
+            return;
+        }
+        else {
+            data = {
+                status: true,
+            };
+            res.send(data);
+            return;
+        }
+    } catch (error) {
+        throw error
+    }
+
+}
 exports.requestCredits = async function (req, res) {
 
     try {
@@ -1598,10 +1777,11 @@ exports.requestCredits = async function (req, res) {
         let credits = req.body.credits
         let dealer_pin = req.body.dealer_pin
         let request_id = req.body.request_id
+        let account_type = req.body.account_type
         // console.log(dealer_pin);
         if (dealer_id != '' && label != '' && credits != '') {
 
-            let query = `INSERT into credit_requests (dealer_id,dealer_pin,dealer_name,dealer_email,label,request_id ,credits) VALUES (${dealer_id},'${dealer_pin}','${dealer_name}','${dealer_email}','${label}','${request_id}',${credits})`;
+            let query = `INSERT into credit_requests (dealer_id,dealer_pin,dealer_name,dealer_email,label,request_id ,credits , account_type) VALUES (${dealer_id},'${dealer_pin}','${dealer_name}','${dealer_email}','${label}','${request_id}',${credits} , '${account_type}')`;
             sql.query(query, function (err, result) {
                 if (err) throw err
                 if (result && result.affectedRows > 0) {
@@ -1822,7 +2002,7 @@ exports.acceptRequest = async function (req, res) {
                             if (getApiURL[0].api_url) {
                                 var WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
                                 axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
-                                    // console.log(response);
+                                    // console.log(response.data);
                                     if (response.data.status) {
                                         let loginResponse = response.data
                                         let data = {
@@ -1834,13 +2014,36 @@ exports.acceptRequest = async function (req, res) {
 
                                         axios.post(WHITE_LABEL_BASE_URL + '/users/credit-request-ack', { data }, { headers: { 'authorization': loginResponse.token } }).then(async (response) => {
                                             if (response.data.status) {
-                                                let inv_no = "PI123456"
-                                                let dealerQ = `SELECT * FROM superadmins_credentials WHERE dealer_pin = ${dealer_pin}`
+                                                let inv_no = await general_helpers.getInvoiceId();
+                                                let dealerQ = `SELECT * FROM superadmins_credentials WHERE dealer_pin = ${requestData.dealer_pin}`
                                                 let dealerData = await sql.query(dealerQ);
 
-                                                let acceptRequestQ = `INSERT INTO sales (dealer_id,dealer_pin,dealer_name,credits,label, accepted_by,inv_no,order_date,account_type,status,pay_type) VALUES(${requestData.dealer_id},'${requestData.dealer_pin}','${requestData.dealer_name}',${requestData.credits},'${requestData.label}','${dealerData[0].dealer_name}','${inv_no}','${order_date}','admin' ,'UNPAID' ,'CASH')`
-                                                sql.query(acceptRequestQ)
-                                                console.log(acceptRequestQ);
+                                                let acceptRequestQ = `INSERT INTO sales (dealer_id,dealer_pin,dealer_name,credits,label, accepted_by,inv_no,order_date,account_type,status,pay_type) VALUES(${requestData.dealer_id},'${requestData.dealer_pin}','${requestData.dealer_name}',${requestData.credits},'${requestData.label}','${dealerData[0].dealer_name}','${inv_no}','${order_date}','${requestData.account_type}' ,'UNPAID' ,'CASH')`
+                                                // console.log(acceptRequestQ);
+                                                await sql.query(acceptRequestQ)
+                                                const invoice = {
+                                                    shipping: {
+                                                        name: requestData.dealer_name.toUpperCase() + ` (${requestData.label})`,
+                                                        dealer_id: requestData.dealer_id,
+                                                        dealer_pin: requestData.dealer_pin,
+                                                    },
+                                                    items: [
+                                                        {
+                                                            item: "Credits",
+                                                            description: "Credits puchased on cash",
+                                                            quantity: requestData.credits,
+                                                            amount: requestData.credits * 100
+                                                        },
+                                                    ],
+                                                    subtotal: requestData.credits * 100,
+                                                    paid: 0,
+                                                    invoice_nr: inv_no
+                                                };
+                                                let fileName = "invoice-" + Date.now() + requestData.dealer_name + requestData.dealer_id + ".pdf"
+                                                let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                                                createInvoice(invoice, filePath, 'credits')
+                                                await sql.query(`INSERT INTO invoices (inv_no , dealer_id, inv_file_path) VALUES('${inv_no}', ${requestData.dealer_id} ,'${fileName}')`)
+
                                                 let updateQuery = "update credit_requests set status = 1 where id= " + id
                                                 sql.query(updateQuery, function (err, result) {
                                                     if (err) throw err
@@ -1862,6 +2065,7 @@ exports.acceptRequest = async function (req, res) {
                                                 return
                                             }
                                         }).catch((error) => {
+                                            console.log(error);
                                             data = {
                                                 "status": false,
                                                 "msg": "White Label server not responding. PLease try again later"
@@ -1933,6 +2137,90 @@ exports.acceptRequest = async function (req, res) {
         data = {
             "status": false,
             "msg": "Error: Request not accepted. Please try again."
+        };
+        res.send(data);
+        return
+    }
+}
+exports.addCreditsSaleRecord = async function (req, res) {
+
+    try {
+        let dealer_id = req.body.dealer_id
+        let dealer_pin = req.body.dealer_pin
+        let dealer_name = req.body.dealer_name
+        let credits = req.body.credits
+        let label = req.body.label
+        let accepted_by = "Online Transfer"
+        let inv_no = await general_helpers.getInvoiceId()
+        let order_date = moment().format("YYYY/MM/DD")
+        let account_type = req.body.dealer_type
+        let status = 'PAID'
+        let payment_type = req.body.payment_type
+        let dealer_email = req.body.dealer_email
+        if (dealer_name && dealer_pin && dealer_id && credits && label && account_type && payment_type && dealer_email) {
+            let acceptRequestQ = `INSERT INTO sales (dealer_id,dealer_pin,dealer_name,credits,label, accepted_by,inv_no,order_date,account_type,status,pay_type, paid_date) VALUES(${dealer_id},'${dealer_pin}','${dealer_name}',${credits},'${label}','${accepted_by}','${inv_no}','${order_date}','${account_type}' ,'${status}' ,'${payment_type}' , '${order_date}')`
+            sql.query(acceptRequestQ, async function (err, result) {
+                if (err) {
+                    data = {
+                        "status": false,
+                        "msg": "ERROR: server Query error."
+                    };
+                    res.send(data);
+                    return
+                }
+
+                if (result.affectedRows) {
+                    const invoice = {
+                        shipping: {
+                            name: dealer_name.toUpperCase() + ` (${label})`,
+                            dealer_id: dealer_id,
+                            dealer_pin: dealer_pin,
+                        },
+                        items: [
+                            {
+                                item: "Credits",
+                                description: "Credits puchased on cash",
+                                quantity: credits,
+                                amount: credits * 100
+                            },
+                        ],
+                        subtotal: credits * 100,
+                        paid: credits * 100,
+                        invoice_nr: inv_no
+                    };
+                    let fileName = "invoice-" + Date.now() + dealer_name + dealer_id + ".pdf"
+                    let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                    createInvoice(invoice, filePath, 'credits')
+
+                    await sql.query(`INSERT INTO invoices (inv_no , dealer_id, inv_file_path) VALUES('${inv_no}', ${dealer_id} , '${fileName}')`)
+                    data = {
+                        "status": true,
+                        "msg": "Record added successfully."
+                    };
+                    res.send(data);
+                    return
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": "ERROR: DATA NOT INSERTED."
+                    };
+                    res.send(data);
+                    return
+                }
+            })
+        } else {
+            data = {
+                "status": false,
+                "msg": "ERROR: REQUEST DATA NOT FOUND"
+            };
+            res.send(data);
+            return
+        }
+    } catch (error) {
+        // console.log(error)
+        data = {
+            "status": false,
+            "msg": "ERROR: server Query error."
         };
         res.send(data);
         return
@@ -2210,7 +2498,7 @@ exports.syncCSVIds = async function (req, res) {
 
             if (!servererror) {
                 for (let i = 0; i < allChat_ids.length; i++) {
-                    await sql.query(`UPDATE chat_ids set used = ${allChat_ids[i].used} where chat_id = ${allChat_ids[i].chat_id}`)
+                    await sql.query(`UPDATE chat_ids set used = ${allChat_ids[i].used} where chat_id = '${allChat_ids[i].chat_id}'`)
                 }
                 for (let i = 0; i < allSim_ids.length; i++) {
                     await sql.query(`UPDATE sim_ids set used = ${allSim_ids[i].used} where sim_id = ${allSim_ids[i].sim_id}`)

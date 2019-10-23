@@ -91,11 +91,17 @@ router.patch('/save-prices', user.saveIdPrices)
 
 router.patch('/save-package', user.savePackage)
 
+router.patch('/save-hardware', user.saveHardware)
+
 router.patch('/check-package-name', user.checkPackageName)
+
+router.patch('/check-hardware-name', user.checkHardwareName)
 
 router.get('/get-prices/:whitelabel_id', user.getPrices)
 
 router.get('/get-packages/:whitelabel_id', user.getPackages)
+
+router.get('/get-hardwares/:whitelabel_id', user.getHardwares)
 
 router.post('/request_for_credits', user.requestCredits)
 
@@ -104,6 +110,8 @@ router.get('/newRequests', user.newRequests)
 router.put('/delete_request/:id', user.deleteRequest)
 
 router.put('/accept_request/:id', user.acceptRequest)
+
+router.post('/add_credits_sale_record', user.addCreditsSaleRecord)
 
 // =================================================================================
 // Billing

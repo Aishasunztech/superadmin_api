@@ -1,12 +1,16 @@
 const fs = require("fs");
 const PDFDocument = require("pdfkit");
 
-function createInvoice(invoice, path) {
+function createInvoice(invoice, path, type) {
     let doc = new PDFDocument({ size: "A4", margin: 50 });
 
     generateHeader(doc);
     generateCustomerInformation(doc, invoice);
-    generateInvoiceTable(doc, invoice);
+    if (type === 'credits') {
+        generateInvoiceTable(doc, invoice);
+    } else if (type === 'services') {
+        generateInvoiceTable(doc, invoice);
+    }
     generateFooter(doc);
 
     doc.end();
@@ -18,7 +22,7 @@ function generateHeader(doc) {
         // .image("logo.png", 50, 45, { width: 50 })
         .fillColor("#444444")
         .fontSize(30)
-        .text("MDM PANEL SERVICES", 160, 50)
+        .text("MDM PANEL SERVICES", 120, 50)
         .fontSize(10)
         .text("FLAT/RM H 15/F  SIU KING BLDG 6 ON WAH ST", 185, 85)
         .text("NGAU TAU KOK KLN, HONG KONG", 215, 100)
@@ -51,17 +55,17 @@ function generateCustomerInformation(doc, invoice) {
         )
 
         .font("Helvetica")
-        .text("Dealer Name:", 325, customerInformationTop)
+        .text("Dealer Name:", 300, customerInformationTop)
         .font("Helvetica-Bold")
-        .text(invoice.shipping.name, 425, customerInformationTop)
+        .text(invoice.shipping.name, 365, customerInformationTop)
         .font("Helvetica")
-        .text("Dealer ID:", 325, customerInformationTop + 15)
+        .text("Dealer ID:", 300, customerInformationTop + 15)
         .font("Helvetica-Bold")
-        .text("225", 425, customerInformationTop + 15)
+        .text(invoice.shipping.dealer_id, 365, customerInformationTop + 15)
         .font("Helvetica")
-        .text("Dealer PIN:", 325, customerInformationTop + 30)
+        .text("Dealer PIN:", 300, customerInformationTop + 30)
         .font("Helvetica-Bold")
-        .text("541763", 425, customerInformationTop + 30)
+        .text(invoice.shipping.dealer_pin, 365, customerInformationTop + 30)
         // .text(invoice.shipping.address, 300, customerInformationTop + 15)
         // .text(
         //     invoice.shipping.city +
