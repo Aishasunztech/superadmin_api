@@ -419,7 +419,8 @@ exports.importCSV = async function (req, res) {
                         if (
                             mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                             mimeType === "text/csv" ||
-                            mimeType === "application/vnd.ms-excel"
+                            mimeType === "application/vnd.ms-excel" ||
+                            mimeType === "application/octet-stream"
                         ) {
                             var workbook = XLSX.readFile(filePath);
 
@@ -689,6 +690,43 @@ exports.importCSV = async function (req, res) {
                                                 error = true;
                                             }
                                         }
+
+
+                                        // ************* Add Domains
+                                        let domains = []
+                                        let all_domains = await sql.query(`SELECT name FROM domains WHERE whitelabel_id= '${labelID}'`)
+                                        if (all_domains.length) {
+                                            all_domains.map((item) => {
+                                                domains.push(item.name)
+                                            })
+                                        }
+
+                                        console.log('domains===> ', domains);
+
+                                        let checkDuplicateDomains = [];
+                                        for (let row of parsedData) {
+                                            let domainName = row.pgp_email.split('@').pop();
+                                            if (!domains.includes(domainName) && !checkDuplicateDomains.includes(domainName)) {
+                                                if (domainName) {
+                                                    checkDuplicateDomains.push(domainName);
+                                                    let insertQ = `INSERT INTO domains (name, whitelabel_id) value ('${domainName}', '${labelID}')`;
+                                                    await sql.query(insertQ);
+                                                }
+                                            }
+                                        }
+
+                                        // let checkDuplicateDomains = [];
+                                        // for (let row of parsedData) {
+                                        //     let domainName = row.pgp_email.split('@').pop();
+                                        //     if (row.pgp_email) {
+                                        //         await sql.query(`INSERT INTO domains (name) value ('${row.pgp_email}')`).catch((err) => {
+                                        //             error = true
+                                        //         });
+                                        //     } else {
+                                        //         error = true;
+                                        //     }
+                                        // }
+
                                         await axios.post(WHITE_LABEL_BASE_URL + '/users/import/pgp_emails', { parsedData }, { headers: { 'authorization': loginResponse.token } }).catch((error) => {
                                             data = {
                                                 "status": false,
@@ -701,7 +739,8 @@ exports.importCSV = async function (req, res) {
                                         });;
                                     }
 
-                                    // console.log('duplicate data is', duplicatedPgp_emails)
+                                    console.log('abaid duplicate data is =========> :: ', duplicatedPgp_emails)
+                                    console.log('InsertablePgp_emails data is', InsertablePgp_emails)
 
                                     if (!error && duplicatedPgp_emails.length === 0) {
                                         res.send({
