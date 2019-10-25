@@ -692,38 +692,26 @@ exports.importCSV = async function (req, res) {
                                         }
 
 
-                                        // ************* Add Domains
-                                        let domains = []
-                                        let all_domains = await sql.query(`SELECT name FROM domains WHERE whitelabel_id= '${labelID}'`)
-                                        if (all_domains.length) {
-                                            all_domains.map((item) => {
-                                                domains.push(item.name)
-                                            })
-                                        }
+                                        // // ************* Add Domains
+                                        // let domains = []
+                                        // let all_domains = await sql.query(`SELECT name FROM domains WHERE whitelabel_id= '${labelID}'`)
+                                        // if (all_domains.length) {
+                                        //     all_domains.map((item) => {
+                                        //         domains.push(item.name)
+                                        //     })
+                                        // }
 
-                                        console.log('domains===> ', domains);
-
-                                        let checkDuplicateDomains = [];
-                                        for (let row of parsedData) {
-                                            let domainName = row.pgp_email.split('@').pop();
-                                            if (!domains.includes(domainName) && !checkDuplicateDomains.includes(domainName)) {
-                                                if (domainName) {
-                                                    checkDuplicateDomains.push(domainName);
-                                                    let insertQ = `INSERT INTO domains (name, whitelabel_id) value ('${domainName}', '${labelID}')`;
-                                                    await sql.query(insertQ);
-                                                }
-                                            }
-                                        }
+                                        // console.log('domains===> ', domains);
 
                                         // let checkDuplicateDomains = [];
                                         // for (let row of parsedData) {
                                         //     let domainName = row.pgp_email.split('@').pop();
-                                        //     if (row.pgp_email) {
-                                        //         await sql.query(`INSERT INTO domains (name) value ('${row.pgp_email}')`).catch((err) => {
-                                        //             error = true
-                                        //         });
-                                        //     } else {
-                                        //         error = true;
+                                        //     if (!domains.includes(domainName) && !checkDuplicateDomains.includes(domainName)) {
+                                        //         if (domainName) {
+                                        //             checkDuplicateDomains.push(domainName);
+                                        //             let insertQ = `INSERT INTO domains (name, whitelabel_id) value ('${domainName}', '${labelID}')`;
+                                        //             await sql.query(insertQ);
+                                        //         }
                                         //     }
                                         // }
 
