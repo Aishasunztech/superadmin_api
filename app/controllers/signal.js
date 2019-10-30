@@ -31,7 +31,7 @@ exports.checkChatID = async function (req, res) {
         });
         return false;
     }
-    if (chat_detail_row[0].used == 1) {
+    if (chat_detail_row[0].used != 1) {
         res.status(400).send({
             status: false,
             msg: "Bad Request: not used"
@@ -42,9 +42,12 @@ exports.checkChatID = async function (req, res) {
     console.log('white label url', chat_detail_row[0].api_url);
     await axios.post(chat_detail_row[0].api_url + '/signal/validate_chat_id', { device_id: device_id, chat_id: chat_id, ts: ts })
         .then(function (response) {
-            console.log('white label response: ', response);
+            console.log('white label response status: ', response.status);
+            console.log('white label response header: ', response.headers);
+            console.log('white label response statusText: ', response.statusText);
+            console.log('white label response data: ', response.data);
             // chat id is assigned to same device id
-            if (response.header.status == 200) {
+            if (response.status == 200) {
                 res.status(200).send({
                     status: true,
                     msg: "success"
