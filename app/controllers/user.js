@@ -419,7 +419,8 @@ exports.importCSV = async function (req, res) {
                         if (
                             mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                             mimeType === "text/csv" ||
-                            mimeType === "application/vnd.ms-excel"
+                            mimeType === "application/vnd.ms-excel" || 
+                            mimeType === "application/octet-stream"
                         ) {
                             var workbook = XLSX.readFile(filePath);
 
