@@ -91,7 +91,10 @@ router.patch('/save-prices', user.saveIdPrices)
 
 router.patch('/save-package', user.savePackage)
 
+router.get('/delete-package/:pkg_id', user.deletePackage)
+
 router.patch('/save-hardware', user.saveHardware)
+router.get('/delete-hardware/:id', user.deleteHardware)
 
 router.patch('/check-package-name', user.checkPackageName)
 
@@ -102,6 +105,7 @@ router.get('/get-prices/:whitelabel_id', user.getPrices)
 router.get('/get-packages/:whitelabel_id', user.getPackages)
 
 router.get('/get-hardwares/:whitelabel_id', user.getHardwares)
+router.post('/edit-hardware', user.editHardware)
 
 router.post('/request_for_credits', user.requestCredits)
 

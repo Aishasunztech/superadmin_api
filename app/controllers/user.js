@@ -419,7 +419,7 @@ exports.importCSV = async function (req, res) {
                         if (
                             mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                             mimeType === "text/csv" ||
-                            mimeType === "application/vnd.ms-excel" || 
+                            mimeType === "application/vnd.ms-excel" ||
                             mimeType === "application/octet-stream"
                         ) {
                             var workbook = XLSX.readFile(filePath);
@@ -1332,20 +1332,24 @@ exports.savePackage = async function (req, res) {
                             if (response.data.status) {
                                 let days = 0;
                                 if (data.pkgTerm) {
-                                    stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
-                                    if (stringarray) {
-                                        // console.log(stringarray,'is string lenth', stringarray.length)
-                                        if (stringarray.length) {
-                                            month = stringarray[0];
-                                            // console.log('is month', month, stringarray[1])
-                                            if (month && stringarray[1]) {
-                                                // console.log('sring[1]', stringarray[1])
-                                                if (stringarray[1] == 'month') {
-                                                    days = parseInt(month) * 30
-                                                } else if (string[1] == 'year') {
-                                                    days = parseInt(month) * 365
-                                                } else {
-                                                    days = 30
+                                    if (data.pkgTerm === "trial") {
+                                        days = 7;
+                                    } else {
+                                        stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                                        if (stringarray) {
+                                            // console.log(stringarray,'is string lenth', stringarray.length)
+                                            if (stringarray.length) {
+                                                month = stringarray[0];
+                                                // console.log('is month', month, stringarray[1])
+                                                if (month && stringarray[1]) {
+                                                    // console.log('sring[1]', stringarray[1])
+                                                    if (stringarray[1] == 'month') {
+                                                        days = parseInt(month) * 30
+                                                    } else if (string[1] == 'year') {
+                                                        days = parseInt(month) * 365
+                                                    } else {
+                                                        days = 30
+                                                    }
                                                 }
                                             }
                                         }
@@ -1440,6 +1444,138 @@ exports.savePackage = async function (req, res) {
     }
 }
 
+
+exports.deletePackage = async function (req, res) {
+    let pkg_id = req.params.pkg_id;
+
+    if (pkg_id) {
+        let pkg_detail = await sql.query(`SELECT * FROM packages WHERE id = ${pkg_id}`);
+
+        // console.log('pkg_detail: ', pkg_detail);
+        let getApiURL = await sql.query(`SELECT api_url FROM white_labels WHERE id = ${pkg_detail[0].whitelabel_id}`);
+        // console.log("getApiURL ==> ", getApiURL[0].api_url)
+
+        let WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async function (response) {
+            if (response.data.status) {
+                loginResponse = response.data;
+
+                let data = {
+                    pkg_name: pkg_detail[0].pkg_name,
+                }
+
+                await axios.post(WHITE_LABEL_BASE_URL + '/users/delete-sa-package', { data }, { headers: { 'authorization': loginResponse.token } }).then(async function (response) {
+                    if (response.data.status) {
+
+                        let result = await sql.query(`UPDATE packages SET delete_status = 1 WHERE id = ${pkg_id}`);
+                        if (result.affectedRows) {
+                            res.send({
+                                status: true,
+                                msg: 'Package deleted successfully'
+                            })
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: 'Package not found'
+                            });
+                            return;
+                        }
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: 'White Label server not responding. PLease try again later'
+                        });
+                        return;
+                    }
+                })
+
+            } else {
+                res.send({
+                    status: true,
+                    msg: 'Package deleted successfully only for Superadmin'
+                })
+            }
+        }).catch((error) => {
+            res.send({
+                status: false,
+                msg: 'White Label server not responding. PLease try again later'
+            });
+            return;
+        })
+
+    } else {
+        res.send({
+            status: false,
+            msg: 'Package not found'
+        })
+    }
+}
+
+exports.deleteHardware = async function (req, res) {
+    let hardware_id = req.params.id;
+
+    if (hardware_id) {
+        let hdw_detail = await sql.query(`SELECT * FROM hardwares WHERE id = ${hardware_id}`);
+
+        // console.log('hdw_detail: ', hdw_detail);
+        let getApiURL = await sql.query(`SELECT api_url FROM white_labels WHERE id = ${hdw_detail[0].whitelabel_id}`);
+        // console.log("getApiURL ==> ", getApiURL[0].api_url);
+
+        let WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async function (response) {
+            if (response.data.status) {
+                loginResponse = response.data;
+
+                let data = {
+                    name: hdw_detail[0].name,
+                }
+
+                await axios.post(WHITE_LABEL_BASE_URL + '/users/delete-sa-hardware', { data }, { headers: { 'authorization': loginResponse.token } }).catch(async function (error) {
+                    res.send({
+                        status: false,
+                        msg: 'White Label server not responding. PLease try again later'
+                    });
+                    return;
+                })
+
+                let result = await sql.query(`UPDATE hardwares SET delete_status = 1 WHERE id = ${hardware_id}`);
+                if (result.affectedRows) {
+
+                    res.send({
+                        status: true,
+                        msg: 'Hardware deleted successfully'
+                    });
+                    return;
+                } else {
+                    res.send({
+                        status: false,
+                        msg: 'Hardware not found'
+                    });
+                    return;
+                }
+
+            } else {
+                res.send({
+                    status: false,
+                    msg: 'White Label server not responding. PLease try again later'
+                });
+                return;
+            }
+        }).catch((error) => {
+            res.send({
+                status: false,
+                msg: 'White Label server not responding. PLease try again later'
+            });
+            return;
+        })
+
+    } else {
+        res.send({
+            status: false,
+            msg: 'Hardware not found'
+        })
+    }
+}
 
 exports.saveHardware = async function (req, res) {
     // console.log('data is', req.body)
@@ -1626,7 +1762,7 @@ exports.getPrices = async function (req, res) {
 exports.getPackages = async function (req, res) {
     let whitelebel_id = req.params.whitelabel_id;
     if (whitelebel_id) {
-        let selectQuery = "SELECT * FROM packages WHERE whitelabel_id='" + whitelebel_id + "'";
+        let selectQuery = `SELECT * FROM packages WHERE whitelabel_id='${whitelebel_id}' AND delete_status = 0`;
         sql.query(selectQuery, async (err, reslt) => {
             if (err) throw err;
             if (reslt) {
@@ -1668,10 +1804,70 @@ exports.getPackages = async function (req, res) {
         })
     }
 }
+exports.editHardware = async function (req, res) {
+    let updateData = req.body.data;
+
+    if (updateData) {
+        let getApiURL = await sql.query(`SELECT api_url FROM white_labels WHERE id = ${updateData.whitelabel_id}`);
+        // console.log("getApiURL ==> ", getApiURL[0].api_url)
+
+        let WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async function (response) {
+            if (response.data.status) {
+                loginResponse = response.data;
+
+                await axios.post(WHITE_LABEL_BASE_URL + '/users/edit-sa-hardware', { data: updateData }, { headers: { 'authorization': loginResponse.token } }).catch(async function (error) {
+                    res.send({
+                        status: false,
+                        msg: 'White Label server not responding. PLease try again later'
+                    });
+                    return;
+                })
+
+                let result = await sql.query(`UPDATE hardwares SET name= '${updateData.new_name}', price = ${updateData.new_price}  WHERE id = ${updateData.id}`)
+
+                if (result && result.affectedRows) {
+                    res.send({
+                        status: true,
+                        msg: "Hardware Update Successfully",
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: "Hardware not found",
+                    })
+                }
+
+
+            } else {
+                res.send({
+                    status: false,
+                    msg: 'White Label server not responding. PLease try again later'
+                });
+                return;
+            }
+        }).catch((error) => {
+            res.send({
+                status: false,
+                msg: 'White Label server not responding. PLease try again later'
+            });
+            return;
+        })
+
+
+    } else {
+        res.send({
+            status: false,
+            msg: "Hardware not found",
+        })
+    }
+
+}
+
 exports.getHardwares = async function (req, res) {
     let whitelebel_id = req.params.whitelabel_id;
     if (whitelebel_id) {
-        let selectQuery = "SELECT * FROM hardwares WHERE whitelabel_id='" + whitelebel_id + "'";
+        let selectQuery = `SELECT * FROM hardwares WHERE whitelabel_id='${whitelebel_id}' AND delete_status = 0`;
         sql.query(selectQuery, async (err, reslt) => {
             if (err) throw err;
             if (reslt) {
@@ -1710,6 +1906,7 @@ exports.getHardwares = async function (req, res) {
         })
     }
 }
+
 
 exports.checkPackageName = async function (req, res) {
 
