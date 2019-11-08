@@ -3,6 +3,7 @@ var router = express.Router();
 
 // import controller here
 var user = require('../app/controllers/user');
+var reportingController = require('../app/controllers/reports');
 var whitelabel = require('../app/controllers/whitelabel');
 var acl = require('../app/controllers/acl');
 var device = require('../app/controllers/device');
@@ -118,6 +119,18 @@ router.put('/accept_request/:id', user.acceptRequest)
 router.post('/add_credits_sale_record', user.addCreditsSaleRecord)
 
 // =================================================================================
+
+//reporting routes
+router.post('/reports/product', reportingController.generateProductReport);
+// router.post('/reports/hardware', reportingController.generateHardwareReport);
+// router.post('/reports/invoice', reportingController.generateInvoiceReport);
+// router.post('/reports/payment-history', reportingController.generatePaymentHistoryReport);
+// router.post('/reports/sales', reportingController.generateSalesReport);
+
+
+// router.post('/get-latest-payment-history', accountController.getLatestPaymentHistory);
+// router.get('/get-overdue-details', accountController.getOverdueDetails);
+
 // Billing
 
 router.get('/get_sales_list', user.getSalesList)
