@@ -119,6 +119,6 @@ router.post('/billing/reports/product', reports.generateProductReport);
 router.post('/billing/reports/hardware', reports.generateHardwareReport);
 router.post('/billing/reports/invoice', reports.generateInvoiceReport);
 router.post('/billing/reports/payment-history', reports.generatePaymentHistoryReport);
-// router.post('/billing/reports/sales', reports.generateSalesReport);
+router.post('/billing/reports/sales', reports.generateSalesReport);
 
 module.exports = router;
