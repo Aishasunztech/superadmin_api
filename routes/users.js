@@ -7,6 +7,7 @@ var whitelabel = require('../app/controllers/whitelabel');
 var acl = require('../app/controllers/acl');
 var device = require('../app/controllers/device');
 var apk = require('../app/controllers/apk');
+var reports = require('../app/controllers/reports');
 
 // ACL
 router.post('/check_component', acl.checkComponent);
@@ -122,5 +123,16 @@ router.post('/add_credits_sale_record', user.addCreditsSaleRecord)
 
 router.get('/get_sales_list', user.getSalesList)
 router.get('/get_dealer_list/:labelId', user.getDealerList)
+
+
+//reporting routes
+// router.get('/billing/reports/:reportName', reports.generateReport);
+router.post('/billing/reports/product', reports.generateProductReport);
+router.post('/billing/reports/hardware', reports.generateHardwareReport);
+router.post('/billing/reports/payment-history', reports.generatePaymentHistoryReport);
+
+// Invoice and Sales
+router.post('/billing/reports/invoice', reports.generateInvoiceReport);
+router.post('/billing/reports/sales', reports.generateSalesReport);
 
 module.exports = router;
