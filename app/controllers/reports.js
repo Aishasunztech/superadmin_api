@@ -234,6 +234,58 @@ exports.generateHardwareReport = async function (req, res) {
     }
 }
 
+exports.generatePaymentHistoryReport = async function (req, res) {
+    try {
+        let defaultData = []
+        let labelId = req.body.label;
+        let WHITE_LABEL_BASE_URL = '';
+        let getWhiteLabel = await sql.query(`SELECT * from white_labels WHERE id= ${labelId}`)
+
+        if (getWhiteLabel.length && getWhiteLabel[0].api_url) {
+
+
+            WHITE_LABEL_BASE_URL = getWhiteLabel[0].api_url;
+            // '/users/reports/payment-history'
+            general_helper.sendRequestToWhiteLabel(WHITE_LABEL_BASE_URL, '/users/reports/payment-history', req.body, defaultData, res, (response) => {
+
+                if (response.data.status) {
+
+                    res.send({
+                        status: true,
+                        msg: "DATA FOUND",
+                        data: response.data.data
+                    });
+                    return
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "DATA FOUND",
+                        data: defaultData
+                    });
+                    return
+                }
+            });
+
+        } else {
+            res.send({
+                status: false,
+                msg: "error",
+                data: defaultData
+            });
+            return
+        }
+    }
+    catch (err) {
+        console.log(err);
+        res.send({
+            status: false,
+            msg: "error",
+            data: defaultData
+        });
+        return
+    }
+}
+
 exports.generateInvoiceReport = async function (req, res) {
     try {
         let defaultData = []
@@ -247,7 +299,6 @@ exports.generateInvoiceReport = async function (req, res) {
             // /users/reports/invoice
 
             general_helper.sendRequestToWhiteLabel(WHITE_LABEL_BASE_URL, '/users/reports/invoice', req.body, defaultData, res, (response) => {
-
                 if (response.data.status) {
 
                     res.send({
@@ -286,130 +337,69 @@ exports.generateInvoiceReport = async function (req, res) {
     }
 }
 
-exports.generatePaymentHistoryReport = async function (req, res) {
+exports.generateSalesReport = async function (req, res) {
     try {
-        let defaultData = []
+        let defaultData = [];
+        let sa_data = [];
+
         let labelId = req.body.label;
         let WHITE_LABEL_BASE_URL = '';
-        let getWhiteLabel = await sql.query(`SELECT * from white_labels WHERE id= ${labelId}`)
+        let getWhiteLabel = await sql.query(`SELECT * FROM white_labels WHERE id= ${labelId}`)
 
         if (getWhiteLabel.length && getWhiteLabel[0].api_url) {
 
 
             WHITE_LABEL_BASE_URL = getWhiteLabel[0].api_url;
-            // '/users/reports/payment-history'
-            general_helper.sendRequestToWhiteLabel(WHITE_LABEL_BASE_URL, '/users/reports/payment-history',req.body, defaultData, res, (response) => {
+            
+            let body = req.body;
+            body.device = '';
+
+            general_helper.sendRequestToWhiteLabel(WHITE_LABEL_BASE_URL, '/users/reports/sales', body, defaultData, res, async (response) => {
+                console.log("sales report:", response.data);
+                
+                let superAdminSalesQ = `SELECT * FROM sales WHERE label='${getWhiteLabel[0].name}'`;
+                let superAdminSales = await sql.query(superAdminSalesQ);
+                console.log(superAdminSales);
+
+                if(superAdminSales.length){
+                    sa_data = superAdminSales;
+                }
 
                 if (response.data.status) {
 
-                    res.send({
+                    return res.send({
                         status: true,
                         msg: "DATA FOUND",
-                        data: response.data.data
+                        data: response.data.data,
+                        sa_data: sa_data
                     });
-                    return
+                    
                 } else {
-                    res.send({
+                    return res.send({
                         status: true,
                         msg: "DATA FOUND",
-                        data: defaultData
+                        data: defaultData,
+                        sa_data: sa_data
                     });
-                    return
                 }
             });
 
+
         } else {
-            res.send({
+            return res.send({
                 status: false,
                 msg: "error",
-                data: defaultData
+                data: defaultData,
+                sa_data: sa_data
             });
-            return
         }
-    }
-    catch (err) {
+    } catch (err) {
         console.log(err);
         res.send({
             status: false,
             msg: "error",
-            data: defaultData
-        });
-        return
-    }
-}
-
-exports.generateSalesReport = async function (req, res) {
-    try {
-        let defaultData = []
-        let labelId = req.body.label;
-        let WHITE_LABEL_BASE_URL = '';
-        let getApiURL = await sql.query(`SELECT * from white_labels WHERE id= ${labelId}`)
-
-        if (getApiURL.length) {
-
-            if (getApiURL[0].api_url) {
-
-                WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
-
-                axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
-                    if (response.data.status) {
-
-                        loginResponse = response.data;
-                        axios.post(WHITE_LABEL_BASE_URL + '/users/reports/sales', req.body, { headers: { 'authorization': loginResponse.token } }).then((response) => {
-
-                            if (response.data.status) {
-
-                                res.send({
-                                    status: true,
-                                    msg: "DATA FOUND",
-                                    data: response.data.data
-                                });
-                                return
-                            } else {
-                                res.send({
-                                    status: true,
-                                    msg: "DATA FOUND",
-                                    data: defaultData
-                                });
-                                return
-                            }
-                        }).catch((error) => {
-                            console.log("White Label server not responding. PLease try again later");
-                        });
-                    }
-                }).catch((error) => {
-                    console.log(error);
-                    console.log("White Label server not responding. PLease try again later");
-                    res.send({
-                        status: false,
-                        msg: "error",
-                        data: defaultData
-                    });
-                    return
-                });;
-            } else {
-                res.send({
-                    status: false,
-                    msg: "error",
-                    data: defaultData
-                });
-                return
-            }
-        } else {
-            res.send({
-                status: false,
-                msg: "error",
-                data: defaultData
-            });
-            return
-        }
-    }
-    catch (err) {
-        console.log(err);
-        res.send({
-            status: false,
-            msg: "error",
-            data: defaultData
+            data: defaultData,
+            sa_data: sa_data
         });
         return
     }
