@@ -1,5 +1,6 @@
-const { sql } = require('../../config/database');
 const axios = require('axios');
+const moment = require('moment');
+const { sql } = require('../../config/database');
 const Constants = require('../../constants/application');
 const general_helper = require('../../helpers/general_helpers');
 // exports.generateReport = async function (req, res) {
@@ -340,9 +341,16 @@ exports.generateInvoiceReport = async function (req, res) {
 exports.generateSalesReport = async function (req, res) {
     try {
         let defaultData = [];
-        let sa_data = [];
 
         let labelId = req.body.label;
+        let product_type = req.body.product_type;
+        let from = req.body.from;
+        let to = req.body.to;
+        let body = req.body;
+
+        let condition = '';
+        body.device = '';
+
         let WHITE_LABEL_BASE_URL = '';
         let getWhiteLabel = await sql.query(`SELECT * FROM white_labels WHERE id= ${labelId}`)
 
@@ -350,39 +358,60 @@ exports.generateSalesReport = async function (req, res) {
 
 
             WHITE_LABEL_BASE_URL = getWhiteLabel[0].api_url;
-            
-            let body = req.body;
-            body.device = '';
 
-            general_helper.sendRequestToWhiteLabel(WHITE_LABEL_BASE_URL, '/users/reports/sales', body, defaultData, res, async (response) => {
-                console.log("sales report:", response.data);
-                
-                let superAdminSalesQ = `SELECT * FROM sales WHERE label='${getWhiteLabel[0].name}'`;
-                let superAdminSales = await sql.query(superAdminSalesQ);
-                console.log(superAdminSales);
+            if (from) {
+                condition += ' AND DATE(created_at) >= "' + moment(from).format('YYYY-MM-DD') + '"'
+            }
 
-                if(superAdminSales.length){
-                    sa_data = superAdminSales;
-                }
+            if (to) {
+                condition += ' AND DATE(created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
+            }
 
-                if (response.data.status) {
+            let superAdminSalesQ = `SELECT * FROM sales WHERE label='${getWhiteLabel[0].name}' ${condition}`;
+            let superAdminSales = await sql.query(superAdminSalesQ);
 
-                    return res.send({
-                        status: true,
-                        msg: "DATA FOUND",
-                        data: response.data.data,
-                        sa_data: sa_data
-                    });
-                    
-                } else {
+            if (superAdminSales.length) {
+                superAdminSales.forEach(item => {
+                    defaultData.push({
+                        id: item.id,
+                        device_id: 'N/A',
+                        dealer_pin: item.dealer_pin,
+                        // 'device_id': item.device_id ? item.device_id : DEVICE_PRE_ACTIVATION,
+                        // 'dealer_pin': item.dealer_pin ? item.dealer_pin : 'N/A',
+                        type: 'credits',
+                        name: 'credits',
+                        // // 'cost_price': item.cost_price ? item.cost_price : 0,
+                        sale_price: item.credits ? item.credits : 0, // cost price of admin is sale price of super admin
+                        // // 'profit_loss': item.profit_loss ? item.profit_loss : 0,
+                        created_at: item.created_at ? item.created_at : 'N/A',
+                    })
+
+                });
+            }
+
+            if (product_type !== 'CREDITS') {
+
+
+                general_helper.sendRequestToWhiteLabel(WHITE_LABEL_BASE_URL, '/users/reports/sales', body, defaultData, res, async (response) => {
+                    console.log("sales report:", response.data);
+
+                    if (response.data.status) {
+                        defaultData = [...defaultData, ...response.data.data];
+
+                    }
                     return res.send({
                         status: true,
                         msg: "DATA FOUND",
                         data: defaultData,
-                        sa_data: sa_data
                     });
-                }
-            });
+                });
+            } else {
+                return res.send({
+                    status: true,
+                    msg: "DATA FOUND",
+                    data: defaultData,
+                });
+            }
 
 
         } else {
@@ -390,7 +419,6 @@ exports.generateSalesReport = async function (req, res) {
                 status: false,
                 msg: "error",
                 data: defaultData,
-                sa_data: sa_data
             });
         }
     } catch (err) {
