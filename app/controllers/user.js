@@ -2213,7 +2213,7 @@ exports.acceptRequest = async function (req, res) {
                                         axios.post(WHITE_LABEL_BASE_URL + '/users/credit-request-ack', { data }, { headers: { 'authorization': loginResponse.token } }).then(async (response) => {
                                             if (response.data.status) {
                                                 let inv_no = await general_helpers.getInvoiceId();
-                                                let dealerQ = `SELECT * FROM superadmins_credentials WHERE dealer_pin = ${requestData.dealer_pin}`
+                                                let dealerQ = `SELECT * FROM superadmins_credentials WHERE dealer_pin = ${dealer_pin}`
                                                 let dealerData = await sql.query(dealerQ);
 
                                                 let acceptRequestQ = `INSERT INTO sales (dealer_id,dealer_pin,dealer_name,credits,label, accepted_by,inv_no,order_date,account_type,status,pay_type) VALUES(${requestData.dealer_id},'${requestData.dealer_pin}','${requestData.dealer_name}',${requestData.credits},'${requestData.label}','${dealerData[0].dealer_name}','${inv_no}','${order_date}','${requestData.account_type}' ,'UNPAID' ,'CASH')`
