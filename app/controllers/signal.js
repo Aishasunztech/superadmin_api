@@ -31,13 +31,15 @@ exports.checkChatID = async function (req, res) {
         });
         return false;
     }
-    if (chat_detail_row[0].used != 1) {
+    // LM update SA about chat id has been used which some time miss to reach SA. 
+    // And user could not use Signal app.
+    /* if (chat_detail_row[0].used != 1) {
         res.status(400).send({
             status: false,
             msg: "Bad Request: not used"
         });
         return false;
-    }
+    } */
 
     console.log('white label url', chat_detail_row[0].api_url);
     await axios.post(chat_detail_row[0].api_url + '/signal/validate_chat_id', { device_id: device_id, chat_id: chat_id, ts: ts })
