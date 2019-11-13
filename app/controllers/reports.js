@@ -367,27 +367,31 @@ exports.generateSalesReport = async function (req, res) {
                 condition += ' AND DATE(created_at) <= "' + moment(to).format('YYYY-MM-DD') + '"'
             }
 
-            let superAdminSalesQ = `SELECT * FROM sales WHERE label='${getWhiteLabel[0].name}' ${condition}`;
-            let superAdminSales = await sql.query(superAdminSalesQ);
+            if(product_type=== 'CREDITS' ||  product_type === 'ALL'){
 
-            if (superAdminSales.length) {
-                superAdminSales.forEach(item => {
-                    defaultData.push({
-                        id: item.id,
-                        device_id: 'N/A',
-                        dealer_pin: item.dealer_pin,
-                        // 'device_id': item.device_id ? item.device_id : DEVICE_PRE_ACTIVATION,
-                        // 'dealer_pin': item.dealer_pin ? item.dealer_pin : 'N/A',
-                        type: 'credits',
-                        name: 'credits',
-                        // // 'cost_price': item.cost_price ? item.cost_price : 0,
-                        sale_price: item.credits ? item.credits : 0, // cost price of admin is sale price of super admin
-                        // // 'profit_loss': item.profit_loss ? item.profit_loss : 0,
-                        created_at: item.created_at ? item.created_at : 'N/A',
-                    })
-
-                });
+                let superAdminSalesQ = `SELECT * FROM sales WHERE label='${getWhiteLabel[0].name}' ${condition}`;
+                let superAdminSales = await sql.query(superAdminSalesQ);
+    
+                if (superAdminSales.length) {
+                    superAdminSales.forEach(item => {
+                        defaultData.push({
+                            id: item.id,
+                            device_id: 'N/A',
+                            dealer_pin: item.dealer_pin,
+                            // 'device_id': item.device_id ? item.device_id : DEVICE_PRE_ACTIVATION,
+                            // 'dealer_pin': item.dealer_pin ? item.dealer_pin : 'N/A',
+                            type: 'credits',
+                            name: 'credits',
+                            // // 'cost_price': item.cost_price ? item.cost_price : 0,
+                            sale_price: item.credits ? item.credits : 0, // cost price of admin is sale price of super admin
+                            // // 'profit_loss': item.profit_loss ? item.profit_loss : 0,
+                            created_at: item.created_at ? item.created_at : 'N/A',
+                        })
+    
+                    });
+                }
             }
+
 
             if (product_type !== 'CREDITS') {
 
