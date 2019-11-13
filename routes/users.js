@@ -123,6 +123,7 @@ router.post('/add_credits_sale_record', user.addCreditsSaleRecord)
 
 router.get('/get_sales_list', user.getSalesList)
 router.get('/get_dealer_list/:labelId', user.getDealerList)
+router.get('/get_device_list/:labelId', user.getDeviceList)
 
 
 //reporting routes

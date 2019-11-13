@@ -2762,6 +2762,7 @@ exports.getSalesList = async function (req, res) {
         }
     });
 }
+
 exports.getDealerList = async function (req, res) {
     try {
         let labelId = req.params.labelId;
@@ -2824,6 +2825,72 @@ exports.getDealerList = async function (req, res) {
             data: []
         });
         return
+
+    }
+}
+
+exports.getDeviceList = async function (req, res) {
+    try {
+        let labelId = req.params.labelId;
+        let WHITE_LABEL_BASE_URL = '';
+        console.log(labelId);
+        let getWhiteLabel = await sql.query(`SELECT * from white_labels WHERE id= ${labelId}`)
+        if (getWhiteLabel.length) {
+            if (getWhiteLabel[0].api_url) {
+                WHITE_LABEL_BASE_URL = getWhiteLabel[0].api_url;
+                axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                    if (response.data.status) {
+                        loginResponse = response.data;
+
+                        axios.get(WHITE_LABEL_BASE_URL + '/users/get-devices-for-report', { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                            if (response.data.status) {
+                                return res.send({
+                                    status: true,
+                                    msg: "DATA FOUND",
+                                    data: response.data.data
+                                });
+                            } else {
+                                return res.send({
+                                    status: false,
+                                    msg: "error",
+                                    data: []
+                                });
+                            }
+                        }).catch((error) => {
+                            console.log("White Label server not responding. PLease try again later");
+                        });
+                    }
+                }).catch((error) => {
+                    console.log(error);
+                    console.log("White Label server not responding. PLease try again later");
+                    return res.send({
+                        status: false,
+                        msg: "error",
+                        data: []
+                    });
+                    
+                });
+            } else {
+                return res.send({
+                    status: false,
+                    msg: "error",
+                    data: []
+                });
+            }
+        } else {
+            return res.send({
+                status: false,
+                msg: "error",
+                data: []
+            });
+        }
+    } catch (err) {
+        console.log(err);
+        return res.send({
+            status: false,
+            msg: "error",
+            data: []
+        });
 
     }
 }
