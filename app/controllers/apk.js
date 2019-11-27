@@ -126,8 +126,9 @@ exports.uploadApk = async function (req, res) {
 
         // let formatByte = helpers.formatBytes(apk_stats.size);
         if (versionCode) {
-
-            fileName = fieldName + '-' + Date.now() + '.apk';
+            let current_date = moment().format("YYYYMMDDHHmmss")
+            fileName = fieldName + '-' + current_date + 'v' + versionCode + '.apk';
+            console.log(fileName);
             let target_path = path.join(__dirname, "../../uploads/" + fileName);
 
             general_helpers.move(filePath, target_path, function (error) {

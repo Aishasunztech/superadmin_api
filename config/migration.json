@@ -1,23 +1,23 @@
 {
-    "development": {
-        "host": "localhost",
-        "username": "root",
-        "password": "",
-        "database": "lm_superadmin",
-        "dialect": "mysql"
-    },
-    "superadmin": {
-        "host": "localhost",
-        "username": "web",
-        "password": "Alibaba@40C#",
-        "database": "lm_superadmin",
-        "dialect": "mysql"
-    },
-    "dev_superadmin": {
-        "host": "localhost",
-        "username": "web",
-        "password": "Alibaba@40C#",
-        "database": "lm_superadmin",
-        "dialect": "mysql"
-    }
+  "development": {
+      "host": "localhost",
+      "username": "root",
+      "password": "",
+      "database": "lm_superadmin",
+      "dialect": "mysql"
+  },
+  "superadmin": {
+      "host": "localhost",
+      "username": "web",
+      "password": "Alibaba@40C#",
+      "database": "lm_superadmin",
+      "dialect": "mysql"
+  },
+  "dev_superadmin": {
+      "host": "localhost",
+      "username": "web",
+      "password": "Alibaba@40C#",
+      "database": "lm_superadmin",
+      "dialect": "mysql"
+  }
 }

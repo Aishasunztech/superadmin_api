@@ -22,12 +22,14 @@ exports.getWhiteLabels = async function (req, res) {
     let whiteLabelsQ = ''
     if (req.params.type === 'all') {
         console.log("hello all servers");
-        whiteLabelsQ = "SELECT id, name, route_uri FROM white_labels";
-    } else if (req.params.type === 'whitelabels') {
+        whiteLabelsQ = "SELECT id, name, route_uri, api_url FROM white_labels";
+    } 
+    // else if (req.params.type === 'whitelabels') {
 
-        whiteLabelsQ = "SELECT id, name, route_uri FROM white_labels WHERE status=1";
-    } else {
-        whiteLabelsQ = "SELECT id, name, route_uri FROM white_labels WHERE status=1";
+    //     whiteLabelsQ = "SELECT id, name, route_uri, api_url FROM white_labels WHERE status=1";
+    // } 
+    else {
+        whiteLabelsQ = "SELECT id, name, route_uri, api_url FROM white_labels WHERE status=1";
     }
     let whiteLabels = await sql.query(whiteLabelsQ);
     if (Object.keys(whiteLabels).length) {
@@ -810,7 +812,7 @@ exports.saveIdPrices = async function (req, res) {
 
 
 exports.savePackage = async function (req, res) {
-    console.log('data is', req.body)
+    // console.log('data is', req.body)
 
     let data = req.body.data;
     if (data) {
