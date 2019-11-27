@@ -193,7 +193,6 @@ exports.generateHardwareReport = async function (req, res) {
 
 
             WHITE_LABEL_BASE_URL = getWhiteLabel[0].api_url;
-            console.log("white label api url: ", WHITE_LABEL_BASE_URL);
             general_helper.sendRequestToWhiteLabel(WHITE_LABEL_BASE_URL, '/users/reports/hardware', req.body, defaultData, res, (response) => {
 
                 if (response.data.status) {
@@ -432,6 +431,58 @@ exports.generateSalesReport = async function (req, res) {
             msg: "error",
             data: defaultData,
             sa_data: sa_data
+        });
+        return
+    }
+}
+
+exports.generateGraceDaysReport = async function (req, res) {
+    try {
+
+        let defaultData = []
+        let labelId = req.body.label;
+        let WHITE_LABEL_BASE_URL = '';
+        let getWhiteLabel = await sql.query(`SELECT * from white_labels WHERE id= ${labelId}`);
+
+        if (getWhiteLabel.length && getWhiteLabel[0].api_url) {
+
+            WHITE_LABEL_BASE_URL = getWhiteLabel[0].api_url;
+            general_helper.sendRequestToWhiteLabel(WHITE_LABEL_BASE_URL, '/users/reports/grace-days', req.body, defaultData, res, (response) => {
+
+                if (response.data.status) {
+
+                    res.send({
+                        status: true,
+                        msg: "DATA FOUND",
+                        data: response.data.data
+                    });
+                    return
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "DATA FOUND",
+                        data: defaultData
+                    });
+                    return
+                }
+            })
+
+        } else {
+            res.send({
+                status: false,
+                msg: "error",
+                data: defaultData
+            });
+            return
+        }
+
+    }
+    catch (err) {
+        console.log(err);
+        res.send({
+            status: false,
+            msg: "error",
+            data: defaultData
         });
         return
     }
