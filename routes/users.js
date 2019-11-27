@@ -7,6 +7,7 @@ var whitelabel = require('../app/controllers/whitelabel');
 var acl = require('../app/controllers/acl');
 var device = require('../app/controllers/device');
 var apk = require('../app/controllers/apk');
+var reports = require('../app/controllers/reports');
 
 // ACL
 router.post('/check_component', acl.checkComponent);
@@ -91,11 +92,21 @@ router.patch('/save-prices', user.saveIdPrices)
 
 router.patch('/save-package', user.savePackage)
 
+router.get('/delete-package/:pkg_id', user.deletePackage)
+
+router.patch('/save-hardware', user.saveHardware)
+router.get('/delete-hardware/:id', user.deleteHardware)
+
 router.patch('/check-package-name', user.checkPackageName)
+
+router.patch('/check-hardware-name', user.checkHardwareName)
 
 router.get('/get-prices/:whitelabel_id', user.getPrices)
 
 router.get('/get-packages/:whitelabel_id', user.getPackages)
+
+router.get('/get-hardwares/:whitelabel_id', user.getHardwares)
+router.post('/edit-hardware', user.editHardware)
 
 router.post('/request_for_credits', user.requestCredits)
 
@@ -105,10 +116,24 @@ router.put('/delete_request/:id', user.deleteRequest)
 
 router.put('/accept_request/:id', user.acceptRequest)
 
+router.post('/add_credits_sale_record', user.addCreditsSaleRecord)
+
 // =================================================================================
 // Billing
 
 router.get('/get_sales_list', user.getSalesList)
 router.get('/get_dealer_list/:labelId', user.getDealerList)
+router.get('/get_device_list/:labelId', user.getDeviceList)
+
+
+//reporting routes
+// router.get('/billing/reports/:reportName', reports.generateReport);
+router.post('/billing/reports/product', reports.generateProductReport);
+router.post('/billing/reports/hardware', reports.generateHardwareReport);
+router.post('/billing/reports/payment-history', reports.generatePaymentHistoryReport);
+
+// Invoice and Sales
+router.post('/billing/reports/invoice', reports.generateInvoiceReport);
+router.post('/billing/reports/sales', reports.generateSalesReport);
 
 module.exports = router;

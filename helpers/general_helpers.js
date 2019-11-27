@@ -1,18 +1,11 @@
 var express = require('express');
 var router = express.Router();
 var datetime = require('node-datetime');
+const axios = require('axios');
+var moment = require('moment-strftime');
 // var moment = require('moment');
 // import ADMIN from "../constants/Application";
-var { sql } = require('../config/database');
-
-var moment = require('moment-strftime');
-var app_constants = require('../constants/application');
-const device_helpers = require('./device_helpers');
-var util = require('util')
-const exec = util.promisify(require('child_process').exec);
-
 var ApkReader = require('node-apk-parser');
-
 var md5 = require('md5');
 var randomize = require('randomatic');
 const mysql_import = require('mysql-import');
@@ -20,6 +13,15 @@ var path = require('path');
 var fs = require('fs');
 
 const mysql = require('mysql');
+
+var { sql } = require('../config/database');
+
+var app_constants = require('../constants/application');
+
+const device_helpers = require('./device_helpers');
+var util = require('util')
+const exec = util.promisify(require('child_process').exec);
+
 
 
 module.exports = {
@@ -305,6 +307,7 @@ module.exports = {
 		var deviceId = str.toUpperCase() + num;
 		return deviceId;
 	},
+
 	getOfflineDvcId: async function (sn, mac) {
 
 		var key = md5(sn + mac);
@@ -523,7 +526,26 @@ module.exports = {
 			return await this.getWindowAPKLabelScript(filePath);
 		}
 	},
+	sendRequestToWhiteLabel: function (WHITE_LABEL_BASE_URL, api, data, defaultData, res, callback) {
+		axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', app_constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+			if (response.data.status) {
 
+				loginResponse = response.data;
+				axios.post(WHITE_LABEL_BASE_URL + api, data, { headers: { 'authorization': loginResponse.token } }).then(callback).catch((error) => {
+					console.log("White Label server not responding. PLease try again later");
+				});
+			}
+		}).catch((error) => {
+			console.log(error);
+			console.log("White Label server not responding. PLease try again later");
+			res.send({
+				status: false,
+				msg: "error",
+				data: defaultData
+			});
+			return
+		});
+	},
 	// Getting APK
 	getAPKPackageName: async function (filePath) {
 		try {
@@ -726,5 +748,18 @@ module.exports = {
 			labelID = data[0].id
 		}
 		return labelID
-	}
+	},
+	getInvoiceId: async function () {
+		let invoiceId = ""
+		var max = "000000"
+		let lastInvoice = "SELECT id from invoices ORDER BY id DESC LIMIT 1"
+		let result = await sql.query(lastInvoice)
+		if (result && result.length) {
+			invoiceId = (result[0].id + 1).toString()
+			invoiceId = max.substring(0, max.length - invoiceId.length) + invoiceId
+		} else {
+			invoiceId = "000001"
+		}
+		return 'PI' + invoiceId;
+	},
 }

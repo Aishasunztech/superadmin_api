@@ -62,7 +62,7 @@ exports.deviceStatus = async function (req, res) {
             // console.log('status is: ', status);
             // start_date = moment(start_date);
             // expiry_date = moment(expiry_date);
-            
+
             start_date = moment(start_date).format('YYYY-MM-DD hh:mm:ss')
             expiry_date = moment(expiry_date).format('YYYY-MM-DD hh:mm:ss');
             updateQ = `UPDATE devices SET start_date= '${start_date}', status = '${status}', expiry_date = '${expiry_date}', remaining_days = '2' WHERE id = ${id}`;
@@ -86,7 +86,7 @@ exports.deviceStatus = async function (req, res) {
                     });
                 } else {
                     let selectQuery = `SELECT devices.*, white_labels.name as whitelabel FROM devices LEFT JOIN white_labels ON (devices.whitelabel_id = white_labels.id) WHERE devices.id = ${id}`;
-                    
+
                     sql.query(selectQuery, async function (err, devices) {
                         if (err) {
                             console.log(err);

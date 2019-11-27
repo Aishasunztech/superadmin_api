@@ -147,7 +147,9 @@ exports.uploadFile = async function (req, res) {
     if (mimeType === "application/vnd.android.package-archive" || mimeType === "application/octet-stream") {
         versionCode = await general_helpers.getAPKVersionCode(filePath);
         if (versionCode) {
-            fileName = fieldName + '-' + Date.now() + '.apk';
+            let current_date = moment().format("YYYYMMDDHHmmss")
+            fileName = fieldName + '-' + current_date + '-v' + versionCode + '.apk';
+            console.log(fileName);
             let target_path = path.join(__dirname, "../../uploads/" + fileName);
 
             let packageName = await general_helpers.getAPKPackageName(filePath);
@@ -162,6 +164,8 @@ exports.uploadFile = async function (req, res) {
                                 status: false,
                                 msg: "Error while uploading"
                             })
+                            console.log("ERROR", error);
+                            return
                         }
 
                         res.send({
@@ -173,9 +177,10 @@ exports.uploadFile = async function (req, res) {
                         return
                     });
                 } else {
+                    console.log("HERE");
                     res.send({
                         status: false,
-                        msg: "Invalid Apk"
+                        msg: "Error: Apk not uploaded. Please ensure that your uploaded apk is Launcher Apk."
                     })
                     return
                 }
@@ -210,7 +215,9 @@ exports.uploadFile = async function (req, res) {
         }
 
     } else if (fieldName === Constants.LOGO) {
-
+        let current_date = moment().format("YYYYMMDDHHmmss")
+        fileName = fieldName + '-' + current_date + '.jpg';
+        console.log(fileName);
         fileName = fieldName + '-' + Date.now() + '.jpg';
         let target_path = path.join(__dirname, "../../uploads/" + fileName);
 
@@ -412,7 +419,8 @@ exports.importCSV = async function (req, res) {
                         if (
                             mimeType === "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
                             mimeType === "text/csv" ||
-                            mimeType === "application/vnd.ms-excel"
+                            mimeType === "application/vnd.ms-excel" ||
+                            mimeType === "application/octet-stream"
                         ) {
                             var workbook = XLSX.readFile(filePath);
 
@@ -1139,11 +1147,9 @@ exports.updateDeviceStatus = async function (req, res) {
 
 
 exports.saveIdPrices = async function (req, res) {
-    // console.log('data is', req.body)
 
     let data = req.body.data;
     if (data) {
-        // console.log(data, 'data')
         let whitelabel_id = req.body.whitelabel_id;
         if (whitelabel_id) {
             let WHITE_LABEL_BASE_URL = '';
@@ -1151,132 +1157,125 @@ exports.saveIdPrices = async function (req, res) {
             if (getApiURL.length) {
                 if (getApiURL[0].api_url) {
                     WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
-                    let error = 0;
-                    let month = ''
-                    for (var key in data) {
-                        if (data.hasOwnProperty(key)) {
-                            // console.log(key + " -> " + data[key]);
-                            let outerKey = key;
+                    axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                        if (response.data.status) {
+                            loginResponse = response.data;
+                            axios.patch(WHITE_LABEL_BASE_URL + '/users/save-sa-prices', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                                // console.log(response.data.status);
+                                if (response.data.status) {
+                                    let error = 0;
+                                    let month = ''
+                                    for (var key in data) {
+                                        if (data.hasOwnProperty(key)) {
+                                            let outerKey = key;
 
-                            let innerObject = data[key];
-                            // console.log('iner object is', innerObject)
-                            for (var innerKey in innerObject) {
-                                if (innerObject.hasOwnProperty(innerKey)) {
-                                    let days = 0;
-                                    // console.log(innerKey + " -> " + innerObject[innerKey]);
-                                    if (innerObject[innerKey]) {
+                                            let innerObject = data[key];
+                                            for (var innerKey in innerObject) {
+                                                if (innerObject.hasOwnProperty(innerKey)) {
+                                                    let days = 0;
+                                                    let priceTerm = innerKey;
+                                                    if (innerObject[innerKey]) {
+                                                        let stringarray = [];
 
-                                        // console.log('is string', string)
-                                        let stringarray = [];
+                                                        stringarray = innerKey.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                                                        if (stringarray) {
+                                                            if (stringarray.length) {
+                                                                month = stringarray[0];
+                                                                if (month && stringarray[1]) {
+                                                                    if (stringarray[1] == 'month') {
+                                                                        days = parseInt(month) * 30
+                                                                    } else if (string[1] == 'year') {
+                                                                        days = parseInt(month) * 365
+                                                                    } else {
+                                                                        res.send({
+                                                                            status: false,
+                                                                            msg: 'ERROR: Error occurred while setting Prices. please try agian'
+                                                                        })
+                                                                    }
+                                                                }
+                                                            }
 
-                                        stringarray = innerKey.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
-                                        if (stringarray) {
-                                            // console.log(stringarray,'is string lenth', stringarray.length)
-                                            if (stringarray.length) {
-                                                month = stringarray[0];
-                                                // console.log('is month', month, stringarray[1])
-                                                if (month && stringarray[1]) {
-                                                    // console.log('sring[1]', stringarray[1])
-                                                    if (stringarray[1] == 'month') {
-                                                        days = parseInt(month) * 30
-                                                    } else if (string[1] == 'year') {
-                                                        days = parseInt(month) * 365
-                                                    } else {
-                                                        days = 30
+                                                        }
                                                     }
+
+                                                    let updateQuery = "UPDATE prices SET unit_price='" + innerObject[priceTerm] + "', price_expiry='" + days + "' WHERE whitelabel_id='" + whitelabel_id + "' AND price_term='" + priceTerm + "' AND price_for='" + outerKey + "'";
+                                                    // console.log(updateQuery, 'update query')
+                                                    sql.query(updateQuery, async function (err, result) {
+                                                        if (err) throw err;
+                                                        if (result) {
+                                                            if (!result.affectedRows) {
+                                                                let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, whitelabel_id) VALUES('" + outerKey + "', '" + innerObject[priceTerm] + "', '" + priceTerm + "', '" + days + "', '" + whitelabel_id + "')";
+                                                                // console.log('insert query', insertQuery)
+                                                                let rslt = await sql.query(insertQuery);
+                                                                if (rslt) {
+                                                                    if (rslt.affectedRows == 0) {
+                                                                        error++;
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    })
                                                 }
                                             }
                                         }
                                     }
-                                    // console.log(days, 'days are')
-                                    let unit_price = innerKey;
-                                    let updateQuery = "UPDATE prices SET unit_price='" + innerObject[innerKey] + "', price_expiry='" + days + "', whitelabel_id='" + whitelabel_id + "' WHERE price_term='" + innerKey + "' AND price_for='" + key + "'";
-                                    sql.query(updateQuery, async function (err, result) {
-                                        if (err) throw err;
-                                        if (result) {
-                                            // console.log('outerKey', outerKey)
-                                            if (!result.affectedRows) {
-                                                let insertQuery = "INSERT INTO prices (price_for, unit_price, price_term, price_expiry, whitelabel_id) VALUES('" + outerKey + "', '" + innerObject[innerKey] + "', '" + unit_price + "', '" + days + "', '" + whitelabel_id + "')";
-                                                // console.log('insert query', insertQuery)
-                                                let rslt = await sql.query(insertQuery);
-                                                if (rslt) {
-                                                    if (rslt.affectedRows == 0) {
-                                                        error++;
-                                                    }
-                                                }
-                                                // console.log(rslt, 'inner rslt')
-                                            }
-                                        }
-                                    })
                                     if (error == 0) {
                                         res.send({
                                             status: true,
                                             msg: 'Prices Set Successfully'
                                         })
+                                        return
                                     } else {
                                         res.send({
                                             status: false,
                                             msg: 'ERROR: Error occurred while setting Prices. please try agian'
                                         })
+                                        return
                                     }
                                 }
-                            }
+                                else {
+                                    res.send({
+                                        status: false,
+                                        msg: 'ERROR: White label server error and Package not saved. please try again.'
+                                    })
+                                    err = true
+                                    return
+
+                                }
+                            }).catch((error) => {
+                                if (error) {
+                                    console.log("ERROR");
+                                    // console.log(error);
+                                    data = {
+                                        "status": false,
+                                        "msg": "White Label server not responding. PLease try again later",
+                                    };
+                                    res.send(data);
+                                    err = true
+                                    return
+                                }
+                            })
 
                         }
-                    }
-                    // axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
-                    //     if (response.data.status) {
-                    //         loginResponse = response.data;
-                    //         axios.patch(WHITE_LABEL_BASE_URL + '/users/save-sa-prices', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
-                    //             // console.log(response.data.status);
-                    //             if (response.data.status) {
-
-                    //             }
-                    //             else {
-                    //                 res.send({
-                    //                     status: false,
-                    //                     msg: 'ERROR: White label server error and Package not saved. please try again.'
-                    //                 })
-                    //                 err = true
-                    //                 return
-
-                    //             }
-                    //         }).catch((error) => {
-                    //             if (error) {
-                    //                 console.log("ERROR");
-                    //                 // console.log(error);
-                    //                 data = {
-                    //                     "status": false,
-                    //                     "msg": "White Label server not responding. PLease try again later",
-                    //                 };
-                    //                 res.send(data);
-                    //                 err = true
-                    //                 return
-                    //             }
-                    //         })
-
-                    //     }
-                    //     else {
-                    //         res.send({
-                    //             status: false,
-                    //             msg: "you are not allowed to perform this action.",
-                    //         })
-                    //         err = true
-                    //         return
-                    //     }
-                    // }).catch((error) => {
-                    //     console.log("error", error);
-                    //     data = {
-                    //         "status": false,
-                    //         "msg": "White Label server not responding. PLease try again later",
-                    //     };
-                    //     // console.log("response send 1");
-                    //     res.send(data);
-                    //     err = true
-                    //     return
-                    // });
-
-                    // console.log('errors are ', error)
+                        else {
+                            res.send({
+                                status: false,
+                                msg: "you are not allowed to perform this action.",
+                            })
+                            err = true
+                            return
+                        }
+                    }).catch((error) => {
+                        console.log("error", error);
+                        data = {
+                            "status": false,
+                            "msg": "White Label server not responding. PLease try again later",
+                        };
+                        // console.log("response send 1");
+                        res.send(data);
+                        err = true
+                        return
+                    });
                 }
                 else {
                     res.send({
@@ -1294,8 +1293,6 @@ exports.saveIdPrices = async function (req, res) {
                 })
                 return
             }
-
-
 
         } else {
             res.send({
@@ -1316,7 +1313,7 @@ exports.saveIdPrices = async function (req, res) {
 
 
 exports.savePackage = async function (req, res) {
-    console.log('data is', req.body)
+    // console.log('data is', req.body)
 
     let data = req.body.data;
     let err = false
@@ -1328,96 +1325,339 @@ exports.savePackage = async function (req, res) {
         if (getApiURL.length) {
             if (getApiURL[0].api_url) {
                 WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
-                let days = 0;
-                if (data.pkgTerm) {
-                    stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
-                    if (stringarray) {
-                        // console.log(stringarray,'is string lenth', stringarray.length)
-                        if (stringarray.length) {
-                            month = stringarray[0];
-                            // console.log('is month', month, stringarray[1])
-                            if (month && stringarray[1]) {
-                                // console.log('sring[1]', stringarray[1])
-                                if (stringarray[1] == 'month') {
-                                    days = parseInt(month) * 30
-                                } else if (string[1] == 'year') {
-                                    days = parseInt(month) * 365
-                                } else {
-                                    days = 30
+                axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                    if (response.data.status) {
+                        loginResponse = response.data;
+                        axios.post(WHITE_LABEL_BASE_URL + '/users/save-sa-package', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                            if (response.data.status) {
+                                let days = 0;
+                                if (data.pkgTerm) {
+                                    if (data.pkgTerm === "trial") {
+                                        days = 7;
+                                    } else {
+                                        stringarray = data.pkgTerm.split(/(\s+)/).filter(function (e) { return e.trim().length > 0; });
+                                        if (stringarray) {
+                                            // console.log(stringarray,'is string lenth', stringarray.length)
+                                            if (stringarray.length) {
+                                                month = stringarray[0];
+                                                // console.log('is month', month, stringarray[1])
+                                                if (month && stringarray[1]) {
+                                                    // console.log('sring[1]', stringarray[1])
+                                                    if (stringarray[1] == 'month') {
+                                                        days = parseInt(month) * 30
+                                                    } else if (string[1] == 'year') {
+                                                        days = parseInt(month) * 365
+                                                    } else {
+                                                        days = 30
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
                                 }
+                                let pkg_features = JSON.stringify(data.pkgFeatures)
+                                let insertQuery = "INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id) VALUES('" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "', '" + whitelabel_id + "')";
+                                sql.query(insertQuery, async (err, rslt) => {
+                                    if (err) throw err;
+                                    if (rslt) {
+                                        if (rslt.affectedRows) {
+                                            insertedRecord = await sql.query("SELECT * FROM packages WHERE whitelabel_id='" + whitelabel_id + "' AND id='" + rslt.insertId + "'")
+                                            res.send({
+                                                status: true,
+                                                msg: 'Package Saved Successfully.',
+                                                data: insertedRecord
+                                            })
+                                            return
+                                        } else {
+                                            res.send({
+                                                status: true,
+                                                msg: 'Package Not Saved.Please try again',
+                                                data: insertedRecord
+                                            })
+                                            return
+                                        }
+                                    }
+                                })
+                            } else {
+                                res.send({
+                                    status: false,
+                                    msg: 'ERROR: White label server error and Package not saved. please try again.'
+                                })
+                                err = true
+                                return
+
                             }
-                        }
+                        }).catch((error) => {
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later",
+                            };
+                            res.send(data);
+                            err = true
+                            return
+                        });;
+
                     }
+                    else {
+                        res.send({
+                            status: false,
+                            msg: "you are not allowed to perform this action.",
+                        })
+                        err = true
+                        return
+                    }
+                }).catch((error) => {
+                    console.log("error", error);
+                    data = {
+                        "status": false,
+                        "msg": "White Label server not responding. PLease try again later",
+                    };
+                    // console.log("response send 1");
+                    res.send(data);
+                    err = true
+                    return
+                });
+
+            }
+            else {
+                res.send({
+                    status: false,
+                    msg: "White Label credentials not found.",
+                    "duplicateData": []
+                })
+                return
+            }
+        }
+        else {
+            res.send({
+                status: false,
+                msg: "White Label Data not found.",
+            })
+            return
+        }
+    } else {
+        res.send({
+            status: false,
+            msg: 'Invalid Data'
+        })
+        return
+    }
+}
+
+
+exports.deletePackage = async function (req, res) {
+    let pkg_id = req.params.pkg_id;
+
+    if (pkg_id) {
+        let pkg_detail = await sql.query(`SELECT * FROM packages WHERE id = ${pkg_id}`);
+
+        // console.log('pkg_detail: ', pkg_detail);
+        let getApiURL = await sql.query(`SELECT api_url FROM white_labels WHERE id = ${pkg_detail[0].whitelabel_id}`);
+        // console.log("getApiURL ==> ", getApiURL[0].api_url)
+
+        let WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async function (response) {
+            if (response.data.status) {
+                loginResponse = response.data;
+
+                let data = {
+                    pkg_name: pkg_detail[0].pkg_name,
                 }
-                let pkg_features = JSON.stringify(data.pkgFeatures)
-                let insertQuery = "INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id) VALUES('" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "', '" + whitelabel_id + "')";
-                sql.query(insertQuery, async (err, rslt) => {
-                    if (err) throw err;
-                    if (rslt) {
-                        if (rslt.affectedRows) {
-                            insertedRecord = await sql.query("SELECT * FROM packages WHERE whitelabel_id='" + whitelabel_id + "' AND id='" + rslt.insertId + "'")
+
+                await axios.post(WHITE_LABEL_BASE_URL + '/users/delete-sa-package', { data }, { headers: { 'authorization': loginResponse.token } }).then(async function (response) {
+                    if (response.data.status) {
+
+                        let result = await sql.query(`UPDATE packages SET delete_status = 1 WHERE id = ${pkg_id}`);
+                        if (result.affectedRows) {
                             res.send({
                                 status: true,
-                                msg: 'Package Saved Successfully.',
-                                data: insertedRecord
+                                msg: 'Package deleted successfully'
                             })
-                            return
                         } else {
                             res.send({
-                                status: true,
-                                msg: 'Package Not Saved.Please try again',
-                                data: insertedRecord
-                            })
-                            return
+                                status: false,
+                                msg: 'Package not found'
+                            });
+                            return;
                         }
+                    } else {
+                        res.send({
+                            status: false,
+                            msg: 'White Label server not responding. PLease try again later'
+                        });
+                        return;
                     }
                 })
 
-                // axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
-                //     if (response.data.status) {
-                //         loginResponse = response.data;
-                //         axios.post(WHITE_LABEL_BASE_URL + '/users/save-sa-package', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
-                //             if (response.data.status) {
+            } else {
+                res.send({
+                    status: true,
+                    msg: 'Package deleted successfully only for Superadmin'
+                })
+            }
+        }).catch((error) => {
+            res.send({
+                status: false,
+                msg: 'White Label server not responding. PLease try again later'
+            });
+            return;
+        })
 
-                //             } else {
-                //                 res.send({
-                //                     status: false,
-                //                     msg: 'ERROR: White label server error and Package not saved. please try again.'
-                //                 })
-                //                 err = true
-                //                 return
+    } else {
+        res.send({
+            status: false,
+            msg: 'Package not found'
+        })
+    }
+}
 
-                //             }
-                //         }).catch((error) => {
-                //             data = {
-                //                 "status": false,
-                //                 "msg": "White Label server not responding. PLease try again later",
-                //             };
-                //             res.send(data);
-                //             err = true
-                //             return
-                //         });;
+exports.deleteHardware = async function (req, res) {
+    let hardware_id = req.params.id;
 
-                //     }
-                //     else {
-                //         res.send({
-                //             status: false,
-                //             msg: "you are not allowed to perform this action.",
-                //         })
-                //         err = true
-                //         return
-                //     }
-                // }).catch((error) => {
-                //     console.log("error", error);
-                //     data = {
-                //         "status": false,
-                //         "msg": "White Label server not responding. PLease try again later",
-                //     };
-                //     // console.log("response send 1");
-                //     res.send(data);
-                //     err = true
-                //     return
-                // });
+    if (hardware_id) {
+        let hdw_detail = await sql.query(`SELECT * FROM hardwares WHERE id = ${hardware_id}`);
+
+        // console.log('hdw_detail: ', hdw_detail);
+        let getApiURL = await sql.query(`SELECT api_url FROM white_labels WHERE id = ${hdw_detail[0].whitelabel_id}`);
+        // console.log("getApiURL ==> ", getApiURL[0].api_url);
+
+        let WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async function (response) {
+            if (response.data.status) {
+                loginResponse = response.data;
+
+                let data = {
+                    name: hdw_detail[0].name,
+                }
+
+                await axios.post(WHITE_LABEL_BASE_URL + '/users/delete-sa-hardware', { data }, { headers: { 'authorization': loginResponse.token } }).catch(async function (error) {
+                    res.send({
+                        status: false,
+                        msg: 'White Label server not responding. PLease try again later'
+                    });
+                    return;
+                })
+
+                let result = await sql.query(`UPDATE hardwares SET delete_status = 1 WHERE id = ${hardware_id}`);
+                if (result.affectedRows) {
+
+                    res.send({
+                        status: true,
+                        msg: 'Hardware deleted successfully'
+                    });
+                    return;
+                } else {
+                    res.send({
+                        status: false,
+                        msg: 'Hardware not found'
+                    });
+                    return;
+                }
+
+            } else {
+                res.send({
+                    status: false,
+                    msg: 'White Label server not responding. PLease try again later'
+                });
+                return;
+            }
+        }).catch((error) => {
+            res.send({
+                status: false,
+                msg: 'White Label server not responding. PLease try again later'
+            });
+            return;
+        })
+
+    } else {
+        res.send({
+            status: false,
+            msg: 'Hardware not found'
+        })
+    }
+}
+
+exports.saveHardware = async function (req, res) {
+    // console.log('data is', req.body)
+
+    let data = req.body.data;
+    let err = false
+    if (data) {
+        // console.log(data, 'data')
+        let whitelabel_id = req.body.data.whitelabel_id;
+        let WHITE_LABEL_BASE_URL = '';
+        let getApiURL = await sql.query(`SELECT * from white_labels where id = ${whitelabel_id}`)
+        if (getApiURL.length) {
+            if (getApiURL[0].api_url) {
+                WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                    if (response.data.status) {
+                        loginResponse = response.data;
+                        axios.post(WHITE_LABEL_BASE_URL + '/users/save-sa-hardware', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                            if (response.data.status) {
+
+                                let insertQuery = "INSERT INTO hardwares (name,price, whitelabel_id) VALUES('" + data.hardwareName + "', '" + data.hardwarePrice + "', '" + whitelabel_id + "')";
+                                sql.query(insertQuery, async (err, rslt) => {
+                                    if (err) throw err;
+                                    if (rslt) {
+                                        if (rslt.affectedRows) {
+                                            insertedRecord = await sql.query("SELECT * FROM hardwares WHERE whitelabel_id='" + whitelabel_id + "' AND id='" + rslt.insertId + "'")
+                                            res.send({
+                                                status: true,
+                                                msg: 'Hardware Saved Successfully.',
+                                                data: insertedRecord
+                                            })
+                                            return
+                                        } else {
+                                            res.send({
+                                                status: true,
+                                                msg: 'Hardware Not Saved.Please try again',
+                                                data: insertedRecord
+                                            })
+                                            return
+                                        }
+                                    }
+                                })
+                            } else {
+                                res.send({
+                                    status: false,
+                                    msg: 'ERROR: White label server error and Hardware not saved. please try again.'
+                                })
+                                err = true
+                                return
+
+                            }
+                        }).catch((error) => {
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later",
+                            };
+                            res.send(data);
+                            err = true
+                            return
+                        });;
+
+                    }
+                    else {
+                        res.send({
+                            status: false,
+                            msg: "you are not allowed to perform this action.",
+                        })
+                        err = true
+                        return
+                    }
+                }).catch((error) => {
+                    console.log("error", error);
+                    data = {
+                        "status": false,
+                        "msg": "White Label server not responding. PLease try again later",
+                    };
+                    // console.log("response send 1");
+                    res.send(data);
+                    err = true
+                    return
+                });
+
             }
             else {
                 res.send({
@@ -1451,13 +1691,13 @@ exports.getPrices = async function (req, res) {
     let chat_id = {};
     let pgp_email = {};
     let vpn = {};
-    console.log(whitelebel_id, 'whitelebel aid')
+    // console.log(whitelebel_id, 'whitelebel aid')
     if (whitelebel_id) {
         let selectQuery = "SELECT * FROM prices WHERE whitelabel_id='" + whitelebel_id + "'";
         sql.query(selectQuery, async (err, reslt) => {
             if (err) throw err;
             if (reslt) {
-                console.log('result for get prices are is ', reslt);
+                // console.log('result for get prices are is ', reslt);
 
                 if (reslt.length) {
                     for (let item of reslt) {
@@ -1522,14 +1762,14 @@ exports.getPrices = async function (req, res) {
 exports.getPackages = async function (req, res) {
     let whitelebel_id = req.params.whitelabel_id;
     if (whitelebel_id) {
-        let selectQuery = "SELECT * FROM packages WHERE whitelabel_id='" + whitelebel_id + "'";
+        let selectQuery = `SELECT * FROM packages WHERE whitelabel_id='${whitelebel_id}' AND delete_status = 0`;
         sql.query(selectQuery, async (err, reslt) => {
             if (err) throw err;
             if (reslt) {
-                console.log('result for get packages are is ', reslt);
+                // console.log('result for get packages are is ', reslt);
 
                 if (reslt.length) {
-                    console.log(reslt, 'reslt data of prices')
+                    // console.log(reslt, 'reslt data of prices')
                     res.send({
                         status: true,
                         msg: "Data found",
@@ -1564,6 +1804,109 @@ exports.getPackages = async function (req, res) {
         })
     }
 }
+exports.editHardware = async function (req, res) {
+    let updateData = req.body.data;
+
+    if (updateData) {
+        let getApiURL = await sql.query(`SELECT api_url FROM white_labels WHERE id = ${updateData.whitelabel_id}`);
+        // console.log("getApiURL ==> ", getApiURL[0].api_url)
+
+        let WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async function (response) {
+            if (response.data.status) {
+                loginResponse = response.data;
+
+                await axios.post(WHITE_LABEL_BASE_URL + '/users/edit-sa-hardware', { data: updateData }, { headers: { 'authorization': loginResponse.token } }).catch(async function (error) {
+                    res.send({
+                        status: false,
+                        msg: 'White Label server not responding. PLease try again later'
+                    });
+                    return;
+                })
+
+                let result = await sql.query(`UPDATE hardwares SET name= '${updateData.new_name}', price = ${updateData.new_price}  WHERE id = ${updateData.id}`)
+
+                if (result && result.affectedRows) {
+                    res.send({
+                        status: true,
+                        msg: "Hardware Update Successfully",
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: "Hardware not found",
+                    })
+                }
+
+
+            } else {
+                res.send({
+                    status: false,
+                    msg: 'White Label server not responding. PLease try again later'
+                });
+                return;
+            }
+        }).catch((error) => {
+            res.send({
+                status: false,
+                msg: 'White Label server not responding. PLease try again later'
+            });
+            return;
+        })
+
+
+    } else {
+        res.send({
+            status: false,
+            msg: "Hardware not found",
+        })
+    }
+
+}
+
+exports.getHardwares = async function (req, res) {
+    let whitelebel_id = req.params.whitelabel_id;
+    if (whitelebel_id) {
+        let selectQuery = `SELECT * FROM hardwares WHERE whitelabel_id='${whitelebel_id}' AND delete_status = 0`;
+        sql.query(selectQuery, async (err, reslt) => {
+            if (err) throw err;
+            if (reslt) {
+
+                if (reslt.length) {
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: reslt
+
+                    })
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: []
+
+                    })
+                }
+
+            } else {
+
+                res.send({
+                    status: true,
+                    msg: "Data found",
+                    data: []
+                })
+            }
+        })
+    } else {
+        res.send({
+            status: false,
+            msg: 'Invalid Whitelabel_id',
+            data: []
+
+        })
+    }
+}
+
 
 exports.checkPackageName = async function (req, res) {
 
@@ -1593,6 +1936,35 @@ exports.checkPackageName = async function (req, res) {
     }
 
 }
+
+exports.checkHardwareName = async function (req, res) {
+
+    try {
+        let name = req.body.name !== undefined ? req.body.name : null;
+
+        let checkExistingQ = "SELECT name FROM hardwares WHERE name='" + name + "'";
+
+        let checkExisting = await sql.query(checkExistingQ);
+        // console.log(checkExistingQ, 'query is')
+        if (checkExisting.length) {
+            data = {
+                status: false,
+            };
+            res.send(data);
+            return;
+        }
+        else {
+            data = {
+                status: true,
+            };
+            res.send(data);
+            return;
+        }
+    } catch (error) {
+        throw error
+    }
+
+}
 exports.requestCredits = async function (req, res) {
 
     try {
@@ -1602,10 +1974,12 @@ exports.requestCredits = async function (req, res) {
         let label = req.body.label
         let credits = req.body.credits
         let dealer_pin = req.body.dealer_pin
+        let request_id = req.body.request_id
+        let account_type = req.body.account_type
         // console.log(dealer_pin);
         if (dealer_id != '' && label != '' && credits != '') {
 
-            let query = `INSERT into credit_requests (dealer_id,dealer_pin,dealer_name,dealer_email,label,credits) VALUES (${dealer_id},'${dealer_pin}','${dealer_name}','${dealer_email}','${label}',${credits})`;
+            let query = `INSERT into credit_requests (dealer_id,dealer_pin,dealer_name,dealer_email,label,request_id ,credits , account_type) VALUES (${dealer_id},'${dealer_pin}','${dealer_name}','${dealer_email}','${label}','${request_id}',${credits} , '${account_type}')`;
             sql.query(query, function (err, result) {
                 if (err) throw err
                 if (result && result.affectedRows > 0) {
@@ -1680,30 +2054,99 @@ exports.deleteRequest = async function (req, res) {
         let id = req.params.id
         let query = "SELECT * from credit_requests where id = " + id + " and  status = '0'"
         console.log(query);
-        sql.query(query, function (err, result) {
+        sql.query(query, async function (err, result) {
             if (err) throw err
             if (result.length) {
+                let labelID = await general_helpers.getlabelIdByName(result[0].label)
+                // console.log(labelID);
+                let getApiURL = await sql.query(`SELECT * FROM white_labels WHERE id = ${labelID}`)
+                if (getApiURL.length) {
+                    if (getApiURL[0].api_url) {
+                        var WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                            // console.log(response);
+                            if (response.data.status) {
+                                let loginResponse = response.data
+                                let data = {
+                                    credits: result[0].credits,
+                                    dealer_id: result[0].dealer_id,
+                                    request_id: result[0].request_id,
+                                    type: "rejected"
+                                }
 
-                let updateQuery = "update credit_requests set status = 1 , del_status = 1 where id= " + id
-                sql.query(updateQuery, function (err, result) {
-                    if (err) throw err
-                    if (result && result.affectedRows > 0) {
-                        data = {
-                            "status": true,
-                            "msg": "Request deleted successfully."
-                        };
-                        res.send(data);
-                        return
-                    } else {
-                        data = {
-                            "status": false,
-                            "msg": "Request not deleted please try again."
-                        };
-                        res.send(data);
+                                axios.post(WHITE_LABEL_BASE_URL + '/users/credit-request-ack', { data }, { headers: { 'authorization': loginResponse.token } }).then(async (response) => {
+                                    if (response.data.status) {
+                                        let updateQuery = "update credit_requests set status = 1 , del_status = 1 where id= " + id
+                                        sql.query(updateQuery, function (err, result) {
+                                            if (err) throw err
+                                            if (result && result.affectedRows > 0) {
+                                                data = {
+                                                    "status": true,
+                                                    "msg": "Request deleted successfully."
+                                                };
+                                                res.send(data);
+                                                return
+                                            } else {
+                                                data = {
+                                                    "status": false,
+                                                    "msg": "Request not deleted please try again."
+                                                };
+                                                res.send(data);
+                                                return
+                                            }
+                                        })
+                                    } else {
+                                        data = {
+                                            "status": false,
+                                            "msg": response.data.msg
+                                        };
+                                        res.send(data);
+                                        return
+                                    }
+                                }).catch((error) => {
+                                    data = {
+                                        "status": false,
+                                        "msg": "White Label server not responding. PLease try again later"
+                                    };
+                                    res.send(data);
+                                    return
+                                });
+                            }
+                            else {
+                                data = {
+                                    "status": false,
+                                    "msg": "User authentication failed.You are not allowed to perform this action."
+                                };
+                                res.send(data);
+                                return
+                            }
+                        }).catch((error) => {
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later"
+                            };
+                            res.send(data);
+                            return
+                        });
+                    }
+                    else {
+                        res.send({
+                            status: false,
+                            msg: "White Label credentials not found.",
+                            "duplicateData": []
+                        })
                         return
                     }
-                })
 
+                }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "White Label Data not found.",
+                        // "duplicateData": []
+                    })
+                    return
+                }
             } else {
                 data = {
                     status: false,
@@ -1726,7 +2169,8 @@ exports.deleteRequest = async function (req, res) {
 exports.acceptRequest = async function (req, res) {
     try {
         let id = req.params.id
-        let password = req.body.pass
+        let pass = req.body.pass
+        let password = md5(req.body.pass)
         let requestData = req.body.request
         let order_date = moment(requestData.created_at).format('YYYY-MM-DD hh:mm:ss');
         let dealer_pin = req.body.dealer_pin
@@ -1756,23 +2200,48 @@ exports.acceptRequest = async function (req, res) {
                             if (getApiURL[0].api_url) {
                                 var WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
                                 axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
-                                    console.log(response);
+                                    // console.log(response.data);
                                     if (response.data.status) {
                                         let loginResponse = response.data
                                         let data = {
                                             credits: result[0].credits,
-                                            dealer_id: result[0].dealer_id
+                                            dealer_id: result[0].dealer_id,
+                                            request_id: result[0].request_id,
+                                            type: "accepted"
                                         }
 
-                                        axios.post(WHITE_LABEL_BASE_URL + '/users/update_credit', { data }, { headers: { 'authorization': loginResponse.token } }).then(async (response) => {
+                                        axios.post(WHITE_LABEL_BASE_URL + '/users/credit-request-ack', { data }, { headers: { 'authorization': loginResponse.token } }).then(async (response) => {
                                             if (response.data.status) {
-                                                let inv_no = "PI123456"
+                                                let inv_no = await general_helpers.getInvoiceId();
                                                 let dealerQ = `SELECT * FROM superadmins_credentials WHERE dealer_pin = ${dealer_pin}`
                                                 let dealerData = await sql.query(dealerQ);
 
-                                                let acceptRequestQ = `INSERT INTO sales (dealer_id,dealer_pin,dealer_name,credits,label, accepted_by,inv_no,order_date,account_type,status,pay_type) VALUES(${requestData.dealer_id},'${requestData.dealer_pin}','${requestData.dealer_name}',${requestData.credits},'${requestData.label}','${dealerData[0].dealer_name}','${inv_no}','${order_date}','admin' ,'UNPAID' ,'CASH')`
-                                                sql.query(acceptRequestQ)
-                                                console.log(acceptRequestQ);
+                                                let acceptRequestQ = `INSERT INTO sales (dealer_id,dealer_pin,dealer_name,credits,label, accepted_by,inv_no,order_date,account_type,status,pay_type) VALUES(${requestData.dealer_id},'${requestData.dealer_pin}','${requestData.dealer_name}',${requestData.credits},'${requestData.label}','${dealerData[0].dealer_name}','${inv_no}','${order_date}','${requestData.account_type}' ,'UNPAID' ,'CASH')`
+                                                // console.log(acceptRequestQ);
+                                                await sql.query(acceptRequestQ)
+                                                const invoice = {
+                                                    shipping: {
+                                                        name: requestData.dealer_name.toUpperCase() + ` (${requestData.label})`,
+                                                        dealer_id: requestData.dealer_id,
+                                                        dealer_pin: requestData.dealer_pin,
+                                                    },
+                                                    items: [
+                                                        {
+                                                            item: "Credits",
+                                                            description: "Credits puchased on cash",
+                                                            quantity: requestData.credits,
+                                                            amount: requestData.credits * 100
+                                                        },
+                                                    ],
+                                                    subtotal: requestData.credits * 100,
+                                                    paid: 0,
+                                                    invoice_nr: inv_no
+                                                };
+                                                let fileName = "invoice-" + Date.now() + requestData.dealer_name + requestData.dealer_id + ".pdf"
+                                                let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                                                createInvoice(invoice, filePath, 'credits')
+                                                await sql.query(`INSERT INTO invoices (inv_no , dealer_id, inv_file_path) VALUES('${inv_no}', ${requestData.dealer_id} ,'${fileName}')`)
+
                                                 let updateQuery = "update credit_requests set status = 1 where id= " + id
                                                 sql.query(updateQuery, function (err, result) {
                                                     if (err) throw err
@@ -1788,12 +2257,13 @@ exports.acceptRequest = async function (req, res) {
                                             } else {
                                                 data = {
                                                     "status": false,
-                                                    "msg": "Credits not added to user please try again."
+                                                    "msg": response.data.msg
                                                 };
                                                 res.send(data);
                                                 return
                                             }
                                         }).catch((error) => {
+                                            console.log(error);
                                             data = {
                                                 "status": false,
                                                 "msg": "White Label server not responding. PLease try again later"
@@ -1811,12 +2281,15 @@ exports.acceptRequest = async function (req, res) {
                                         return
                                     }
                                 }).catch((error) => {
-                                    data = {
-                                        "status": false,
-                                        "msg": "White Label server not responding. PLease try again later"
-                                    };
-                                    res.send(data);
-                                    return
+                                    if (error) {
+                                        console.log(error);
+                                        data = {
+                                            "status": false,
+                                            "msg": "White Label server not responding. PLease try again later"
+                                        };
+                                        res.send(data);
+                                        return
+                                    }
                                 });
                             }
                             else {
@@ -1862,6 +2335,90 @@ exports.acceptRequest = async function (req, res) {
         data = {
             "status": false,
             "msg": "Error: Request not accepted. Please try again."
+        };
+        res.send(data);
+        return
+    }
+}
+exports.addCreditsSaleRecord = async function (req, res) {
+
+    try {
+        let dealer_id = req.body.dealer_id
+        let dealer_pin = req.body.dealer_pin
+        let dealer_name = req.body.dealer_name
+        let credits = req.body.credits
+        let label = req.body.label
+        let accepted_by = "Online Transfer"
+        let inv_no = await general_helpers.getInvoiceId()
+        let order_date = moment().format("YYYY/MM/DD")
+        let account_type = req.body.dealer_type
+        let status = 'PAID'
+        let payment_type = req.body.payment_type
+        let dealer_email = req.body.dealer_email
+        if (dealer_name && dealer_pin && dealer_id && credits && label && account_type && payment_type && dealer_email) {
+            let acceptRequestQ = `INSERT INTO sales (dealer_id,dealer_pin,dealer_name,credits,label, accepted_by,inv_no,order_date,account_type,status,pay_type, paid_date) VALUES(${dealer_id},'${dealer_pin}','${dealer_name}',${credits},'${label}','${accepted_by}','${inv_no}','${order_date}','${account_type}' ,'${status}' ,'${payment_type}' , '${order_date}')`
+            sql.query(acceptRequestQ, async function (err, result) {
+                if (err) {
+                    data = {
+                        "status": false,
+                        "msg": "ERROR: server Query error."
+                    };
+                    res.send(data);
+                    return
+                }
+
+                if (result.affectedRows) {
+                    const invoice = {
+                        shipping: {
+                            name: dealer_name.toUpperCase() + ` (${label})`,
+                            dealer_id: dealer_id,
+                            dealer_pin: dealer_pin,
+                        },
+                        items: [
+                            {
+                                item: "Credits",
+                                description: "Credits puchased on cash",
+                                quantity: credits,
+                                amount: credits * 100
+                            },
+                        ],
+                        subtotal: credits * 100,
+                        paid: credits * 100,
+                        invoice_nr: inv_no
+                    };
+                    let fileName = "invoice-" + Date.now() + dealer_name + dealer_id + ".pdf"
+                    let filePath = path.join(__dirname, "../../uploads/" + fileName)
+                    createInvoice(invoice, filePath, 'credits')
+
+                    await sql.query(`INSERT INTO invoices (inv_no , dealer_id, inv_file_path) VALUES('${inv_no}', ${dealer_id} , '${fileName}')`)
+                    data = {
+                        "status": true,
+                        "msg": "Record added successfully."
+                    };
+                    res.send(data);
+                    return
+                } else {
+                    data = {
+                        "status": false,
+                        "msg": "ERROR: DATA NOT INSERTED."
+                    };
+                    res.send(data);
+                    return
+                }
+            })
+        } else {
+            data = {
+                "status": false,
+                "msg": "ERROR: REQUEST DATA NOT FOUND"
+            };
+            res.send(data);
+            return
+        }
+    } catch (error) {
+        // console.log(error)
+        data = {
+            "status": false,
+            "msg": "ERROR: server Query error."
         };
         res.send(data);
         return
@@ -1919,6 +2476,7 @@ exports.checkDealerPin = async function (req, res) {
         let requestData = req.body.requestData
         let enc_pass = md5(requestData.dealer_name + requestData.dealer_email + requestData.id + Date.now())
         // console.log(enc_pass);
+        let dbPass = md5(enc_pass);
         let query_res = await sql.query(`SELECT * FROM superadmins_credentials WHERE dealer_pin='${dealer_pin}' limit 1`);
         if (query_res.length) {
 
@@ -1930,7 +2488,7 @@ exports.checkDealerPin = async function (req, res) {
             catch (err) {
                 console.log(err);
             }
-            sql.query(`UPDATE credit_requests set password = '${enc_pass}' WHERE id = ${requestData.id}`);
+            sql.query(`UPDATE credit_requests set password = '${dbPass}' WHERE id = ${requestData.id}`);
             res.send({
                 "pin_matched": true
             });
@@ -2204,6 +2762,7 @@ exports.getSalesList = async function (req, res) {
         }
     });
 }
+
 exports.getDealerList = async function (req, res) {
     try {
         let labelId = req.params.labelId;
@@ -2218,10 +2777,11 @@ exports.getDealerList = async function (req, res) {
                     if (response.data.status) {
                         loginResponse = response.data;
                         axios.get(WHITE_LABEL_BASE_URL + '/users/get_dealer_list', { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                            console.log(response.data);
                             if (response.data.status) {
                                 res.send({
-                                    status: false,
-                                    msg: "error",
+                                    status: true,
+                                    msg: "DATA FOUND",
                                     data: response.data.data
                                 });
                                 return
@@ -2265,6 +2825,72 @@ exports.getDealerList = async function (req, res) {
             data: []
         });
         return
+
+    }
+}
+
+exports.getDeviceList = async function (req, res) {
+    try {
+        let labelId = req.params.labelId;
+        let WHITE_LABEL_BASE_URL = '';
+        console.log(labelId);
+        let getWhiteLabel = await sql.query(`SELECT * from white_labels WHERE id= ${labelId}`)
+        if (getWhiteLabel.length) {
+            if (getWhiteLabel[0].api_url) {
+                WHITE_LABEL_BASE_URL = getWhiteLabel[0].api_url;
+                axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                    if (response.data.status) {
+                        loginResponse = response.data;
+
+                        axios.get(WHITE_LABEL_BASE_URL + '/users/get-devices-for-report', { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                            if (response.data.status) {
+                                return res.send({
+                                    status: true,
+                                    msg: "DATA FOUND",
+                                    data: response.data.data
+                                });
+                            } else {
+                                return res.send({
+                                    status: false,
+                                    msg: "error",
+                                    data: []
+                                });
+                            }
+                        }).catch((error) => {
+                            console.log("White Label server not responding. PLease try again later");
+                        });
+                    }
+                }).catch((error) => {
+                    console.log(error);
+                    console.log("White Label server not responding. PLease try again later");
+                    return res.send({
+                        status: false,
+                        msg: "error",
+                        data: []
+                    });
+                    
+                });
+            } else {
+                return res.send({
+                    status: false,
+                    msg: "error",
+                    data: []
+                });
+            }
+        } else {
+            return res.send({
+                status: false,
+                msg: "error",
+                data: []
+            });
+        }
+    } catch (err) {
+        console.log(err);
+        return res.send({
+            status: false,
+            msg: "error",
+            data: []
+        });
 
     }
 }
