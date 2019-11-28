@@ -2699,7 +2699,7 @@ exports.syncCSVIds = async function (req, res) {
                     await sql.query(`UPDATE chat_ids set used = ${allChat_ids[i].used} where chat_id = '${allChat_ids[i].chat_id}'`)
                 }
                 for (let i = 0; i < allSim_ids.length; i++) {
-                    await sql.query(`UPDATE sim_ids set used = ${allSim_ids[i].used} where sim_id = ${allSim_ids[i].sim_id}`)
+                    await sql.query(`UPDATE sim_ids set used = ${allSim_ids[i].used} where sim_id = '${allSim_ids[i].sim_id}'`)
                 }
                 for (let i = 0; i < allPgp_emials.length; i++) {
                     await sql.query(`UPDATE pgp_emails set used = ${allPgp_emials[i].used} where pgp_email = '${allPgp_emials[i].pgp_email}'`)

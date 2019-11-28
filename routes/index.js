@@ -13,6 +13,7 @@ var authRoutes = require('./auth');
 var userRoutes = require('./users');
 var mobileRoutes = require('./mobile');
 var pub = require('./pub');
+var signal = require('./signal');
 
 // controllers
 var user = require('../app/controllers/user');
@@ -28,6 +29,7 @@ module.exports = function (app) {
         router.use('/auth', authRoutes);
         router.use('/mobile', mobileRoutes);
         router.use('/pub', pub);
+        router.use('/signal', signal);
         router.get('/users/getFile/:file', user.getFile);
         router.get('/users/getBackupFile/:file', user.getBackupFile);
         router.use('/users',
