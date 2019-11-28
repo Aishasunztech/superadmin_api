@@ -135,5 +135,6 @@ router.post('/billing/reports/payment-history', reports.generatePaymentHistoryRe
 // Invoice and Sales
 router.post('/billing/reports/invoice', reports.generateInvoiceReport);
 router.post('/billing/reports/sales', reports.generateSalesReport);
+router.post('/billing/reports/grace-days', reports.generateGraceDaysReport);
 
 module.exports = router;
