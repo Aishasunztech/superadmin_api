@@ -4,11 +4,11 @@ module.exports = {
   up: (queryInterface, Sequelize) => {
     return Promise.all([
       queryInterface.addColumn(
-        'sales',
-        'whitelabel_id',
+        'hardwares',
+        'delete_status',
         {
           type: Sequelize.INTEGER,
-          defaultValue: null,
+          defaultValue: 0,
         }
       )
     ]);

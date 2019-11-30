@@ -245,7 +245,7 @@ exports.generatePaymentHistoryReport = async function (req, res) {
 
 
             WHITE_LABEL_BASE_URL = getWhiteLabel[0].api_url;
-            // '/users/reports/payment-history'
+
             general_helper.sendRequestToWhiteLabel(WHITE_LABEL_BASE_URL, '/users/reports/payment-history', req.body, defaultData, res, (response) => {
 
                 if (response.data.status) {
@@ -351,7 +351,7 @@ exports.generateSalesReport = async function (req, res) {
         body.device = '';
 
         let WHITE_LABEL_BASE_URL = '';
-        let getWhiteLabel = await sql.query(`SELECT * FROM white_labels WHERE id= ${labelId}`)
+        let getWhiteLabel = await sql.query(`SELECT * FROM white_labels WHERE id= ${labelId}`);
 
         if (getWhiteLabel.length && getWhiteLabel[0].api_url) {
 
@@ -370,7 +370,7 @@ exports.generateSalesReport = async function (req, res) {
 
                 let superAdminSalesQ = `SELECT * FROM sales WHERE label='${getWhiteLabel[0].name}' ${condition}`;
                 let superAdminSales = await sql.query(superAdminSalesQ);
-    
+
                 if (superAdminSales.length) {
                     superAdminSales.forEach(item => {
                         defaultData.push({
@@ -379,10 +379,10 @@ exports.generateSalesReport = async function (req, res) {
                             dealer_pin: item.dealer_pin,
                             // 'device_id': item.device_id ? item.device_id : DEVICE_PRE_ACTIVATION,
                             // 'dealer_pin': item.dealer_pin ? item.dealer_pin : 'N/A',
-                            type: 'credits',
-                            name: 'credits',
+                            type: 'Credits',
+                            name: 'Credits',
                             // // 'cost_price': item.cost_price ? item.cost_price : 0,
-                            sale_price: item.credits ? item.credits : 0, // cost price of admin is sale price of super admin
+                            cost_price: item.credits ? item.credits : 0, // cost price of admin is sale price of super admin
                             // // 'profit_loss': item.profit_loss ? item.profit_loss : 0,
                             created_at: item.created_at ? item.created_at : 'N/A',
                         })
@@ -439,7 +439,7 @@ exports.generateSalesReport = async function (req, res) {
 exports.generateGraceDaysReport = async function (req, res) {
     try {
 
-        let defaultData = []
+        let defaultData = [];
         let labelId = req.body.label;
         let WHITE_LABEL_BASE_URL = '';
         let getWhiteLabel = await sql.query(`SELECT * from white_labels WHERE id= ${labelId}`);
