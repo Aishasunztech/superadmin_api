@@ -1,27 +1,26 @@
-var express = require('express');
-var router = express.Router();
-var datetime = require('node-datetime');
+// Predefined Libraries
 const axios = require('axios');
-var moment = require('moment-strftime');
-// var moment = require('moment');
-// import ADMIN from "../constants/Application";
+var datetime = require('node-datetime');
+const moment = require('moment-strftime');
 var ApkReader = require('node-apk-parser');
 var md5 = require('md5');
 var randomize = require('randomatic');
 const mysql_import = require('mysql-import');
 var path = require('path');
 var fs = require('fs');
-
+var util = require('util')
 const mysql = require('mysql');
 
+// Custom Libraries
 var { sql } = require('../config/database');
 
-var app_constants = require('../constants/application');
-
+// helpers
 const device_helpers = require('./device_helpers');
-var util = require('util')
-const exec = util.promisify(require('child_process').exec);
 
+// Defined Constants
+const app_constants = require('../constants/application');
+const exec = util.promisify(require('child_process').exec);
+const constants = require('../config/constants')
 
 
 module.exports = {
@@ -762,4 +761,83 @@ module.exports = {
 		}
 		return 'PI' + invoiceId;
 	},
+	createPGPEmailAccountToServer: async function (mail, ) {
+		// axios.get('/accounts/exists')
+
+		axios.get(`${constants.PGP_SERVER_URL}/accounts/exists?email=${mail}`, {
+			headers: {
+				Authorization: constants.PGP_SERVER_KEY
+			}
+		}).then(async (response) => {
+			// if(response.status === 200){
+			if (response.data) {
+				if (!response.data.exists) {
+					// === Payload
+					// domains: []
+					// first_name: "Usman"
+					// is_active: true
+					// language: "en"
+					// last_name: "Hafeez"
+					// mailbox: {}
+					// master_user: false
+					// password: "123456"
+					// random_password: false
+					// role: "Resellers"
+					// username: "usmanhafeez147"
+					// random_password: true
+					// role: "Resellers"
+					// secondary_email: "usmanhafeez147@gmail.com"
+					// username: "usmanhafeez147"
+					let data = {
+						// domains: []
+						// first_name: "Usman"
+						// is_active: true
+						// language: "en"
+						// last_name: "Hafeez"
+						// mailbox: {}
+						// master_user: false
+						// password: "123456"
+						// random_password: false
+						// role: "Resellers"
+						// username: "usmanhafeez147"
+						// random_password: true
+						// role: "Resellers"
+						// secondary_email: "usmanhafeez147@gmail.com"
+						// username: "usmanhafeez147"
+					}
+					axios.post(`${constants.PGP_SERVER_URL}/accounts`, data, {
+						headers: {
+							Authorization: constants.PGP_SERVER_KEY
+						}
+					}).then(async (response) => {
+
+						// === Response
+						// first_name: "usman"
+						// is_active: true
+						// language: "en"
+						// last_name: "hafeez"
+						// mailbox: null
+						// master_user: false
+						// password: "{SHA512-CRYPT}$6$rounds=70000$pjjthZEekg4lT68o$oVSVpkX.H/IDbLexUZvRYcU9A8vysd.rwAmB.ndWe/PbF7wZ8wf7QMvP3wB95PsnwfVovfeQMeKNTH0hRQjhf0"
+						// phone_number: "03137919712"
+						// pk: 3
+						// random_password: false
+						// role: "Resellers"
+						// secondary_email: "usmanhafeez147@gmail.com"
+						// username: "usmanhafeez147
+
+					})
+				}
+				// console.log(response.data)
+			}
+			// }
+			// if (response.data.status) {
+
+			// 	loginResponse = response.data;
+			// 	axios.post(WHITE_LABEL_BASE_URL + api, data, { headers: { 'authorization': loginResponse.token } }).then(callback).catch((error) => {
+			// 		console.log("White Label server not responding. PLease try again later");
+			// 	});
+			// }
+		});
+	}
 }

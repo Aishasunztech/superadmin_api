@@ -2,11 +2,15 @@
 // middlewares
 var authMiddleware = require('../config/auth');
 var multipart = require('connect-multiparty');
-var multipartMiddleware = multipart();
 var moment = require('moment-strftime');
-
 var crypto = require("crypto");
 var md5 = require('md5');
+
+// constants
+const multipartMiddleware = multipart();
+
+// helpers
+const general_helpers = require('../helpers/general_helpers')
 
 // routes
 var authRoutes = require('./auth');
@@ -17,7 +21,6 @@ var signal = require('./signal');
 
 // controllers
 var user = require('../app/controllers/user');
-
 
 
 module.exports = function (app) {

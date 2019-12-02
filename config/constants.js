@@ -1,3 +1,4 @@
+// Site Configs
 const HOST_NAME = process.env.HOST_NAME;
 let APP_TITLE = 'SuperAdmin';
 let URL = 'http://localhost:8042';
@@ -11,6 +12,11 @@ let DB_PASSWORD = '';
 // Email
 let SMTP_FROM_EMAIL = "admin@meshguard.co";
 let SMTP_FROM_NAME = "SuperAdmin";
+
+// PGP Mail Server
+let PGP_SERVER_HOST = 'https://mail.codelocs.com/'
+let PGP_SERVER_URL = PGP_SERVER_HOST + 'api/v1';
+let PGP_SERVER_KEY = 'Token 1ad78ff44efad888144c2def2c2b321994da946d';
 
 if (HOST_NAME) {
 	// APP_TITLE = HOST_NAME;
@@ -54,7 +60,7 @@ if (HOST_NAME) {
 module.exports = {
 	PROJECT_NAME: APP_TITLE,
 	HOST: URL,
-	SECRET: 'kepitsecretwithauth!@#',
+	SECRET: 'keepItSecretWithAuth!@#',
   	EXPIRES_IN: '86400s',
 
 	// SMTP Constants
@@ -75,5 +81,10 @@ module.exports = {
 
 	// Fixer API key
 	FIXER_API_KEY:'96035c5c5b46baea5a96b84930eaed79',
-	BASE_CURRENCY: 'USD'
+	BASE_CURRENCY: 'USD',
+
+	// PGP Mail Server
+	PGP_SERVER_HOST: PGP_SERVER_HOST,
+	PGP_SERVER_URL: PGP_SERVER_URL,
+	PGP_SERVER_KEY: PGP_SERVER_KEY
 };
