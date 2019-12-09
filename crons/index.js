@@ -123,7 +123,12 @@ cron.schedule('0 0 0 * * *', async () => {
     }
 });
 
-cron.schedule("0 0 * * * *", async () => {
+// cron.schedule("0 0 * * * *", async () => {
+/**
+ * @author Usman Hafeez
+ * @description run fixer cron twice in a day
+ */
+cron.schedule("0 0 */12 * * *", async () => {
     try {
         const data = await fixer.latest({ base: constants.BASE_CURRENCY });
         if (data && data.success) {
