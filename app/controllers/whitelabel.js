@@ -23,7 +23,7 @@ exports.getWhiteLabels = async function (req, res) {
     if (req.params.type === 'all') {
         console.log("hello all servers");
         whiteLabelsQ = "SELECT id, name, route_uri, api_url FROM white_labels";
-    } 
+    }
     // else if (req.params.type === 'whitelabels') {
 
     //     whiteLabelsQ = "SELECT id, name, route_uri, api_url FROM white_labels WHERE status=1";
@@ -136,7 +136,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                 // let where = (is_byod == 1) ? 'AND is_byod = 1' : ''
                                 let query = ''
                                 // if (is_byod == 1) {
-   
+
                                 query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND apk_type='${apk_type}'`
                                 // } else {
                                 // query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
@@ -1163,6 +1163,114 @@ exports.saveBackup = async function (req, res) {
             status: false,
             msg: "whitelabel not defined"
         })
+    }
+}
+
+exports.getDomains = async function (req, res) {
+    let whitelebel_id = req.params.whitelabel_id;
+    if (whitelebel_id) {
+        let selectQuery = `SELECT * FROM domains WHERE whitelabel_id='${whitelebel_id}' AND delete_status = 0`;
+        sql.query(selectQuery, async (err, reslt) => {
+            if (err) {
+                console.log(err);
+                res.send({
+                    status: false,
+                    data: []
+                })
+                return
+            };
+            if (reslt) {
+                // console.log('result for get packages are is ', reslt);
+
+                if (reslt.length) {
+                    // console.log(reslt, 'reslt data of prices')
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: reslt
+
+                    })
+                    return
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "Data not found",
+                        data: []
+
+                    })
+                    return
+                }
+
+            } else {
+
+                res.send({
+                    status: true,
+                    msg: "Domain not Found ",
+                    data: []
+                })
+                return
+            }
+        })
+    } else {
+
+        res.send({
+            status: false,
+            msg: 'Invalid Whitelabel_id',
+            data: []
+
+        })
+        return
+    }
+}
+
+exports.deleteDomains = async function (req, res) {
+    let whitelebel_id = req.params.whitelabel_id;
+    if (whitelebel_id) {
+        let selectQuery = `SELECT * FROM domains WHERE whitelabel_id='${whitelebel_id}' AND delete_status = 0`;
+        sql.query(selectQuery, async (err, reslt) => {
+            if (err) {
+                console.log(err);
+                res.send({
+                    status: false,
+                    data: []
+                })
+                return
+            };
+            if (reslt.length) {
+                let deleteQ = `UPDATE domains SET delete_status = 1 WHERE id = ${whitelebel_id}`
+                sql.query(deleteQ, function (err, result) {
+                    if (err) {
+                        console.log(err);
+                        res.send({
+                            status: false,
+                            msg: "ERROR:  Domain not deleted.Please Try again.",
+                        })
+                        return
+                    }
+                    if (result.affectedRows) {
+                        res.send({
+                            status: true,
+                            msg: "Domain Has been Deleted SuccessFully.",
+                        })
+                        return
+
+                    } else {
+                    }
+                })
+            } else {
+                res.send({
+                    status: false,
+                    msg: "ERROR: Domain not Found.",
+                })
+                return
+            }
+        })
+    } else {
+        res.send({
+            status: false,
+            msg: 'ERROR: Invalid Whitelabel'
+        })
+        return
     }
 }
 
