@@ -32,6 +32,14 @@ router.post('/restart-whitelabel', whitelabel.restartWhitelabel);
 
 router.post('/save_backup', whitelabel.saveBackup);
 
+router.get('/get-domains/:whitelabel_id', whitelabel.getDomains)
+
+router.delete('/delete-domains/:whitelabel_id', whitelabel.deleteDomains)
+
+router.post('/add-domain', whitelabel.addDomain)
+
+router.put('/edit-domain', whitelabel.editDomain)
+
 
 // ==============================================================================
 // apk file
