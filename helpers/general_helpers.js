@@ -308,6 +308,7 @@ module.exports = {
 		return deviceId;
 	},
 
+
 	getOfflineDvcId: async function (sn, mac) {
 
 		var key = md5(sn + mac);
@@ -762,4 +763,38 @@ module.exports = {
 		}
 		return 'PI' + invoiceId;
 	},
+
+	makeid(length) {
+		var result = '';
+		var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		var charactersLength = characters.length;
+		for (var i = 0; i < length; i++) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+		return result;
+	},
+
+	generatePgpEmail: async function (domain) {
+		let random_string = this.makeid(10);
+		let pgp_email = random_string + '@' + domain
+		if (await this.checkUniquePgp(pgp_email)) {
+			if (this.validateEmail(pgp_email)) {
+				return pgp_email
+			} else {
+				this.generatePgpEmail(domain)
+			}
+		} else {
+			this.generatePgpEmail(domain)
+		}
+	},
+
+	checkUniquePgp: async function (pgp_email) {
+		let checkPgp = `SELECT * FROM pgp_emails WHERE pgp_email = '${pgp_email}'`
+		let result = await sql.query(checkPgp);
+		if (result && result.length) {
+			return false
+		} else {
+			return true
+		}
+	}
 }
