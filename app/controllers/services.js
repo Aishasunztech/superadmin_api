@@ -36,6 +36,10 @@ exports.createServiceProduct = async function (req, res) {
                     }
                 }
                 if (pgp_email) {
+
+                    // general_helper.createPGPEmailAccountToServer(pgp_email, function (response, alreadyExists) {
+                    //     if (!alreadyExists) {
+                    //         if (response.status === 200) {
                     sql.query(`INSERT INTO pgp_emails (pgp_email , whitelabel_id) VALUES ('${pgp_email}' , '${whitelabel_id}')`, function (err, results) {
                         if (err) {
                             res.send({
@@ -59,6 +63,21 @@ exports.createServiceProduct = async function (req, res) {
                             return
                         }
                     })
+                    //         } else {
+                    //             res.send({
+                    //                 status: false,
+                    //                 msg: "ERROR: PGP email server internal error."
+                    //             })
+                    //             return
+                    //         }
+                    //     } else {
+                    //         res.send({
+                    //             status: false,
+                    //             msg: "ERROR: Username not available. Please choose another username.."
+                    //         })
+                    //         return
+                    //     }
+                    // })
                 } else {
                     res.send({
                         status: false,
@@ -81,6 +100,45 @@ exports.createServiceProduct = async function (req, res) {
             });
             return
         }
+    }
+    catch (err) {
+        console.log(err);
+        res.send({
+            status: false,
+            msg: "Super Admin Server Error.",
+        });
+        return
+    }
+}
+
+exports.generateRandomUsername = async function (req, res) {
+    try {
+        let username = await general_helper.generateUsername();
+        res.send({
+            status: true,
+            msg: "Username Created.",
+            username: username
+        });
+        return
+    }
+    catch (err) {
+        console.log(err);
+        res.send({
+            status: false,
+            msg: "Super Admin Server Error.",
+        });
+        return
+    }
+}
+
+exports.checkUniquePgp = async function (req, res) {
+    try {
+        let available = await general_helper.checkUniquePgp();
+        res.send({
+            status: true,
+            available: available
+        });
+        return
     }
     catch (err) {
         console.log(err);

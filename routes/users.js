@@ -152,5 +152,9 @@ router.post('/billing/reports/grace-days', reports.generateGraceDaysReport);
 
 router.post('/create-service-product', ServiceController.createServiceProduct);
 
+router.post('/generate-random-username', ServiceController.generateRandomUsername);
+
+router.post('/check-unique-pgp', ServiceController.checkUniquePgp);
+
 
 module.exports = router;
