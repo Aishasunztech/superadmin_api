@@ -775,7 +775,7 @@ module.exports = {
 		return result;
 	},
 
-	
+
 
 	generateUsername: async function () {
 		let random_string = this.makeid(10);
@@ -920,11 +920,11 @@ module.exports = {
 		}
 		return result;
 	},
-	
+
 	generateChatID: async function () {
 		let chat_id = this.makeChat(8);
 		if (await this.checkUniqueChatId(chat_id)) {
-			this.generateChatID()
+			return chat_id
 		} else {
 			this.generateChatID()
 		}

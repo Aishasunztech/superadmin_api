@@ -121,6 +121,41 @@ exports.createServiceProduct = async function (req, res) {
                     return
                 }
             }
+            else if (type === 'sim_id') {
+                let sim_id = await general_helper.generateSimID()
+                if (sim_id) {
+                    sql.query(`INSERT INTO sim_ids (sim_id , whitelabel_id , uploaded_by, uploaded_by_id) VALUES ('${sim_id}' , '${whitelabel_id}' ,'${req.body.uploaded_by}' , '${req.body.uploaded_by_id}')`, function (err, results) {
+                        if (err) {
+                            res.send({
+                                status: false,
+                                msg: "ERROR: Internal Server Error."
+                            })
+                            return
+                        }
+                        if (results && results.insertId) {
+                            res.send({
+                                status: true,
+                                msg: "Sim Id has been generated Successfully.",
+                                product: sim_id
+                            })
+                            return
+                        }
+                        else {
+                            res.send({
+                                status: false,
+                                msg: "ERROR: Internal Server Error."
+                            })
+                            return
+                        }
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: "ERROR: Superadmin Server Error.",
+                    });
+                    return
+                }
+            }
             else {
                 res.send({
                     status: false,
