@@ -924,7 +924,7 @@ module.exports = {
 	generateChatID: async function () {
 		let chat_id = this.makeChat(8);
 		if (await this.checkUniqueChatId(chat_id)) {
-			this.generateChatID()
+			return chat_id
 		} else {
 			this.generateChatID()
 		}
