@@ -40,7 +40,7 @@ exports.createServiceProduct = async function (req, res) {
                     // general_helper.createPGPEmailAccountToServer(pgp_email, function (response, alreadyExists) {
                     //     if (!alreadyExists) {
                     //         if (response.status === 200) {
-                    sql.query(`INSERT INTO pgp_emails (pgp_email , whitelabel_id) VALUES ('${pgp_email}' , '${whitelabel_id}')`, function (err, results) {
+                    sql.query(`INSERT INTO pgp_emails (pgp_email , whitelabel_id , uploaded_by, uploaded_by_id) VALUES ('${pgp_email}' , '${whitelabel_id}' ,'${req.body.uploaded_by}' , '${req.body.uploaded_by_id}')`, function (err, results) {
                         if (err) {
                             res.send({
                                 status: false,
@@ -86,6 +86,41 @@ exports.createServiceProduct = async function (req, res) {
                     return
                 }
             }
+            else if (type === 'chat_id') {
+                let chat_id = await general_helper.generateChatID()
+                if (chat_id) {
+                    sql.query(`INSERT INTO chat_ids (chat_id , whitelabel_id , uploaded_by, uploaded_by_id) VALUES ('${chat_id}' , '${whitelabel_id}' ,'${req.body.uploaded_by}' , '${req.body.uploaded_by_id}')`, function (err, results) {
+                        if (err) {
+                            res.send({
+                                status: false,
+                                msg: "ERROR: Internal Server Error."
+                            })
+                            return
+                        }
+                        if (results && results.insertId) {
+                            res.send({
+                                status: true,
+                                msg: "Chat Id has been generated Successfully.",
+                                product: chat_id
+                            })
+                            return
+                        }
+                        else {
+                            res.send({
+                                status: false,
+                                msg: "ERROR: Internal Server Error."
+                            })
+                            return
+                        }
+                    })
+                } else {
+                    res.send({
+                        status: false,
+                        msg: "ERROR: Superadmin Server Error.",
+                    });
+                    return
+                }
+            }
             else {
                 res.send({
                     status: false,
@@ -96,7 +131,7 @@ exports.createServiceProduct = async function (req, res) {
         } else {
             res.send({
                 status: false,
-                msg: "Invalid Whitelabel.",
+                msg: "Invalid WhiteLabel.",
             });
             return
         }

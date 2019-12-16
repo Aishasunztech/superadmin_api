@@ -775,6 +775,8 @@ module.exports = {
 		return result;
 	},
 
+	
+
 	generateUsername: async function () {
 		let random_string = this.makeid(10);
 		if (await this.checkUniqueUsername(random_string)) {
@@ -907,6 +909,35 @@ module.exports = {
 			// 	});
 			// }
 		});
-	}
+	},
+
+	makeChat(length) {
+		var result = '';
+		var characters = '0123456789';
+		var charactersLength = characters.length;
+		for (var i = 0; i < length; i++) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+		return result;
+	},
+	
+	generateChatID: async function () {
+		let chat_id = this.makeChat(8);
+		if (await this.checkUniqueChatId(chat_id)) {
+			this.generateChatID()
+		} else {
+			this.generateChatID()
+		}
+	},
+
+	checkUniqueChatId: async function (chat_id) {
+		let checkChat = `SELECT * FROM chat_ids WHERE chat_id = '${chat_id}'`
+		let result = await sql.query(checkChat);
+		if (result && result.length) {
+			return false
+		} else {
+			return true
+		}
+	},
 
 }
