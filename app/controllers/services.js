@@ -203,7 +203,7 @@ exports.generateRandomUsername = async function (req, res) {
 
 exports.checkUniquePgp = async function (req, res) {
     try {
-        let available = await general_helper.checkUniquePgp();
+        let available = await general_helper.checkUniquePgp(req.body.pgp_email);
         res.send({
             status: true,
             available: available
