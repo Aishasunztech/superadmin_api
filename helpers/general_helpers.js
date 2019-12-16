@@ -775,7 +775,7 @@ module.exports = {
 		return result;
 	},
 
-	
+
 
 	generateUsername: async function () {
 		let random_string = this.makeid(10);
@@ -823,92 +823,78 @@ module.exports = {
 	createPGPEmailAccountToServer: async function (mail, cb) {
 		// axios.get('/accounts/exists')
 
-		axios.get(`${constants.PGP_SERVER_URL}/accounts/exists?email=${mail}`, {
-			headers: {
-				Authorization: constants.PGP_SERVER_KEY
-			}
-		}).then(async (response) => {
-			console.log(response);
-			// if(response.status === 200){
-			if (response.data) {
-				if (!response.data.exists) {
-					// === Payload
-					// domains: []
-					// first_name: "Usman"
-					// is_active: true
-					// language: "en"
-					// last_name: "Hafeez"
-					// mailbox: {}
-					// master_user: false
-					// password: "123456"
-					// random_password: false
-					// role: "Resellers"
-					// username: "usmanhafeez147"
-					// random_password: true
-					// role: "Resellers"
-					// secondary_email: "usmanhafeez147@gmail.com"
-					// username: "usmanhafeez147"
-					let data = {
-						// domains: []
-						// first_name: "Usman",
-						is_active: true,
-						language: "en",
-						// last_name: "Hafeez"
-						"mailbox": {
-							"full_address": mail,
-							"use_domain_quota": true,
-							"quota": "0"
-						},
-						master_user: false,
-						// password: "123456"
-						role: "Resellers",
-						username: mail,
-						random_password: true,
-						secondary_email: mail
-						// username: "usmanhafeez147"
-					}
-					axios.post(`${constants.PGP_SERVER_URL}/accounts/`, data, {
-						headers: {
-							Authorization: constants.PGP_SERVER_KEY
-						}
-					}).then(async (response) => {
-						console.log(response, "dasdasds");
+		let data = {
+			"username": mail.toString(),
+			"first_name": "usman",
+			"last_name": "hafeez",
+			"is_active": true,
+			"master_user": false,
+			"mailbox": {
+				"full_address": mail.toString(),
+				"use_domain_quota": true,
+				"quota": 0
+			},
 
-						cb(response, true)
-						// === Response
-						// first_name: "usman"
-						// is_active: true
-						// language: "en"
-						// last_name: "hafeez"
-						// mailbox: null
-						// master_user: false
-						// password: "{SHA512-CRYPT}$6$rounds=70000$pjjthZEekg4lT68o$oVSVpkX.H/IDbLexUZvRYcU9A8vysd.rwAmB.ndWe/PbF7wZ8wf7QMvP3wB95PsnwfVovfeQMeKNTH0hRQjhf0"
-						// phone_number: "03137919712"
-						// pk: 3
-						// random_password: false
-						// role: "Resellers"
-						// secondary_email: "usmanhafeez147@gmail.com"
-						// username: "usmanhafeez147
+			"role": "SimpleUsers",
+			"language": "en",
+			"phone_number": "03137919712",
+			"secondary_email": mail.toString(),
+			"random_password": true,
+		}
+		
 
-					})
+		axios.post(`${constants.PGP_SERVER_URL}/accounts/`,
+			{
+				username: 'odcdc134@sunztech.com',
+				// first_name: 'usman',
+				// last_name: 'hafeez',
+				is_active: true,
+				master_user: false,
+				mailbox:
+				{
+					full_address: 'odcdc134@sunztech.com',
+					use_domain_quota: true,
+					quota: '0'
+				},
+				role: 'SimpleUsers',
+				language: 'en',
+				phone_number: '03137919712',
+				random_password: true
+			},
+			{
+				headers: {
+					"Authorization": constants.PGP_SERVER_KEY,
+					'Content-Type': 'application/json',
+					// Connection: 'keep-alive',
+					// Host: 'mail.codelocs.com',
+					// 'Cache-Control': 'no-cache',
+					// Accept: '*/*',
+
 				}
-				else {
-					cb(response.data, false)
-				}
-				// console.log(response.data)
-			}
-			else {
-				cb(response.data, false)
-			}
-			// }
-			// if (response.data.status) {
+			}).then( (response) => {
 
-			// 	loginResponse = response.data;
-			// 	axios.post(WHITE_LABEL_BASE_URL + api, data, { headers: { 'authorization': loginResponse.token } }).then(callback).catch((error) => {
-			// 		console.log("White Label server not responding. PLease try again later");
-			// 	});
-			// }
-		});
+			console.log("response:", response.data)
+			// cb(response, true)
+			// === Response
+			// first_name: "usman"
+			// is_active: true
+			// language: "en"
+			// last_name: "hafeez"
+			// mailbox: null
+			// master_user: false
+			// password: "{SHA512-CRYPT}$6$rounds=70000$pjjthZEekg4lT68o$oVSVpkX.H/IDbLexUZvRYcU9A8vysd.rwAmB.ndWe/PbF7wZ8wf7QMvP3wB95PsnwfVovfeQMeKNTH0hRQjhf0"
+			// phone_number: "03137919712"
+			// pk: 3
+			// random_password: false
+			// role: "Resellers"
+			// secondary_email: "usmanhafeez147@gmail.com"
+			// username: "usmanhafeez147
+
+		}).catch((error) => {
+			console.log("testing:", error)
+		})
+
+
 	},
 
 	makeChat(length) {
@@ -920,7 +906,7 @@ module.exports = {
 		}
 		return result;
 	},
-	
+
 	generateChatID: async function () {
 		let chat_id = this.makeChat(8);
 		if (await this.checkUniqueChatId(chat_id)) {
