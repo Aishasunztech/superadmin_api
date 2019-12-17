@@ -25,11 +25,11 @@ const general_helpers = require('../helpers/general_helpers');
 
 module.exports = function (app) {
     app.get('/', async function (req, res) {
-        general_helpers.createPGPEmailAccountToServer('hamzadawood007332@codelocs2.com', (response)=> {
-            console.log("response: ", response);
-        }, (error) => {
-            console.log("error:", error);
-        });
+        // general_helpers.createPGPEmailAccountToServer('hamzadawood008232@codel.com', (response) => {
+        //     console.log("response: ", response.data);
+        // }, (error) => {
+        //     console.log("error:", error.response.data);
+        // });
         res.send("Express Js");
     });
 

@@ -37,47 +37,50 @@ exports.createServiceProduct = async function (req, res) {
                 }
                 if (pgp_email) {
 
-                    // general_helper.createPGPEmailAccountToServer(pgp_email, function (response, alreadyExists) {
-                    //     if (!alreadyExists) {
-                    //         if (response.status === 200) {
-                    sql.query(`INSERT INTO pgp_emails (pgp_email , whitelabel_id , uploaded_by, uploaded_by_id) VALUES ('${pgp_email}' , '${whitelabel_id}' ,'${req.body.uploaded_by}' , '${req.body.uploaded_by_id}')`, function (err, results) {
-                        if (err) {
+                    general_helper.createPGPEmailAccountToServer(pgp_email, (response) => {
+                        if (response.data) {
+                            sql.query(`INSERT INTO pgp_emails (pgp_email , whitelabel_id , uploaded_by, uploaded_by_id) VALUES ('${pgp_email}' , '${whitelabel_id}' ,'${req.body.uploaded_by}' , '${req.body.uploaded_by_id}')`, function (err, results) {
+                                if (err) {
+                                    res.send({
+                                        status: false,
+                                        msg: "ERROR: Internal Server Error."
+                                    })
+                                    return
+                                }
+                                if (results && results.insertId) {
+                                    res.send({
+                                        status: true,
+                                        msg: "Pgp Email has been generated Successfully.",
+                                        product: pgp_email
+                                    })
+                                    return
+                                } else {
+                                    res.send({
+                                        status: false,
+                                        msg: "ERROR: Internal Server Error."
+                                    })
+                                    return
+                                }
+                            })
+                        }
+                    }, (error) => {
+                        // console.log("error:", error);
+                        if (error.response.data && error.response.data.username[0] == 'user with this username already exists.') {
                             res.send({
                                 status: false,
-                                msg: "ERROR: Internal Server Error."
+                                msg: 'User with this username already exists.'
                             })
                             return
                         }
-                        if (results && results.insertId) {
-                            res.send({
-                                status: true,
-                                msg: "Pgp Email has been generated Successfully.",
-                                product: pgp_email
-                            })
-                            return
-                        } else {
+                        else {
                             res.send({
                                 status: false,
-                                msg: "ERROR: Internal Server Error."
+                                msg: "ERROR: Internal PGP Server Error."
                             })
                             return
                         }
-                    })
-                    //         } else {
-                    //             res.send({
-                    //                 status: false,
-                    //                 msg: "ERROR: PGP email server internal error."
-                    //             })
-                    //             return
-                    //         }
-                    //     } else {
-                    //         res.send({
-                    //             status: false,
-                    //             msg: "ERROR: Username not available. Please choose another username.."
-                    //         })
-                    //         return
-                    //     }
-                    // })
+
+                    });
                 } else {
                     res.send({
                         status: false,

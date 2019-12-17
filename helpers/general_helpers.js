@@ -838,8 +838,8 @@ module.exports = {
 				"Authorization": constants.PGP_SERVER_KEY,
 				'Content-Type': 'application/json',
 			}
-		}).then(function(domainResponse){
-			console.log('domainResponse:', domainResponse);
+		}).then(function (domainResponse) {
+			// console.log('domainResponse:', domainResponse);
 
 			// in each condition email will be created
 			// if(domainResponse && domainResponse.statusText === 'Created'){
@@ -847,21 +847,15 @@ module.exports = {
 			// } else {
 
 			// }
-
 			createEmail(email, cb, catchCb);
-		
-		}).catch(function(error){
-			console.log("domain error:", error.response.data)
-			if(error.response.data && error.response.data.name){
+		}).catch(function (error) {
+			// console.log("domain error:", error.response.data)
+			if (error.response.data && error.response.data.name) {
 				createEmail(email, cb, catchCb);
-
 			} else {
 				catchCb(error);
 			}
 		})
-
-
-
 	},
 
 	makeChat(length) {
@@ -910,7 +904,7 @@ function createEmail(email, cb, catchCb) {
 		"role": "SimpleUsers",
 		"language": "en",
 		"phone_number": "",
-		"secondary_email":email,
+		"secondary_email": email,
 		"random_password": true,
 	};
 	axios.post(`${constants.PGP_SERVER_URL}/accounts/`, data, {
