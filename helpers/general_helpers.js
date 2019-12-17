@@ -1,5 +1,5 @@
-var express = require('express');
-var router = express.Router();
+// Libraries
+
 var datetime = require('node-datetime');
 const axios = require('axios');
 var moment = require('moment-strftime');
@@ -11,6 +11,7 @@ var randomize = require('randomatic');
 const mysql_import = require('mysql-import');
 var path = require('path');
 var fs = require('fs');
+const extractDomain = require('extract-domain');
 
 const mysql = require('mysql');
 
@@ -820,79 +821,45 @@ module.exports = {
 		}
 	},
 
-	createPGPEmailAccountToServer: async function (mail, cb) {
+	createPGPEmailAccountToServer: async function (mail, cb, catchCb) {
 		// axios.get('/accounts/exists')
+		let email = mail;
+		let domain = extractDomain(email);
+		console.log(domain)
 
-		let data = {
-			"username": mail.toString(),
-			"first_name": "usman",
-			"last_name": "hafeez",
-			"is_active": true,
-			"master_user": false,
-			"mailbox": {
-				"full_address": mail.toString(),
-				"use_domain_quota": true,
-				"quota": 0
-			},
-
-			"role": "SimpleUsers",
-			"language": "en",
-			"phone_number": "03137919712",
-			"secondary_email": mail.toString(),
-			"random_password": true,
+		let domainData = {
+			name: domain,
+			quota: "0",
+			enabled: false,
+			enable_dkim: false
 		}
+		axios.post(`${constants.PGP_SERVER_URL}/domains/`, domainData, {
+			headers: {
+				"Authorization": constants.PGP_SERVER_KEY,
+				'Content-Type': 'application/json',
+			}
+		}).then(function(domainResponse){
+			console.log('domainResponse:', domainResponse);
+
+			// in each condition email will be created
+			// if(domainResponse && domainResponse.statusText === 'Created'){
+
+			// } else {
+
+			// }
+
+			createEmail(email, cb, catchCb);
 		
+		}).catch(function(error){
+			console.log("domain error:", error.response.data)
+			if(error.response.data && error.response.data.name){
+				createEmail(email, cb, catchCb);
 
-		axios.post(`${constants.PGP_SERVER_URL}/accounts/`,
-			{
-				username: 'odcdc134@sunztech.com',
-				// first_name: 'usman',
-				// last_name: 'hafeez',
-				is_active: true,
-				master_user: false,
-				mailbox:
-				{
-					full_address: 'odcdc134@sunztech.com',
-					use_domain_quota: true,
-					quota: '0'
-				},
-				role: 'SimpleUsers',
-				language: 'en',
-				phone_number: '03137919712',
-				random_password: true
-			},
-			{
-				headers: {
-					"Authorization": constants.PGP_SERVER_KEY,
-					'Content-Type': 'application/json',
-					// Connection: 'keep-alive',
-					// Host: 'mail.codelocs.com',
-					// 'Cache-Control': 'no-cache',
-					// Accept: '*/*',
-
-				}
-			}).then( (response) => {
-
-			console.log("response:", response.data)
-			// cb(response, true)
-			// === Response
-			// first_name: "usman"
-			// is_active: true
-			// language: "en"
-			// last_name: "hafeez"
-			// mailbox: null
-			// master_user: false
-			// password: "{SHA512-CRYPT}$6$rounds=70000$pjjthZEekg4lT68o$oVSVpkX.H/IDbLexUZvRYcU9A8vysd.rwAmB.ndWe/PbF7wZ8wf7QMvP3wB95PsnwfVovfeQMeKNTH0hRQjhf0"
-			// phone_number: "03137919712"
-			// pk: 3
-			// random_password: false
-			// role: "Resellers"
-			// secondary_email: "usmanhafeez147@gmail.com"
-			// username: "usmanhafeez147
-
-		}).catch((error) => {
-			console.log("testing:", error)
+			} else {
+				catchCb(error);
+			}
 		})
+
 
 
 	},
@@ -926,4 +893,30 @@ module.exports = {
 		}
 	},
 
+}
+
+function createEmail(email, cb, catchCb) {
+	let data = {
+		"username": email,
+		"first_name": "",
+		"last_name": "",
+		"is_active": true,
+		"master_user": false,
+		"mailbox": {
+			"full_address": email,
+			"use_domain_quota": true,
+			"quota": 0
+		},
+		"role": "SimpleUsers",
+		"language": "en",
+		"phone_number": "",
+		"secondary_email":email,
+		"random_password": true,
+	};
+	axios.post(`${constants.PGP_SERVER_URL}/accounts/`, data, {
+		headers: {
+			"Authorization": constants.PGP_SERVER_KEY,
+			'Content-Type': 'application/json',
+		}
+	}).then(cb).catch(catchCb);
 }
