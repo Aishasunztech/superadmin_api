@@ -766,20 +766,26 @@ module.exports = {
 		return 'PI' + invoiceId;
 	},
 
-	makeid(length) {
+	makePgp() {
 		var result = '';
-		var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 		var charactersLength = characters.length;
-		for (var i = 0; i < length; i++) {
-			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		let string = ''
+		let numbers = ''
+		for (var i = 0; i < 4; i++) {
+			string += characters.charAt(Math.floor(Math.random() * charactersLength));
 		}
+		var numChar = '0123456789';
+		var numbersLength = numChar.length;
+		for (var j = 0; j < 3; j++) {
+			numbers += numChar.charAt(Math.floor(Math.random() * numbersLength));
+		}
+		result = string + numbers
 		return result;
 	},
 
-
-
 	generateUsername: async function () {
-		let random_string = this.makeid(10);
+		let random_string = this.makePgp();
 		if (await this.checkUniqueUsername(random_string)) {
 			return random_string
 		} else {
@@ -788,7 +794,7 @@ module.exports = {
 	},
 
 	generatePgpEmail: async function (domain) {
-		let random_string = this.makeid(10);
+		let random_string = this.makePgp(10);
 		let pgp_email = random_string + '@' + domain
 		if (await this.checkUniquePgp(pgp_email)) {
 			if (this.validateEmail(pgp_email)) {
@@ -887,30 +893,54 @@ module.exports = {
 		}
 	},
 
-}
-
-function createEmail(email, cb, catchCb) {
-	let data = {
-		"username": email,
-		"first_name": "",
-		"last_name": "",
-		"is_active": true,
-		"master_user": false,
-		"mailbox": {
-			"full_address": email,
-			"use_domain_quota": true,
-			"quota": 0
-		},
-		"role": "SimpleUsers",
-		"language": "en",
-		"phone_number": "",
-		"secondary_email": email,
-		"random_password": true,
-	};
-	axios.post(`${constants.PGP_SERVER_URL}/accounts/`, data, {
-		headers: {
-			"Authorization": constants.PGP_SERVER_KEY,
-			'Content-Type': 'application/json',
+	validateSimID: async function (sim_id) {
+		if (sim_id.length < 19 || sim_id.length > 20) {
+			return {
+				status: false,
+				valid: false,
+				msg: "ERROR: ICCID MUST BE 19 OR 20 DIGITS LONG",
+			}
 		}
-	}).then(cb).catch(catchCb);
-}
+		let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND activated = 1 AND delete_status = 0`
+		let simFound = await sql.query(selectSimQ)
+		if (simFound && simFound.length) {
+			return {
+				status: true,
+				valid: false,
+				msg: "ERROR: THIS ICCID IS IN USE, PLEASE TRY ANOTHER ONE"
+			}
+		} else {
+			return {
+				status: true,
+				valid: true,
+			}
+		}
+	}
+},
+
+
+	function createEmail(email, cb, catchCb) {
+		let data = {
+			"username": email,
+			"first_name": "",
+			"last_name": "",
+			"is_active": true,
+			"master_user": false,
+			"mailbox": {
+				"full_address": email,
+				"use_domain_quota": true,
+				"quota": 0
+			},
+			"role": "SimpleUsers",
+			"language": "en",
+			"phone_number": "",
+			"secondary_email": email,
+			"random_password": true,
+		};
+		axios.post(`${constants.PGP_SERVER_URL}/accounts/`, data, {
+			headers: {
+				"Authorization": constants.PGP_SERVER_KEY,
+				'Content-Type': 'application/json',
+			}
+		}).then(cb).catch(catchCb);
+	}

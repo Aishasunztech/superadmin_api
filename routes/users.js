@@ -156,5 +156,7 @@ router.post('/generate-random-username', ServiceController.generateRandomUsernam
 
 router.post('/check-unique-pgp', ServiceController.checkUniquePgp);
 
+router.post('/validate_sim_id', ServiceController.validateSimID);
+
 
 module.exports = router;

@@ -1002,6 +1002,7 @@ exports.getFile = async function (req, res) {
     }
 
 }
+
 exports.getBackupFile = async function (req, res) {
 
 
@@ -2879,7 +2880,7 @@ exports.getDeviceList = async function (req, res) {
                         msg: "error",
                         data: []
                     });
-                    
+
                 });
             } else {
                 return res.send({

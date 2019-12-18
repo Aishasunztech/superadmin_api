@@ -2,6 +2,7 @@
 var multipart = require('connect-multiparty');
 var multipartMiddleware = multipart();
 var moment = require('moment-strftime');
+var axios = require('axios');
 
 var crypto = require("crypto");
 var md5 = require('md5');
@@ -16,21 +17,17 @@ var signal = require('./signal');
 // middleware
 var authMiddleware = require('../config/auth');
 
+var constants = require('../config/constants');
+
 // controllers
 var user = require('../app/controllers/user');
 
 // helpers
 const general_helpers = require('../helpers/general_helpers');
 
-
 module.exports = function (app) {
     app.get('/', async function (req, res) {
-        // general_helpers.createPGPEmailAccountToServer('hamzadawood008232@codel.com', (response) => {
-        //     console.log("response: ", response.data);
-        // }, (error) => {
-        //     console.log("error:", error.response.data);
-        // });
-        res.send("Express Js");
+        
     });
 
     app.group('/api/v1', function (router) {
