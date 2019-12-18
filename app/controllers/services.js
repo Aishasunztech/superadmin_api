@@ -241,7 +241,7 @@ exports.validateSimID = async function (req, res) {
         let sim_id = req.body.sim_id;
         let validation = await general_helper.validateSimID(sim_id)
         if (validation.valid) {
-            twilioClient.wireless.sims.list({ iccid: '89012608522913971' }).then(response => {
+            twilioClient.wireless.sims.list({ iccid: sim_id }).then(response => {
                 if (response && response.length) {
                     if (response.status !== 'active') {
                         return res.send({

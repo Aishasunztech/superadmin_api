@@ -896,12 +896,12 @@ module.exports = {
 	validateSimID: async function (sim_id) {
 		if (sim_id.length < 19 || sim_id.length > 20) {
 			return {
-				status: false,
+				status: true,
 				valid: false,
 				msg: "ERROR: ICCID MUST BE 19 OR 20 DIGITS LONG",
 			}
 		}
-		let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND activated = 1 AND delete_status = 0`
+		let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND activated = '1'`
 		let simFound = await sql.query(selectSimQ)
 		if (simFound && simFound.length) {
 			return {
