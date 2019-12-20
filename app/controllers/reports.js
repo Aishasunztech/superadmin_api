@@ -3,6 +3,8 @@ const moment = require('moment');
 const { sql } = require('../../config/database');
 const Constants = require('../../constants/application');
 const general_helper = require('../../helpers/general_helpers');
+const fs    = require('fs');
+const path  = require("path");
 // exports.generateReport = async function (req, res) {
 //     try {
 //         let reportName = req.params.reportName;
@@ -379,10 +381,10 @@ exports.generateSalesReport = async function (req, res) {
                             dealer_pin: item.dealer_pin,
                             // 'device_id': item.device_id ? item.device_id : DEVICE_PRE_ACTIVATION,
                             // 'dealer_pin': item.dealer_pin ? item.dealer_pin : 'N/A',
-                            type: 'credits',
+                            type: 'Credits',
                             name: 'credits',
                             // // 'cost_price': item.cost_price ? item.cost_price : 0,
-                            sale_price: item.credits ? item.credits : 0, // cost price of admin is sale price of super admin
+                            cost_price: item.credits ? item.credits : 0, // cost price of admin is sale price of super admin
                             // // 'profit_loss': item.profit_loss ? item.profit_loss : 0,
                             created_at: item.created_at ? item.created_at : 'N/A',
                         })
@@ -396,7 +398,6 @@ exports.generateSalesReport = async function (req, res) {
 
 
                 general_helper.sendRequestToWhiteLabel(WHITE_LABEL_BASE_URL, '/users/reports/sales', body, defaultData, res, async (response) => {
-                    console.log("sales report:", response.data);
 
                     if (response.data.status) {
                         defaultData = [...defaultData, ...response.data.data];
@@ -487,6 +488,21 @@ exports.generateGraceDaysReport = async function (req, res) {
         return
     }
 }
+
+exports.showPdfFile = async function (req, res) {
+    var findRemoveSync = require('find-remove');
+    findRemoveSync(path.join(__dirname, "../../uploads/report/"), {age: {seconds: 3600}, extensions: '.pdf', limit: 100});
+
+    var buf = new Buffer(req.body.blob, 'base64');
+    let filePath = path.join(__dirname, "../../uploads/report/" + req.body.fileName);
+    fs.writeFile(filePath, buf, function(err) {
+        if(err) {
+            return res.send({'status': false});
+        } else {
+            return res.send({'status': true});
+        }
+    });
+};
 
 // exports.generateSalesReport = async function (req, res) {
 
