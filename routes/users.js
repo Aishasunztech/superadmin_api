@@ -148,7 +148,7 @@ router.post('/billing/reports/grace-days', reports.generateGraceDaysReport);
 
 
 // =================================================================================
-// Billing
+// Services
 
 router.post('/create-service-product', ServiceController.createServiceProduct);
 

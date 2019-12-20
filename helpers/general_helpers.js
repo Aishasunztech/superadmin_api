@@ -901,7 +901,7 @@ module.exports = {
 				msg: "ERROR: ICCID MUST BE 19 OR 20 DIGITS LONG",
 			}
 		}
-		let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}' AND activated = '1'`
+		let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}'`
 		let simFound = await sql.query(selectSimQ)
 		if (simFound && simFound.length) {
 			return {

@@ -1,6 +1,6 @@
 
 const accountSid = 'AC2383c4b776efb51c86cc6f9a5cdb4e89';
-const authToken = 'd48dd337f4d8462b6aa15b0eb652017f';
+const authToken = '8f09f2ebc98338bff27e0ac73ea71a23';
 let twilioClient = require('twilio')(accountSid, authToken);
 
 const HOST_NAME = process.env.HOST_NAME;
