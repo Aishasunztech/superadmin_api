@@ -23,6 +23,7 @@
     "express-group-routes": "^1.1.0",
     "express-mailer": "^0.3.0",
     "express-session": "latest",
+    "find-remove": "^2.0.0",
     "extract-domain": "^2.2.1",
     "fixer-api": "^2.0.0",
     "fs-extra": "latest",
