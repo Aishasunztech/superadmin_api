@@ -8,6 +8,7 @@ var acl = require('../app/controllers/acl');
 var device = require('../app/controllers/device');
 var apk = require('../app/controllers/apk');
 var reports = require('../app/controllers/reports');
+var ServiceController = require('../app/controllers/services');
 
 // ACL
 router.post('/check_component', acl.checkComponent);
@@ -31,6 +32,14 @@ router.post('/get_label_pgp_emails', whitelabel.getLabelPgpEmails)
 router.post('/restart-whitelabel', whitelabel.restartWhitelabel);
 
 router.post('/save_backup', whitelabel.saveBackup);
+
+router.get('/get-domains/:whitelabel_id', whitelabel.getDomains)
+
+router.delete('/delete-domains/:whitelabel_id', whitelabel.deleteDomains)
+
+router.post('/add-domain', whitelabel.addDomain)
+
+router.put('/edit-domain', whitelabel.editDomain)
 
 
 // ==============================================================================
@@ -136,5 +145,16 @@ router.post('/billing/reports/payment-history', reports.generatePaymentHistoryRe
 router.post('/billing/reports/invoice', reports.generateInvoiceReport);
 router.post('/billing/reports/sales', reports.generateSalesReport);
 router.post('/billing/reports/grace-days', reports.generateGraceDaysReport);
+
+
+// =================================================================================
+// Billing
+
+router.post('/create-service-product', ServiceController.createServiceProduct);
+
+router.post('/generate-random-username', ServiceController.generateRandomUsername);
+
+router.post('/check-unique-pgp', ServiceController.checkUniquePgp);
+
 
 module.exports = router;

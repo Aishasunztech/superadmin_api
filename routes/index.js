@@ -1,6 +1,4 @@
-
-// middlewares
-var authMiddleware = require('../config/auth');
+// Libraries
 var multipart = require('connect-multiparty');
 var multipartMiddleware = multipart();
 var moment = require('moment-strftime');
@@ -13,14 +11,25 @@ var authRoutes = require('./auth');
 var userRoutes = require('./users');
 var mobileRoutes = require('./mobile');
 var pub = require('./pub');
+var signal = require('./signal');
+
+// middleware
+var authMiddleware = require('../config/auth');
 
 // controllers
 var user = require('../app/controllers/user');
 
+// helpers
+const general_helpers = require('../helpers/general_helpers');
 
 
 module.exports = function (app) {
     app.get('/', async function (req, res) {
+        // general_helpers.createPGPEmailAccountToServer('hamzadawood008232@codel.com', (response) => {
+        //     console.log("response: ", response.data);
+        // }, (error) => {
+        //     console.log("error:", error.response.data);
+        // });
         res.send("Express Js");
     });
 
@@ -28,6 +37,7 @@ module.exports = function (app) {
         router.use('/auth', authRoutes);
         router.use('/mobile', mobileRoutes);
         router.use('/pub', pub);
+        router.use('/signal', signal);
         router.get('/users/getFile/:file', user.getFile);
         router.get('/users/getBackupFile/:file', user.getBackupFile);
         router.use('/users',

@@ -1804,6 +1804,7 @@ exports.getPackages = async function (req, res) {
         })
     }
 }
+
 exports.editHardware = async function (req, res) {
     let updateData = req.body.data;
 
@@ -1965,6 +1966,7 @@ exports.checkHardwareName = async function (req, res) {
     }
 
 }
+
 exports.requestCredits = async function (req, res) {
 
     try {
@@ -2022,6 +2024,7 @@ exports.requestCredits = async function (req, res) {
     }
 
 }
+
 exports.newRequests = async function (req, res) {
     try {
         let query = "SELECT * from credit_requests where status = '0'"
@@ -2049,6 +2052,7 @@ exports.newRequests = async function (req, res) {
     }
 
 }
+
 exports.deleteRequest = async function (req, res) {
     try {
         let id = req.params.id
@@ -2166,6 +2170,7 @@ exports.deleteRequest = async function (req, res) {
         return
     }
 }
+
 exports.acceptRequest = async function (req, res) {
     try {
         let id = req.params.id
@@ -2340,6 +2345,7 @@ exports.acceptRequest = async function (req, res) {
         return
     }
 }
+
 exports.addCreditsSaleRecord = async function (req, res) {
 
     try {
@@ -2424,6 +2430,7 @@ exports.addCreditsSaleRecord = async function (req, res) {
         return
     }
 }
+
 exports.checkPwd = async function (req, res) {
     // console.log(req.decoded);
     if (req.decoded && req.decoded.user) {
@@ -2443,6 +2450,7 @@ exports.checkPwd = async function (req, res) {
     }
 
 }
+
 exports.checkDealerPin = async function (req, res) {
     // console.log(req.decoded);
     // const invoice = {
@@ -2501,6 +2509,7 @@ exports.checkDealerPin = async function (req, res) {
         }
     }
 }
+
 exports.deleteCSVids = async function (req, res) {
     try {
         var fieldName = req.params.fieldName
@@ -2658,6 +2667,7 @@ exports.deleteCSVids = async function (req, res) {
         return
     }
 }
+
 exports.syncCSVIds = async function (req, res) {
     try {
         let allChat_ids = [];
@@ -2699,7 +2709,7 @@ exports.syncCSVIds = async function (req, res) {
                     await sql.query(`UPDATE chat_ids set used = ${allChat_ids[i].used} where chat_id = '${allChat_ids[i].chat_id}'`)
                 }
                 for (let i = 0; i < allSim_ids.length; i++) {
-                    await sql.query(`UPDATE sim_ids set used = ${allSim_ids[i].used} where sim_id = ${allSim_ids[i].sim_id}`)
+                    await sql.query(`UPDATE sim_ids set used = ${allSim_ids[i].used} where sim_id = '${allSim_ids[i].sim_id}'`)
                 }
                 for (let i = 0; i < allPgp_emials.length; i++) {
                     await sql.query(`UPDATE pgp_emails set used = ${allPgp_emials[i].used} where pgp_email = '${allPgp_emials[i].pgp_email}'`)
@@ -2740,6 +2750,7 @@ exports.syncCSVIds = async function (req, res) {
         return
     }
 }
+
 exports.getSalesList = async function (req, res) {
     // let query = "select * from pgp_emails where used=0";
     let query = `SELECT * FROM sales`;
