@@ -1322,6 +1322,12 @@ exports.savePackage = async function (req, res) {
         let package_type = data.package_type;
         let whitelabel_id = req.body.data.whitelabel_id;
         let WHITE_LABEL_BASE_URL = '';
+        if(package_type!=='services' && package_type !=='data_plan'){
+            return res.send({
+                status: false,
+                msg: 'Invalid Data'
+            })
+        }
 
         let getApiURL = await sql.query(`SELECT * FROM white_labels WHERE id = ${whitelabel_id}`)
         if (getApiURL.length) {
@@ -1364,9 +1370,15 @@ exports.savePackage = async function (req, res) {
                                     }
                                 }
 
-                                
-                                let pkg_features = JSON.stringify(data.pkgFeatures)
-                                let insertQuery = `INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id, package_type) VALUES('${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', '${whitelabel_id}', '${package_type}')`;
+                                let pkg_features = '{}';
+                                let insertQuery = '';
+                                if(package_type==='services'){
+                                    insertQuery = `INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id, package_type) VALUES('${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', '${whitelabel_id}', '${package_type}')`;
+                                    pkg_features = JSON.stringify(data.pkgFeatures)
+                                } else if ( package_type === 'data_plan') {
+                                    insertQuery = `INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, data_limit, whitelabel_id, package_type) VALUES('${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', ${data.data_limit}, '${whitelabel_id}', '${package_type}')`;
+                                }
+                            
                                 sql.query(insertQuery, async (err, rslt) => {
                                     if (err) {
                                         console.log(err)
@@ -1374,7 +1386,7 @@ exports.savePackage = async function (req, res) {
                                     if (rslt) {
                                         if (rslt.affectedRows) {
 
-                                            insertedRecord = await sql.query("SELECT * FROM packages WHERE whitelabel_id='" + whitelabel_id + "' AND id='" + rslt.insertId + "'")
+                                            insertedRecord = await sql.query(`SELECT * FROM packages WHERE whitelabel_id='${whitelabel_id}' AND id=${rslt.insertId}`)
                                             return res.send({
                                                 status: true,
                                                 msg: 'Package Saved Successfully.',
@@ -1428,8 +1440,7 @@ exports.savePackage = async function (req, res) {
                     "duplicateData": []
                 })
             }
-        }
-        else {
+        } else {
             return res.send({
                 status: false,
                 msg: "White Label Data not found.",
