@@ -1316,20 +1316,28 @@ exports.savePackage = async function (req, res) {
     // console.log('data is', req.body)
 
     let data = req.body.data;
-    let err = false
-    if (data) {
+    
+    if (data && data.package_type) {
         // console.log(data, 'data')
+        let package_type = data.package_type;
         let whitelabel_id = req.body.data.whitelabel_id;
         let WHITE_LABEL_BASE_URL = '';
-        let getApiURL = await sql.query(`SELECT * from white_labels where id = ${whitelabel_id}`)
+
+        let getApiURL = await sql.query(`SELECT * FROM white_labels WHERE id = ${whitelabel_id}`)
         if (getApiURL.length) {
             if (getApiURL[0].api_url) {
                 WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
-                axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+
+                // whitelabel login
+                axios.post(`${WHITE_LABEL_BASE_URL}/users/super_admin_login`, Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
                     if (response.data.status) {
+
+                        // package addition to whitelabel
                         loginResponse = response.data;
-                        axios.post(WHITE_LABEL_BASE_URL + '/users/save-sa-package', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                        
+                        axios.post(`${WHITE_LABEL_BASE_URL}/users/save-sa-package`, { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
                             if (response.data.status) {
+                                
                                 let days = 0;
                                 if (data.pkgTerm) {
                                     if (data.pkgTerm === "trial") {
@@ -1355,36 +1363,37 @@ exports.savePackage = async function (req, res) {
                                         }
                                     }
                                 }
+
+                                
                                 let pkg_features = JSON.stringify(data.pkgFeatures)
-                                let insertQuery = "INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id) VALUES('" + data.pkgName + "', '" + data.pkgTerm + "', '" + data.pkgPrice + "','" + days + "', '" + pkg_features + "', '" + whitelabel_id + "')";
+                                let insertQuery = `INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id, package_type) VALUES('${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', '${whitelabel_id}', '${package_type}')`;
                                 sql.query(insertQuery, async (err, rslt) => {
-                                    if (err) throw err;
+                                    if (err) {
+                                        console.log(err)
+                                    };
                                     if (rslt) {
                                         if (rslt.affectedRows) {
+
                                             insertedRecord = await sql.query("SELECT * FROM packages WHERE whitelabel_id='" + whitelabel_id + "' AND id='" + rslt.insertId + "'")
-                                            res.send({
+                                            return res.send({
                                                 status: true,
                                                 msg: 'Package Saved Successfully.',
                                                 data: insertedRecord
                                             })
-                                            return
                                         } else {
-                                            res.send({
+                                            return res.send({
                                                 status: true,
-                                                msg: 'Package Not Saved.Please try again',
+                                                msg: 'Package Not Saved. Please try again',
                                                 data: insertedRecord
                                             })
-                                            return
                                         }
                                     }
                                 })
                             } else {
-                                res.send({
+                                return res.send({
                                     status: false,
                                     msg: 'ERROR: White label server error and Package not saved. please try again.'
                                 })
-                                err = true
-                                return
 
                             }
                         }).catch((error) => {
@@ -1392,19 +1401,15 @@ exports.savePackage = async function (req, res) {
                                 "status": false,
                                 "msg": "White Label server not responding. PLease try again later",
                             };
-                            res.send(data);
-                            err = true
-                            return
-                        });;
+                            return res.send(data);
+            
+                        });
 
-                    }
-                    else {
-                        res.send({
+                    } else {
+                        return res.send({
                             status: false,
                             msg: "you are not allowed to perform this action.",
                         })
-                        err = true
-                        return
                     }
                 }).catch((error) => {
                     console.log("error", error);
@@ -1412,35 +1417,29 @@ exports.savePackage = async function (req, res) {
                         "status": false,
                         "msg": "White Label server not responding. PLease try again later",
                     };
-                    // console.log("response send 1");
-                    res.send(data);
-                    err = true
-                    return
+                    return res.send(data);
+        
                 });
 
-            }
-            else {
-                res.send({
+            } else {
+                return res.send({
                     status: false,
                     msg: "White Label credentials not found.",
                     "duplicateData": []
                 })
-                return
             }
         }
         else {
-            res.send({
+            return res.send({
                 status: false,
                 msg: "White Label Data not found.",
             })
-            return
         }
     } else {
-        res.send({
+        return res.send({
             status: false,
             msg: 'Invalid Data'
         })
-        return
     }
 }
 
