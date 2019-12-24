@@ -65,6 +65,12 @@ exports.createServiceProduct = async function (req, res) {
                                     return
                                 }
                             })
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: "ERROR: Internal PGP Server Error."
+                            })
+                            return
                         }
                     }, (error) => {
                         // console.log("error:", error);
