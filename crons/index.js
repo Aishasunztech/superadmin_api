@@ -130,35 +130,42 @@ cron.schedule('0 0 0 * * *', async () => {
  */
 cron.schedule("0 0 */12 * * *", async () => {
     try {
-        const data = await fixer.latest({ base: constants.BASE_CURRENCY });
-        if (data && data.success) {
+        fixer.latest({ base: constants.BASE_CURRENCY }).then((data) => {
+            if (data && data.success) {
 
-            let updateCurrencyQ = `UPDATE currencies SET base='${constants.BASE_CURRENCY}', data='${JSON.stringify(data.rates)}'`;
-            sql.query(updateCurrencyQ, async function (error, updateResult) {
-                if (error) {
-                    console.log("error occured", error);
-                }
-                if (updateResult && updateResult.affectedRows) {
-                    console.log("succesfully updated record");
-                } else {
-                    let insertCurrencyQ = `INSERT INTO currencies (base, data) VALUES ('${constants.BASE_CURRENCY}', '${JSON.stringify(data.rates)}')`;
-                    sql.query(insertCurrencyQ, await function (error, insertResult) {
-                        if (error) {
-                            console.log("error occured", error);
-                        }
+                let updateCurrencyQ = `UPDATE currencies SET base='${constants.BASE_CURRENCY}', data='${JSON.stringify(data.rates)}'`;
+                sql.query(updateCurrencyQ, async function (error, updateResult) {
+                    if (error) {
+                        console.log("query error occurred:", error);
+                        return;
+                    }
 
-                        if (insertResult) {
-                            console.log("inserted successfully", insertResult);
-                        }
-                    })
-                }
-            })
+                    if (updateResult && updateResult.affectedRows) {
+                        console.log("successfully updated record");
+                    } else {
+                        
+                        let insertCurrencyQ = `INSERT INTO currencies (base, data) VALUES ('${constants.BASE_CURRENCY}', '${JSON.stringify(data.rates)}')`;
+                        sql.query(insertCurrencyQ, await function (error, insertResult) {
+                            if (error) {
+                                console.log("query error occurred", error);
+                                return;
+                            }
 
-        } else {
-            console.log("data not fetched by api");
-        }
+                            if (insertResult) {
+                                console.log("inserted successfully", insertResult);
+                            }
+                        })
+                    }
+                })
+
+            } else {
+                console.log("data not fetched by api");
+            }
+        }).catch((error) => {
+            console.log("api error:", error.message);
+        });
 
     } catch (error) {
-        console.log("some error occured", error);
+        console.log("api key error:", error.message);
     }
 })
