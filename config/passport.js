@@ -9,7 +9,6 @@ var constant = require('../config/constants');
 var dateFormat = require('dateformat');
 var fs = require('fs');
 
-var bcrypt = require('bcrypt-nodejs');
 
 
 //expose this function to our app using module.exports
