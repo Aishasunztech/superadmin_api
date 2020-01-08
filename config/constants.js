@@ -80,7 +80,7 @@ module.exports = {
 	DB_PASSWORD: DB_PASSWORD,
 
 	// Fixer API key
-	FIXER_API_KEY: '96035c5c5b46baea5a96b84930eaed79',
+	FIXER_API_KEY: 'e612b431d585367d58fa7806cdeae2e0',
 	BASE_CURRENCY: 'USD',
 
 	// PGP Mail Server
