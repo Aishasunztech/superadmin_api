@@ -1,10 +1,11 @@
-var numeral = require('numeral');
-var bcrypt = require('bcrypt-nodejs');
+// var numeral = require('numeral');
+var bcrypt = require('bcryptjs');
 var dateFormat = require('dateformat');
 var md5 = require('md5');
+
 const config = require('../../config/constants')
 var { sql } = require('../../config/database');
-var Admin = require('../models/admin');
+// var Admin = require('../models/admin');
 var helpers = require('../../helpers/general_helpers');
 var app_constants = require('../../constants/application');
 var jwt = require('jsonwebtoken');
