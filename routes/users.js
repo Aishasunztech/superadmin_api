@@ -148,13 +148,15 @@ router.post('/billing/reports/grace-days', reports.generateGraceDaysReport);
 
 
 // =================================================================================
-// Billing
+// Services
 
 router.post('/create-service-product', ServiceController.createServiceProduct);
 
 router.post('/generate-random-username', ServiceController.generateRandomUsername);
 
 router.post('/check-unique-pgp', ServiceController.checkUniquePgp);
+
+router.post('/validate_sim_id', ServiceController.validateSimID);
 
 
 module.exports = router;

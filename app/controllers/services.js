@@ -3,6 +3,9 @@ const moment = require('moment');
 const { sql } = require('../../config/database');
 const Constants = require('../../constants/application');
 const general_helper = require('../../helpers/general_helpers');
+const accountSid = 'AC2383c4b776efb51c86cc6f9a5cdb4e89';
+const authToken = '8f09f2ebc98338bff27e0ac73ea71a23';
+const twilioClient = require('twilio')(accountSid, authToken);
 
 exports.createServiceProduct = async function (req, res) {
     try {
@@ -62,6 +65,12 @@ exports.createServiceProduct = async function (req, res) {
                                     return
                                 }
                             })
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: "ERROR: Internal PGP Server Error."
+                            })
+                            return
                         }
                     }, (error) => {
                         // console.log("error:", error);
@@ -125,7 +134,17 @@ exports.createServiceProduct = async function (req, res) {
                 }
             }
             else if (type === 'sim_id') {
-                let sim_id = await general_helper.generateSimID()
+                let sim_id = product_data.sim_id;
+                let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${product_data.sim_id}' AND activated = 1 AND delete_status = 0`
+                let simFound = await sql.query(selectSimQ)
+                if (simFound && simFound.length) {
+                    res.send({
+                        status: false,
+                        msg: "ERROR: THIS ICCID IS IN USE, PLEASE TRY ANOTHER ONE"
+                    })
+                    return
+                }
+                let valid = await general_helper.validateSimID()
                 if (sim_id) {
                     sql.query(`INSERT INTO sim_ids (sim_id , whitelabel_id , uploaded_by, uploaded_by_id) VALUES ('${sim_id}' , '${whitelabel_id}' ,'${req.body.uploaded_by}' , '${req.body.uploaded_by_id}')`, function (err, results) {
                         if (err) {
@@ -212,6 +231,50 @@ exports.checkUniquePgp = async function (req, res) {
             available: available
         });
         return
+    }
+    catch (err) {
+        console.log(err);
+        res.send({
+            status: false,
+            msg: "Super Admin Server Error.",
+        });
+        return
+    }
+}
+
+exports.validateSimID = async function (req, res) {
+    try {
+        let sim_id = req.body.sim_id;
+        let validation = await general_helper.validateSimID(sim_id)
+        if (validation.valid) {
+            twilioClient.wireless.sims.list({ iccid: sim_id }).then(response => {
+                if (response && response.length) {
+                    if (response.status !== 'active') {
+                        return res.send({
+                            status: true,
+                            msg: "ICCID VALIDATED SUCCESSFULLY.",
+                            valid: true,
+                        })
+                    }
+                    else {
+                        return res.send({
+                            status: true,
+                            msg: "ERROR: THIS ICCID IS IN USE, PLEASE TRY ANOTHER ONE",
+                            valid: false,
+                        })
+                    }
+                } else {
+                    return res.send({
+                        status: true,
+                        msg: "ERROR: INVALID ICCID PLEASE MAKE SURE YOU ENTER VALID ICCID",
+                        valid: false,
+                    })
+                }
+            })
+        } else {
+            res.send(validation)
+            return
+        }
     }
     catch (err) {
         console.log(err);

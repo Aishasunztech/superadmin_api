@@ -61,6 +61,7 @@
     "stackify-logger": "^3.0.0",
     "stackify-node-apm": "^1.6.1",
     "swagger-ui-express": "^4.0.4",
+    "twilio": "^3.39.0",
     "underscore": "latest",
     "xlsx": "^0.14.3"
   }
