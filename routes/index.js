@@ -27,7 +27,7 @@ const general_helpers = require('../helpers/general_helpers');
 
 module.exports = function (app) {
     app.get('/', async function (req, res) {
-        
+        res.send("Express.js")
     });
 
     app.group('/api/v1', function (router) {
