@@ -916,31 +916,31 @@ module.exports = {
 			}
 		}
 	}
-},
+}
 
 
-	function createEmail(email, cb, catchCb) {
-		let data = {
-			"username": email,
-			"first_name": "",
-			"last_name": "",
-			"is_active": true,
-			"master_user": false,
-			"mailbox": {
-				"full_address": email,
-				"use_domain_quota": true,
-				"quota": 0
-			},
-			"role": "SimpleUsers",
-			"language": "en",
-			"phone_number": "",
-			"secondary_email": email,
-			"random_password": true,
-		};
-		axios.post(`${constants.PGP_SERVER_URL}/accounts/`, data, {
-			headers: {
-				"Authorization": constants.PGP_SERVER_KEY,
-				'Content-Type': 'application/json',
-			}
-		}).then(cb).catch(catchCb);
-	}
+function createEmail(email, cb, catchCb) {
+	let data = {
+		"username": email,
+		"first_name": "",
+		"last_name": "",
+		"is_active": true,
+		"master_user": false,
+		"mailbox": {
+			"full_address": email,
+			"use_domain_quota": true,
+			"quota": 0
+		},
+		"role": "SimpleUsers",
+		"language": "en",
+		"phone_number": "",
+		"secondary_email": email,
+		"random_password": true,
+	};
+	axios.post(`${constants.PGP_SERVER_URL}/accounts/`, data, {
+		headers: {
+			"Authorization": constants.PGP_SERVER_KEY,
+			'Content-Type': 'application/json',
+		}
+	}).then(cb).catch(catchCb);
+}
