@@ -35,7 +35,7 @@ router.post('/save_backup', whitelabel.saveBackup);
 
 router.get('/get-domains/:whitelabel_id', whitelabel.getDomains)
 
-router.delete('/delete-domains/:whitelabel_id', whitelabel.deleteDomains)
+router.delete('/delete-domains/:domain_id/:whitelabel_id', whitelabel.deleteDomains)
 
 router.post('/add-domain', whitelabel.addDomain)
 
