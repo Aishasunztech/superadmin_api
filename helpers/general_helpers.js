@@ -1,5 +1,5 @@
-var express = require('express');
-var router = express.Router();
+// Libraries
+
 var datetime = require('node-datetime');
 const axios = require('axios');
 var moment = require('moment-strftime');
@@ -11,12 +11,14 @@ var randomize = require('randomatic');
 const mysql_import = require('mysql-import');
 var path = require('path');
 var fs = require('fs');
+const extractDomain = require('extract-domain');
 
 const mysql = require('mysql');
 
 var { sql } = require('../config/database');
 
 var app_constants = require('../constants/application');
+var constants = require('../config/constants');
 
 const device_helpers = require('./device_helpers');
 var util = require('util')
@@ -307,6 +309,7 @@ module.exports = {
 		var deviceId = str.toUpperCase() + num;
 		return deviceId;
 	},
+
 
 	getOfflineDvcId: async function (sn, mac) {
 
@@ -762,4 +765,195 @@ module.exports = {
 		}
 		return 'PI' + invoiceId;
 	},
+
+	makePgp() {
+		var result = '';
+		var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		var charactersLength = characters.length;
+		let string = ''
+		let numbers = ''
+		for (var i = 0; i < 4; i++) {
+			string += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+		var numChar = '0123456789';
+		var numbersLength = numChar.length;
+		for (var j = 0; j < 3; j++) {
+			numbers += numChar.charAt(Math.floor(Math.random() * numbersLength));
+		}
+		result = string + numbers
+		return result;
+	},
+
+	generateUsername: async function () {
+		let random_string = this.makePgp();
+		if (await this.checkUniqueUsername(random_string)) {
+			return random_string
+		} else {
+			this.generateUsername(random_string)
+		}
+	},
+
+	generatePgpEmail: async function (domain) {
+		let random_string = this.makePgp(10);
+		let pgp_email = random_string + '@' + domain
+		if (await this.checkUniquePgp(pgp_email)) {
+			if (this.validateEmail(pgp_email)) {
+				return pgp_email
+			} else {
+				this.generatePgpEmail(domain)
+			}
+		} else {
+			this.generatePgpEmail(domain)
+		}
+	},
+
+	checkUniquePgp: async function (pgp_email) {
+		let checkPgp = `SELECT * FROM pgp_emails WHERE pgp_email = '${pgp_email}'`
+		let result = await sql.query(checkPgp);
+		if (result && result.length) {
+			return false
+		} else {
+			return true
+		}
+	},
+
+	checkUniqueUsername: async function (username) {
+		let checkUsername = `SELECT * FROM pgp_emails WHERE pgp_email LIKE '${username}'`
+		let result = await sql.query(checkUsername);
+		if (result && result.length) {
+			return false
+		} else {
+			return true
+		}
+	},
+
+	createPGPEmailAccountToServer: async function (mail, cb, catchCb) {
+		// axios.get('/accounts/exists')
+		let email = mail;
+		let domain = extractDomain(email);
+		console.log(domain)
+
+		let domainData = {
+			name: domain,
+			quota: "0",
+			enabled: false,
+			enable_dkim: false
+		}
+		axios.post(`${constants.PGP_SERVER_URL}/domains/`, domainData, {
+			headers: {
+				"Authorization": constants.PGP_SERVER_KEY,
+				'Content-Type': 'application/json',
+			}
+		}).then(function (domainResponse) {
+			// console.log('domainResponse:', domainResponse);
+
+			// in each condition email will be created
+			// if(domainResponse && domainResponse.statusText === 'Created'){
+
+			// } else {
+
+			// }
+			createEmail(email, cb, catchCb);
+		}).catch(function (error) {
+			// console.log("domain error:", error.response.data)
+			if (error.response.data && error.response.data.name) {
+				createEmail(email, cb, catchCb);
+			} else {
+				catchCb(error);
+			}
+		})
+	},
+	checkChatIDPrefix(ch, characters){
+		if(ch == 0){
+			return this.checkChatIDPrefix( characters.charAt(Math.floor(Math.random() * characters.length)), characters)
+		} else {
+			return ch;
+		}
+	},
+	makeChat(length) {
+		var result = '';
+		var characters = '0123456789';
+		// var characters = '01';
+		var charactersLength = characters.length;
+		for (var i = 0; i < length; i++) {
+			let ch = characters.charAt(Math.floor(Math.random() * charactersLength));
+			
+			if(i==0){
+				ch =this.checkChatIDPrefix(ch, characters);
+			}
+		
+			result += ch;
+		}
+		return result;
+	},
+
+	generateChatID: async function () {
+		let chat_id = this.makeChat(8);
+		if (await this.checkUniqueChatId(chat_id)) {
+			return chat_id
+		} else {
+			this.generateChatID()
+		}
+	},
+
+	checkUniqueChatId: async function (chat_id) {
+		let checkChat = `SELECT * FROM chat_ids WHERE chat_id = '${chat_id}'`
+		let result = await sql.query(checkChat);
+		if (result && result.length) {
+			return false
+		} else {
+			return true
+		}
+	},
+
+	validateSimID: async function (sim_id) {
+		if (sim_id.length < 19 || sim_id.length > 20) {
+			return {
+				status: true,
+				valid: false,
+				msg: "ERROR: ICCID MUST BE 19 OR 20 DIGITS LONG",
+			}
+		}
+		let selectSimQ = `SELECT * FROM sim_ids WHERE sim_id = '${sim_id}'`
+		let simFound = await sql.query(selectSimQ)
+		if (simFound && simFound.length) {
+			return {
+				status: true,
+				valid: false,
+				msg: "ERROR: THIS ICCID IS IN USE, PLEASE TRY ANOTHER ONE"
+			}
+		} else {
+			return {
+				status: true,
+				valid: true,
+			}
+		}
+	}
+}
+
+
+function createEmail(email, cb, catchCb) {
+	let data = {
+		"username": email,
+		"first_name": "",
+		"last_name": "",
+		"is_active": true,
+		"master_user": false,
+		"mailbox": {
+			"full_address": email,
+			"use_domain_quota": true,
+			"quota": 0
+		},
+		"role": "SimpleUsers",
+		"language": "en",
+		"phone_number": "",
+		"secondary_email": email,
+		"random_password": true,
+	};
+	axios.post(`${constants.PGP_SERVER_URL}/accounts/`, data, {
+		headers: {
+			"Authorization": constants.PGP_SERVER_KEY,
+			'Content-Type': 'application/json',
+		}
+	}).then(cb).catch(catchCb);
 }

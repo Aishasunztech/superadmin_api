@@ -23,7 +23,7 @@ exports.getWhiteLabels = async function (req, res) {
     if (req.params.type === 'all') {
         console.log("hello all servers");
         whiteLabelsQ = "SELECT id, name, route_uri, api_url FROM white_labels";
-    } 
+    }
     // else if (req.params.type === 'whitelabels') {
 
     //     whiteLabelsQ = "SELECT id, name, route_uri, api_url FROM white_labels WHERE status=1";
@@ -136,7 +136,7 @@ exports.updateWhiteLabelInfo = async function (req, res) {
                                 // let where = (is_byod == 1) ? 'AND is_byod = 1' : ''
                                 let query = ''
                                 // if (is_byod == 1) {
-   
+
                                 query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND apk_type='${apk_type}'`
                                 // } else {
                                 // query = `UPDATE whitelabel_apks SET apk_file='${apk}', apk_size='${formatByte}' , version_name='${versionName}', version_code='${versionCode}' WHERE whitelabel_id = '${whiteLabelId}' AND package_name = '${packageName}' AND label = '${label}'`
@@ -1163,6 +1163,412 @@ exports.saveBackup = async function (req, res) {
             status: false,
             msg: "whitelabel not defined"
         })
+    }
+}
+
+exports.getDomains = async function (req, res) {
+    let whitelebel_id = req.params.whitelabel_id;
+    if (whitelebel_id) {
+        let selectQuery = `SELECT * FROM domains WHERE whitelabel_id='${whitelebel_id}' AND delete_status = 0`;
+        sql.query(selectQuery, async (err, reslt) => {
+            if (err) {
+                console.log(err);
+                res.send({
+                    status: false,
+                    data: []
+                })
+                return
+            };
+            if (reslt) {
+                // console.log('result for get packages are is ', reslt);
+
+                if (reslt.length) {
+                    // console.log(reslt, 'reslt data of prices')
+                    res.send({
+                        status: true,
+                        msg: "Data found",
+                        data: reslt
+
+                    })
+                    return
+                } else {
+                    res.send({
+                        status: true,
+                        msg: "Data not found",
+                        data: []
+
+                    })
+                    return
+                }
+
+            } else {
+
+                res.send({
+                    status: true,
+                    msg: "Domain not Found ",
+                    data: []
+                })
+                return
+            }
+        })
+    } else {
+
+        res.send({
+            status: false,
+            msg: 'Invalid Whitelabel_id',
+            data: []
+
+        })
+        return
+    }
+}
+
+
+exports.addDomain = async function (req, res) {
+    let whitelabel_id = req.body.whitelabel_id;
+    let domain = req.body.domain_name;
+    let WHITE_LABEL_BASE_URL = '';
+    let getApiURL = await sql.query(`SELECT * from white_labels where id = ${whitelabel_id}`)
+    if (getApiURL.length) {
+        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE whitelabel_id = ${whitelabel_id} AND domain_name = '${domain}'`)
+        if (alreadyAdded && alreadyAdded.length) {
+            res.send({
+                status: false,
+                msg: 'Domain already added on whitelabel.Please Choose another domain.'
+            })
+            return
+        }
+        if (getApiURL[0].api_url) {
+            WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+            axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                if (response.data.status) {
+                    loginResponse = response.data;
+                    let data = {
+                        domain: domain
+                    }
+                    axios.post(WHITE_LABEL_BASE_URL + '/users/add-domain', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                        if (response.data.status) {
+                            let insertQuery = "INSERT INTO domains (whitelabel_id , domain_name) VALUES('" + whitelabel_id + "','" + domain + "')";
+                            sql.query(insertQuery, async (err, rslt) => {
+                                if (err) {
+                                    res.send({
+                                        status: false,
+                                        msg: 'Domain has been saved on Whitelabel But Superadmin server encountered by some internal error.',
+                                    })
+                                    return
+                                };
+                                if (rslt.affectedRows) {
+                                    insertedRecord = await sql.query("SELECT * FROM domains WHERE id='" + rslt.insertId + "'")
+                                    res.send({
+                                        status: true,
+                                        msg: 'Domain Saved Successfully.',
+                                        data: insertedRecord[0]
+                                    })
+                                    return
+                                } else {
+                                    res.send({
+                                        status: false,
+                                        msg: 'Domain has been saved on Whitelabel But Superadmin server encountered by some internal error.',
+                                    })
+                                    return
+                                }
+
+                            })
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: response.data.msg
+                            })
+                            return
+
+                        }
+                    }).catch((error) => {
+                        data = {
+                            "status": false,
+                            "msg": "White Label server not responding. PLease try again later",
+                        };
+                        res.send(data);
+                        return
+                    });;
+
+                }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "you are not allowed to perform this action.",
+                    })
+                    return
+                }
+            }).catch((error) => {
+                console.log("error", error);
+                data = {
+                    "status": false,
+                    "msg": "White Label server not responding. PLease try again later",
+                };
+                // console.log("response send 1");
+                res.send(data);
+                return
+            });
+
+        }
+        else {
+            res.send({
+                status: false,
+                msg: "White Label credentials not found.",
+                "duplicateData": []
+            })
+            return
+        }
+    }
+    else {
+        res.send({
+            status: false,
+            msg: "White Label Data not found.",
+        })
+        return
+    }
+
+}
+
+
+exports.editDomain = async function (req, res) {
+    let whitelabel_id = req.body.whitelabel_id;
+    let id = req.body.id;
+    let domain = req.body.domain_name;
+    let WHITE_LABEL_BASE_URL = '';
+    let checkDomain = await sql.query(`SELECT * FROM domains WHERE whitelabel_id = ${whitelabel_id} AND id = ${id}`)
+
+    if (checkDomain.length == 0) {
+        res.send({
+            status: false,
+            msg: 'ERROR: Domain not found on server.'
+        })
+        return
+    }
+
+    let getApiURL = await sql.query(`SELECT * from white_labels where id = ${whitelabel_id}`)
+    if (getApiURL.length) {
+        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE whitelabel_id = ${whitelabel_id} AND domain_name = '${domain}' AND id != ${id}`)
+        if (alreadyAdded && alreadyAdded.length) {
+            res.send({
+                status: false,
+                msg: 'Domain already added on whitelabel.Please Choose another domain.'
+            })
+            return
+        }
+        if (getApiURL[0].api_url) {
+            WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+            axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                if (response.data.status) {
+                    loginResponse = response.data;
+                    let data = {
+                        domain: domain,
+                        oldDomain: checkDomain[0].domain_name
+                    }
+                    axios.put(WHITE_LABEL_BASE_URL + '/users/edit-domain', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                        if (response.data.status) {
+                            let insertQuery = `UPDATE domains SET domain_name = '${domain}' WHERE id = ${id}`;
+                            sql.query(insertQuery, async (err, rslt) => {
+                                if (err) {
+                                    res.send({
+                                        status: false,
+                                        msg: 'Domain has been updated on Whitelabel But Superadmin server encountered by some internal error.',
+                                    })
+                                    return
+                                };
+                                if (rslt.affectedRows) {
+                                    res.send({
+                                        status: true,
+                                        msg: 'Domain has been updated Successfully.',
+                                    })
+                                    return
+                                } else {
+                                    res.send({
+                                        status: false,
+                                        msg: 'Domain has been updated on Whitelabel But Superadmin server encountered by some internal error.',
+                                    })
+                                    return
+                                }
+
+                            })
+                        } else {
+                            res.send({
+                                status: false,
+                                msg: response.data.msg
+                            })
+                            return
+
+                        }
+                    }).catch((error) => {
+                        data = {
+                            "status": false,
+                            "msg": "White Label server not responding. PLease try again later",
+                        };
+                        res.send(data);
+                        return
+                    });;
+
+                }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "you are not allowed to perform this action.",
+                    })
+                    return
+                }
+            }).catch((error) => {
+                console.log("error", error);
+                data = {
+                    "status": false,
+                    "msg": "White Label server not responding. PLease try again later",
+                };
+                // console.log("response send 1");
+                res.send(data);
+                return
+            });
+
+        }
+        else {
+            res.send({
+                status: false,
+                msg: "White Label credentials not found.",
+                "duplicateData": []
+            })
+            return
+        }
+    }
+    else {
+        res.send({
+            status: false,
+            msg: "White Label Data not found.",
+        })
+        return
+    }
+
+}
+
+
+exports.deleteDomains = async function (req, res) {
+    let whitelabel_id = req.params.whitelabel_id;
+    let domain_id = req.params.domain_id
+    // console.log(domain_id);
+    if (whitelabel_id) {
+        let selectQuery = `SELECT * FROM domains WHERE whitelabel_id='${whitelabel_id}' AND id = ${domain_id} AND delete_status = 0`;
+        sql.query(selectQuery, async (err, reslt) => {
+            if (err) {
+                console.log(err);
+                res.send({
+                    status: false,
+                    data: []
+                })
+                return
+            };
+            if (reslt.length) {
+
+                let getApiURL = await sql.query(`SELECT * from white_labels where id = ${whitelabel_id}`)
+                if (getApiURL.length) {
+                    if (getApiURL[0].api_url) {
+                        WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                            if (response.data.status) {
+                                loginResponse = response.data;
+                                let data = {
+                                    domain_name: reslt[0].domain_name,
+                                }
+                                axios.put(WHITE_LABEL_BASE_URL + '/users/delete-domain', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                                    if (response.data.status) {
+                                        let deleteQ = `UPDATE domains SET delete_status = 1 WHERE id = ${domain_id}`
+                                        sql.query(deleteQ, function (err, result) {
+                                            if (err) {
+                                                console.log(err);
+                                                res.send({
+                                                    status: false,
+                                                    msg: "ERROR:  Domain not deleted.Please Try again.",
+                                                })
+                                                return
+                                            }
+                                            if (result.affectedRows) {
+                                                res.send({
+                                                    status: true,
+                                                    msg: "Domain Has been Deleted SuccessFully.",
+                                                })
+                                                return
+
+                                            } else {
+                                                res.send({
+                                                    status: false,
+                                                    msg: "ERROR: Domain not deleted. Please try again later.",
+                                                })
+                                                return
+                                            }
+                                        })
+                                    } else {
+                                        res.send({
+                                            status: false,
+                                            msg: response.data.msg
+                                        })
+                                        return
+
+                                    }
+                                }).catch((error) => {
+                                    data = {
+                                        "status": false,
+                                        "msg": "White Label server not responding. PLease try again later",
+                                    };
+                                    res.send(data);
+                                    return
+                                });;
+
+                            }
+                            else {
+                                res.send({
+                                    status: false,
+                                    msg: "you are not allowed to perform this action.",
+                                })
+                                return
+                            }
+                        }).catch((error) => {
+                            console.log("error", error);
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later",
+                            };
+                            // console.log("response send 1");
+                            res.send(data);
+                            return
+                        });
+
+                    }
+                    else {
+                        res.send({
+                            status: false,
+                            msg: "White Label credentials not found.",
+                            "duplicateData": []
+                        })
+                        return
+                    }
+                }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "White Label Data not found.",
+                    })
+                    return
+                }
+            } else {
+                res.send({
+                    status: false,
+                    msg: "ERROR: Domain not Found.",
+                })
+                return
+            }
+        })
+    } else {
+        res.send({
+            status: false,
+            msg: 'ERROR: Invalid Whitelabel'
+        })
+        return
     }
 }
 
