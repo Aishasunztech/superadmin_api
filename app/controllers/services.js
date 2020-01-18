@@ -74,7 +74,7 @@ exports.createServiceProduct = async function (req, res) {
                         }
                     }, (error) => {
                         // console.log("error:", error);
-                        if (error.response.data && error.response.data.username[0] == 'user with this username already exists.') {
+                        if (error.response.data && error.response.data.username && error.response.data.username[0] == 'user with this username already exists.') {
                             res.send({
                                 status: false,
                                 msg: 'User with this username already exists.'
