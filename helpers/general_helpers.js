@@ -863,13 +863,26 @@ module.exports = {
 			}
 		})
 	},
-
+	checkChatIDPrefix(ch, characters){
+		if(ch == 0){
+			return this.checkChatIDPrefix( characters.charAt(Math.floor(Math.random() * characters.length)), characters)
+		} else {
+			return ch;
+		}
+	},
 	makeChat(length) {
 		var result = '';
 		var characters = '0123456789';
+		// var characters = '01';
 		var charactersLength = characters.length;
 		for (var i = 0; i < length; i++) {
-			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+			let ch = characters.charAt(Math.floor(Math.random() * charactersLength));
+			
+			if(i==0){
+				ch =this.checkChatIDPrefix(ch, characters);
+			}
+		
+			result += ch;
 		}
 		return result;
 	},
