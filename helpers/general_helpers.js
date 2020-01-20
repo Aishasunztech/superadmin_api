@@ -808,8 +808,11 @@ module.exports = {
 	},
 
 	checkUniquePgp: async function (pgp_email) {
-		let checkPgp = `SELECT * FROM pgp_emails WHERE pgp_email = '${pgp_email}'`
-		let result = await sql.query(checkPgp);
+		console.log('pgp_email.toUpperCase(): ', pgp_email.toLowerCase());
+		let checkExistingEmailQuery = `SELECT * FROM pgp_emails WHERE LOWER(pgp_email) = '${pgp_email.toLowerCase()}'`;
+		console.log('checkExistingEmailQuery:', checkExistingEmailQuery);
+		
+		let result = await sql.query(checkExistingEmailQuery);
 		if (result && result.length) {
 			return false
 		} else {
@@ -863,9 +866,9 @@ module.exports = {
 			}
 		})
 	},
-	checkChatIDPrefix(ch, characters){
-		if(ch == 0){
-			return this.checkChatIDPrefix( characters.charAt(Math.floor(Math.random() * characters.length)), characters)
+	checkChatIDPrefix(ch, characters) {
+		if (ch == 0) {
+			return this.checkChatIDPrefix(characters.charAt(Math.floor(Math.random() * characters.length)), characters)
 		} else {
 			return ch;
 		}
@@ -877,11 +880,11 @@ module.exports = {
 		var charactersLength = characters.length;
 		for (var i = 0; i < length; i++) {
 			let ch = characters.charAt(Math.floor(Math.random() * charactersLength));
-			
-			if(i==0){
-				ch =this.checkChatIDPrefix(ch, characters);
+
+			if (i == 0) {
+				ch = this.checkChatIDPrefix(ch, characters);
 			}
-		
+
 			result += ch;
 		}
 		return result;
