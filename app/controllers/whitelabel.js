@@ -1230,7 +1230,7 @@ exports.addDomain = async function (req, res) {
     let WHITE_LABEL_BASE_URL = '';
     let getApiURL = await sql.query(`SELECT * from white_labels where id = ${whitelabel_id}`)
     if (getApiURL.length) {
-        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE whitelabel_id = ${whitelabel_id} AND domain_name = '${domain}'`)
+        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE whitelabel_id = ${whitelabel_id} AND domain_name = '${domain}' AND delete_status = 0`)
         if (alreadyAdded && alreadyAdded.length) {
             res.send({
                 status: false,
@@ -1336,7 +1336,7 @@ exports.editDomain = async function (req, res) {
     let id = req.body.id;
     let domain = req.body.domain_name;
     let WHITE_LABEL_BASE_URL = '';
-    let checkDomain = await sql.query(`SELECT * FROM domains WHERE whitelabel_id = ${whitelabel_id} AND id = ${id}`)
+    let checkDomain = await sql.query(`SELECT * FROM domains WHERE whitelabel_id = ${whitelabel_id} AND id = ${id} AND delete_status = 0`)
 
     if (checkDomain.length == 0) {
         res.send({
