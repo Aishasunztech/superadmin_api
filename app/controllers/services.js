@@ -74,7 +74,7 @@ exports.createServiceProduct = async function (req, res) {
                         }
                     }, (error) => {
                         // console.log("error:", error);
-                        if (error.response.data && error.response.data.username[0] == 'user with this username already exists.') {
+                        if (error.response.data && error.response.data.username && error.response.data.username[0] == 'user with this username already exists.') {
                             res.send({
                                 status: false,
                                 msg: 'User with this username already exists.'
@@ -225,12 +225,20 @@ exports.generateRandomUsername = async function (req, res) {
 
 exports.checkUniquePgp = async function (req, res) {
     try {
-        let available = await general_helper.checkUniquePgp(req.body.pgp_email);
-        res.send({
-            status: true,
-            available: available
-        });
-        return
+        let pgp_email = req.body.pgp_email;
+        if (general_helper.validateEmail(pgp_email)) {
+
+            let available = await general_helper.checkUniquePgp(req.body.pgp_email);
+            return res.send({
+                status: true,
+                available: available
+            });
+        } else {
+            return res.send({
+                status: true,
+                available: false
+            })
+        }
     }
     catch (err) {
         console.log(err);

@@ -13,6 +13,7 @@ var userRoutes = require('./users');
 var mobileRoutes = require('./mobile');
 var pub = require('./pub');
 var signal = require('./signal');
+var sMailRoutes = require('./sMail');
 
 // middleware
 var authMiddleware = require('../config/auth');
@@ -27,7 +28,7 @@ const general_helpers = require('../helpers/general_helpers');
 
 module.exports = function (app) {
     app.get('/', async function (req, res) {
-        
+        res.send("Express.js")
     });
 
     app.group('/api/v1', function (router) {
@@ -35,6 +36,8 @@ module.exports = function (app) {
         router.use('/mobile', mobileRoutes);
         router.use('/pub', pub);
         router.use('/signal', signal);
+        router.use('/s-mail', sMailRoutes);
+
         router.get('/users/getFile/:file', user.getFile);
         router.get('/users/getBackupFile/:file', user.getBackupFile);
         router.use('/users',

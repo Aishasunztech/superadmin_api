@@ -808,8 +808,11 @@ module.exports = {
 	},
 
 	checkUniquePgp: async function (pgp_email) {
-		let checkPgp = `SELECT * FROM pgp_emails WHERE pgp_email = '${pgp_email}'`
-		let result = await sql.query(checkPgp);
+		console.log('pgp_email.toUpperCase(): ', pgp_email.toLowerCase());
+		let checkExistingEmailQuery = `SELECT * FROM pgp_emails WHERE LOWER(pgp_email) = '${pgp_email.toLowerCase()}'`;
+		console.log('checkExistingEmailQuery:', checkExistingEmailQuery);
+		
+		let result = await sql.query(checkExistingEmailQuery);
 		if (result && result.length) {
 			return false
 		} else {
@@ -863,13 +866,26 @@ module.exports = {
 			}
 		})
 	},
-
+	checkChatIDPrefix(ch, characters) {
+		if (ch == 0) {
+			return this.checkChatIDPrefix(characters.charAt(Math.floor(Math.random() * characters.length)), characters)
+		} else {
+			return ch;
+		}
+	},
 	makeChat(length) {
 		var result = '';
 		var characters = '0123456789';
+		// var characters = '01';
 		var charactersLength = characters.length;
 		for (var i = 0; i < length; i++) {
-			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+			let ch = characters.charAt(Math.floor(Math.random() * charactersLength));
+
+			if (i == 0) {
+				ch = this.checkChatIDPrefix(ch, characters);
+			}
+
+			result += ch;
 		}
 		return result;
 	},
@@ -916,31 +932,31 @@ module.exports = {
 			}
 		}
 	}
-},
+}
 
 
-	function createEmail(email, cb, catchCb) {
-		let data = {
-			"username": email,
-			"first_name": "",
-			"last_name": "",
-			"is_active": true,
-			"master_user": false,
-			"mailbox": {
-				"full_address": email,
-				"use_domain_quota": true,
-				"quota": 0
-			},
-			"role": "SimpleUsers",
-			"language": "en",
-			"phone_number": "",
-			"secondary_email": email,
-			"random_password": true,
-		};
-		axios.post(`${constants.PGP_SERVER_URL}/accounts/`, data, {
-			headers: {
-				"Authorization": constants.PGP_SERVER_KEY,
-				'Content-Type': 'application/json',
-			}
-		}).then(cb).catch(catchCb);
-	}
+function createEmail(email, cb, catchCb) {
+	let data = {
+		"username": email,
+		"first_name": "",
+		"last_name": "",
+		"is_active": true,
+		"master_user": false,
+		"mailbox": {
+			"full_address": email,
+			"use_domain_quota": true,
+			"quota": 0
+		},
+		"role": "SimpleUsers",
+		"language": "en",
+		"phone_number": "",
+		"secondary_email": email,
+		"random_password": true,
+	};
+	axios.post(`${constants.PGP_SERVER_URL}/accounts/`, data, {
+		headers: {
+			"Authorization": constants.PGP_SERVER_KEY,
+			'Content-Type': 'application/json',
+		}
+	}).then(cb).catch(catchCb);
+}

@@ -1230,7 +1230,7 @@ exports.addDomain = async function (req, res) {
     let WHITE_LABEL_BASE_URL = '';
     let getApiURL = await sql.query(`SELECT * from white_labels where id = ${whitelabel_id}`)
     if (getApiURL.length) {
-        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE whitelabel_id = ${whitelabel_id} AND domain_name = '${domain}'`)
+        let alreadyAdded = await sql.query(`SELECT * FROM domains WHERE whitelabel_id = ${whitelabel_id} AND domain_name = '${domain}' AND delete_status = 0`)
         if (alreadyAdded && alreadyAdded.length) {
             res.send({
                 status: false,
@@ -1336,7 +1336,7 @@ exports.editDomain = async function (req, res) {
     let id = req.body.id;
     let domain = req.body.domain_name;
     let WHITE_LABEL_BASE_URL = '';
-    let checkDomain = await sql.query(`SELECT * FROM domains WHERE whitelabel_id = ${whitelabel_id} AND id = ${id}`)
+    let checkDomain = await sql.query(`SELECT * FROM domains WHERE whitelabel_id = ${whitelabel_id} AND id = ${id} AND delete_status = 0`)
 
     if (checkDomain.length == 0) {
         res.send({
@@ -1449,9 +1449,11 @@ exports.editDomain = async function (req, res) {
 
 
 exports.deleteDomains = async function (req, res) {
-    let whitelebel_id = req.params.whitelabel_id;
-    if (whitelebel_id) {
-        let selectQuery = `SELECT * FROM domains WHERE whitelabel_id='${whitelebel_id}' AND delete_status = 0`;
+    let whitelabel_id = req.params.whitelabel_id;
+    let domain_id = req.params.domain_id
+    // console.log(domain_id);
+    if (whitelabel_id) {
+        let selectQuery = `SELECT * FROM domains WHERE whitelabel_id='${whitelabel_id}' AND id = ${domain_id} AND delete_status = 0`;
         sql.query(selectQuery, async (err, reslt) => {
             if (err) {
                 console.log(err);
@@ -1462,26 +1464,97 @@ exports.deleteDomains = async function (req, res) {
                 return
             };
             if (reslt.length) {
-                let deleteQ = `UPDATE domains SET delete_status = 1 WHERE id = ${whitelebel_id}`
-                sql.query(deleteQ, function (err, result) {
-                    if (err) {
-                        console.log(err);
+
+                let getApiURL = await sql.query(`SELECT * from white_labels where id = ${whitelabel_id}`)
+                if (getApiURL.length) {
+                    if (getApiURL[0].api_url) {
+                        WHITE_LABEL_BASE_URL = getApiURL[0].api_url;
+                        axios.post(WHITE_LABEL_BASE_URL + '/users/super_admin_login', Constants.SUPERADMIN_CREDENTIALS, { headers: {} }).then(async (response) => {
+                            if (response.data.status) {
+                                loginResponse = response.data;
+                                let data = {
+                                    domain_name: reslt[0].domain_name,
+                                }
+                                axios.put(WHITE_LABEL_BASE_URL + '/users/delete-domain', { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
+                                    if (response.data.status) {
+                                        let deleteQ = `UPDATE domains SET delete_status = 1 WHERE id = ${domain_id}`
+                                        sql.query(deleteQ, function (err, result) {
+                                            if (err) {
+                                                console.log(err);
+                                                res.send({
+                                                    status: false,
+                                                    msg: "ERROR:  Domain not deleted.Please Try again.",
+                                                })
+                                                return
+                                            }
+                                            if (result.affectedRows) {
+                                                res.send({
+                                                    status: true,
+                                                    msg: "Domain Has been Deleted SuccessFully.",
+                                                })
+                                                return
+
+                                            } else {
+                                                res.send({
+                                                    status: false,
+                                                    msg: "ERROR: Domain not deleted. Please try again later.",
+                                                })
+                                                return
+                                            }
+                                        })
+                                    } else {
+                                        res.send({
+                                            status: false,
+                                            msg: response.data.msg
+                                        })
+                                        return
+
+                                    }
+                                }).catch((error) => {
+                                    data = {
+                                        "status": false,
+                                        "msg": "White Label server not responding. PLease try again later",
+                                    };
+                                    res.send(data);
+                                    return
+                                });;
+
+                            }
+                            else {
+                                res.send({
+                                    status: false,
+                                    msg: "you are not allowed to perform this action.",
+                                })
+                                return
+                            }
+                        }).catch((error) => {
+                            console.log("error", error);
+                            data = {
+                                "status": false,
+                                "msg": "White Label server not responding. PLease try again later",
+                            };
+                            // console.log("response send 1");
+                            res.send(data);
+                            return
+                        });
+
+                    }
+                    else {
                         res.send({
                             status: false,
-                            msg: "ERROR:  Domain not deleted.Please Try again.",
+                            msg: "White Label credentials not found.",
+                            "duplicateData": []
                         })
                         return
                     }
-                    if (result.affectedRows) {
-                        res.send({
-                            status: true,
-                            msg: "Domain Has been Deleted SuccessFully.",
-                        })
-                        return
-
-                    } else {
-                    }
-                })
+                }
+                else {
+                    res.send({
+                        status: false,
+                        msg: "White Label Data not found.",
+                    })
+                    return
+                }
             } else {
                 res.send({
                     status: false,
