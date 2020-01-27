@@ -1,4 +1,5 @@
 /node_modules
+.vscode
 #/_DB
 /config/constants.js
 db_backup/*
