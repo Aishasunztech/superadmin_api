@@ -225,12 +225,20 @@ exports.generateRandomUsername = async function (req, res) {
 
 exports.checkUniquePgp = async function (req, res) {
     try {
-        let available = await general_helper.checkUniquePgp(req.body.pgp_email);
-        res.send({
-            status: true,
-            available: available
-        });
-        return
+        let pgp_email = req.body.pgp_email;
+        if (general_helper.validateEmail(pgp_email)) {
+
+            let available = await general_helper.checkUniquePgp(req.body.pgp_email);
+            return res.send({
+                status: true,
+                available: available
+            });
+        } else {
+            return res.send({
+                status: true,
+                available: false
+            })
+        }
     }
     catch (err) {
         console.log(err);

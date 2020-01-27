@@ -13,6 +13,7 @@ var userRoutes = require('./users');
 var mobileRoutes = require('./mobile');
 var pub = require('./pub');
 var signal = require('./signal');
+var sMailRoutes = require('./sMail');
 
 // middleware
 var authMiddleware = require('../config/auth');
@@ -35,6 +36,8 @@ module.exports = function (app) {
         router.use('/mobile', mobileRoutes);
         router.use('/pub', pub);
         router.use('/signal', signal);
+        router.use('/s-mail', sMailRoutes);
+
         router.get('/users/getFile/:file', user.getFile);
         router.get('/users/getBackupFile/:file', user.getBackupFile);
         router.use('/users',
