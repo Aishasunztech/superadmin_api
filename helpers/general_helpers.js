@@ -746,7 +746,7 @@ module.exports = {
 	},
 	getLabelIdByName: async function (name) {
 		var labelID = 0
-		let data = await sql.query(`SELECT id from white_labels where name = ?`, [sql.escape(name)])
+		let data = await sql.query(`SELECT id FROM white_labels WHERE name = ?`, [name])
 		if (data.length) {
 			labelID = data[0].id
 		}
