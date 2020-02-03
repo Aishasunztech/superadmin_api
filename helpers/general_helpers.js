@@ -744,9 +744,9 @@ module.exports = {
 
 		return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 	},
-	getlabelIdByName: async function (name) {
+	getLabelIdByName: async function (name) {
 		var labelID = 0
-		let data = await sql.query("SELECT id from white_labels where name = '" + name + "'")
+		let data = await sql.query(`SELECT id from white_labels where name = ?`, [sql.escape(name)])
 		if (data.length) {
 			labelID = data[0].id
 		}

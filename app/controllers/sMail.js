@@ -7,22 +7,19 @@ exports.validatePgpEmail = async function (req, res) {
     let pgp_email = req.body.pgp_email;
     // let ts = req.body.ts;
 
-    console.log('checkEmail: ', device_id, pgp_email);
     console.log('checkEmail req.body', req.body);
+    console.log('checkEmail: ', device_id, pgp_email);
 
     if (!device_id || !pgp_email) {
-        res.status(422).send({
+        return res.status(422).send({
             status: false,
             msg: "missing required data",
             data: req.body
         });
-        return false;
     }
 
-    let pgpDetailsQ = `SELECT wl.api_url, cid.pgp_email, cid.used, cid.whitelabel_id 
-    FROM pgp_emails AS cid JOIN white_labels AS wl ON cid.whitelabel_id = wl.id 
-    WHERE cid.pgp_email = '${pgp_email}'`;
-    let pgpDetailRow = await sql.query(pgpDetailsQ);
+    let pgpDetailsQ = `SELECT wl.api_url, cid.pgp_email, cid.used, cid.whitelabel_id FROM pgp_emails AS cid JOIN white_labels AS wl ON cid.whitelabel_id = wl.id WHERE cid.pgp_email = ?`;
+    let pgpDetailRow = await sql.query(pgpDetailsQ, [pgp_email]);
 
     if (!pgpDetailRow || pgpDetailRow.length <= 0) {
         return res.status(400).send({
@@ -64,4 +61,66 @@ exports.validatePgpEmail = async function (req, res) {
                 error: error
             });
         });
+}
+
+exports.disablePgpEmail = async function (req, res) {
+    let email = req.body.email;
+    if (!email) {
+        return res.send({
+            status: false,
+            msg: 'Bad request'
+        });
+    }
+
+    // get single record against email
+    axios.get(`${app_constants.PGP_SERVER_URL}/accounts?search=${email}`, {
+        headers: {
+            'Authorization': app_constants.PGP_SERVER_KEY,
+            'Content-Type': 'application/json',
+        }
+    }).then(function (emailData) {
+        if (emailData && emailData.data && emailData.data.length) {
+            let emailConfigData = emailData.data[0];
+            console.log("email searched records: ", emailConfigData.pk);
+
+            axios.patch(`${app_constants.PGP_SERVER_URL}/accounts/${emailConfigData.pk}/`, {
+                'is_active': false,
+            }, {
+                headers: {
+                    'Authorization': app_constants.PGP_SERVER_KEY,
+                    'Content-Type': 'application/json',
+                }
+            }).then(function (updateEmailRes) {
+                console.log("updating account info: ", updateEmailRes);
+                console.log("updating user password data: ", updateEmailRes.data);
+
+                return res.send({
+                    status: true,
+                    msg: 'Account is disabled successfully'
+                })
+            }).catch(function (error) {
+                console.log("updating account error:");
+                return res.status(200).send({
+                    status: false,
+                    msg: 'PGP server error'
+                })
+            })
+        } else {
+            console.log("email not found on pgp server");
+
+            return res.status(200).send({
+                status: false,
+                msg: 'PGP server error while disabling'
+            })
+        }
+
+    }).catch(function (error) {
+        console.log("getting account error:");
+        return res.status(200).send({
+            status: false,
+            msg: 'PGP server error'
+        })
+    })
+
+
 }
