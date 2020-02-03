@@ -7,8 +7,8 @@ exports.validatePgpEmail = async function (req, res) {
     let pgp_email = req.body.pgp_email;
     // let ts = req.body.ts;
 
-    console.log('checkChatID: ', device_id, pgp_email);
-    console.log('checkChatID req.body', req.body);
+    console.log('checkEmail: ', device_id, pgp_email);
+    console.log('checkEmail req.body', req.body);
 
     if (!device_id || !pgp_email) {
         res.status(422).send({
