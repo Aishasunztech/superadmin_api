@@ -18,9 +18,9 @@ let SMTP_FROM_EMAIL = "admin@meshguard.co";
 let SMTP_FROM_NAME = "SuperAdmin";
 
 // PGP Mail Server
-let PGP_SERVER_HOST = 'https://mail.codelocs.com/'
+let PGP_SERVER_HOST = 'https://smail.lockmesh.com/'
 let PGP_SERVER_URL = PGP_SERVER_HOST + 'api/v1';
-let PGP_SERVER_KEY = 'Token 1ad78ff44efad888144c2def2c2b321994da946d';
+let PGP_SERVER_KEY = 'Token 29bba6e2fef984ff98e568b602e4aef215dd4b3e';
 
 
 if (HOST_NAME) {

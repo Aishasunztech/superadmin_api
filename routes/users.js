@@ -104,6 +104,7 @@ router.patch('/save-package', user.savePackage)
 router.get('/delete-package/:pkg_id', user.deletePackage)
 
 router.patch('/save-hardware', user.saveHardware)
+
 router.get('/delete-hardware/:id', user.deleteHardware)
 
 router.patch('/check-package-name', user.checkPackageName)
