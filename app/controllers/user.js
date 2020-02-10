@@ -2074,7 +2074,7 @@ exports.deleteRequest = async function (req, res) {
         sql.query(query, async function (err, result) {
             if (err) throw err
             if (result.length) {
-                let labelID = await general_helpers.getlabelIdByName(result[0].label)
+                let labelID = await general_helpers.getLabelIdByName(result[0].label)
                 // console.log(labelID);
                 let getApiURL = await sql.query(`SELECT * FROM white_labels WHERE id = ${labelID}`)
                 if (getApiURL.length) {
@@ -2211,7 +2211,7 @@ exports.acceptRequest = async function (req, res) {
                 sql.query(query, async function (err, result) {
                     if (err) throw err
                     if (result.length) {
-                        let labelID = await general_helpers.getlabelIdByName(result[0].label)
+                        let labelID = await general_helpers.getLabelIdByName(result[0].label)
                         // console.log(labelID);
                         let getApiURL = await sql.query(`SELECT * FROM white_labels WHERE id = ${labelID}`)
                         if (getApiURL.length) {

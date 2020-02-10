@@ -18,7 +18,7 @@ var sMailRoutes = require('./sMail');
 // middleware
 var authMiddleware = require('../config/auth');
 
-var constants = require('../config/constants');
+// var constants = require('../config/constants');
 
 // controllers
 var user = require('../app/controllers/user');
@@ -40,16 +40,7 @@ module.exports = function (app) {
 
         router.get('/users/getFile/:file', user.getFile);
         router.get('/users/getBackupFile/:file', user.getBackupFile);
-        router.use('/users',
-            [
-                authMiddleware,
-                multipartMiddleware
-            ]
-            , userRoutes
-        );
-
-
-
+        router.use('/users', [authMiddleware, multipartMiddleware], userRoutes);
 
     });
 
