@@ -768,7 +768,7 @@ module.exports = {
 
 	makePgp() {
 		var result = '';
-		var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+		var characters = 'abcdefghijklmnopqrstuvwxyz';
 		var charactersLength = characters.length;
 		let string = ''
 		let numbers = ''
@@ -811,7 +811,7 @@ module.exports = {
 		console.log('pgp_email.toUpperCase(): ', pgp_email.toLowerCase());
 		let checkExistingEmailQuery = `SELECT * FROM pgp_emails WHERE LOWER(pgp_email) = '${pgp_email.toLowerCase()}'`;
 		console.log('checkExistingEmailQuery:', checkExistingEmailQuery);
-		
+
 		let result = await sql.query(checkExistingEmailQuery);
 		if (result && result.length) {
 			return false
