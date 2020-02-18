@@ -1317,13 +1317,13 @@ exports.savePackage = async function (req, res) {
     // console.log('data is', req.body)
 
     let data = req.body.data;
-    
+
     if (data && data.package_type) {
         // console.log(data, 'data')
         let package_type = data.package_type;
         let whitelabel_id = req.body.data.whitelabel_id;
         let WHITE_LABEL_BASE_URL = '';
-        if(package_type!=='services' && package_type !=='data_plan'){
+        if (package_type !== 'services' && package_type !== 'data_plan' && package_type !== 'Standalone Sim') {
             return res.send({
                 status: false,
                 msg: 'Invalid Data'
@@ -1341,10 +1341,10 @@ exports.savePackage = async function (req, res) {
 
                         // package addition to whitelabel
                         loginResponse = response.data;
-                        
+
                         axios.post(`${WHITE_LABEL_BASE_URL}/users/save-sa-package`, { data }, { headers: { 'authorization': loginResponse.token } }).then((response) => {
                             if (response.data.status) {
-                                
+
                                 let days = 0;
                                 if (data.pkgTerm) {
                                     if (data.pkgTerm === "trial") {
@@ -1373,13 +1373,15 @@ exports.savePackage = async function (req, res) {
 
                                 let pkg_features = '{}';
                                 let insertQuery = '';
-                                if(package_type==='services'){
+                                if (package_type === 'services') {
                                     insertQuery = `INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id, package_type) VALUES('${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', '${whitelabel_id}', '${package_type}')`;
                                     pkg_features = JSON.stringify(data.pkgFeatures)
-                                } else if ( package_type === 'data_plan') {
+                                } else if (package_type === 'data_plan') {
                                     insertQuery = `INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, data_limit, whitelabel_id, package_type) VALUES('${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', ${data.data_limit}, '${whitelabel_id}', '${package_type}')`;
+                                } else if (package_type === 'Standalone Sim') {
+                                    insertQuery = `INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id, package_type) VALUES('${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', '${whitelabel_id}', 'standalone_sim')`;
                                 }
-                            
+
                                 sql.query(insertQuery, async (err, rslt) => {
                                     if (err) {
                                         console.log(err)
@@ -1390,7 +1392,7 @@ exports.savePackage = async function (req, res) {
                                             insertedRecord = await sql.query(`SELECT * FROM packages WHERE whitelabel_id='${whitelabel_id}' AND id=${rslt.insertId}`)
                                             return res.send({
                                                 status: true,
-                                                msg: 'Package Saved Successfully.',
+                                                msg: package_type === 'Standalone Sim' ? 'Standalone Sim Package Saved Successfully.' : 'Package Saved Successfully.',
                                                 data: insertedRecord
                                             })
                                         } else {
@@ -1415,7 +1417,7 @@ exports.savePackage = async function (req, res) {
                                 "msg": "White Label server not responding. PLease try again later",
                             };
                             return res.send(data);
-            
+
                         });
 
                     } else {
@@ -1431,7 +1433,7 @@ exports.savePackage = async function (req, res) {
                         "msg": "White Label server not responding. PLease try again later",
                     };
                     return res.send(data);
-        
+
                 });
 
             } else {

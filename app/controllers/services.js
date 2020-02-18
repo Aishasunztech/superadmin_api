@@ -18,7 +18,7 @@ exports.createServiceProduct = async function (req, res) {
         if (whitelabel_id) {
             if (type === 'pgp_email' && product_data.domain) {
                 let pgp_email = ''
-                
+
                 if (auto_generated) {
                     pgp_email = await general_helper.generatePgpEmail(product_data.domain)
                 } else {
@@ -39,10 +39,9 @@ exports.createServiceProduct = async function (req, res) {
                 }
 
                 if (pgp_email) {
-
                     general_helper.createPGPEmailAccountToServer(pgp_email, (response) => {
                         if (response.data) {
-                            sql.query(`INSERT INTO pgp_emails (pgp_email , whitelabel_id , uploaded_by, uploaded_by_id) VALUES ('${pgp_email}' , '${whitelabel_id}' ,'${req.body.uploaded_by}' , '${req.body.uploaded_by_id}')`, function (err, results) {
+                            sql.query(`INSERT INTO pgp_emails (pgp_email , whitelabel_id , uploaded_by, uploaded_by_id) VALUES ('${pgp_email.toLowerCase()}' , '${whitelabel_id}' ,'${req.body.uploaded_by}' , '${req.body.uploaded_by_id}')`, function (err, results) {
                                 if (err) {
                                     return res.send({
                                         status: false,

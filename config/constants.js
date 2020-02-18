@@ -1,27 +1,33 @@
 
-const accountSid = 'AC2383c4b776efb51c86cc6f9a5cdb4e89';
-const authToken = '8f09f2ebc98338bff27e0ac73ea71a23';
-let twilioClient = require('twilio')(accountSid, authToken);
+var HOST_NAME = process.env.HOST_NAME;
+var APP_ENV = process.env.APP_ENV;
 
-const HOST_NAME = process.env.HOST_NAME;
-let APP_TITLE = 'SuperAdmin';
-let URL = 'http://localhost:8042';
+var APP_TITLE = 'SuperAdmin';
+var URL = 'http://localhost:8042';
+
+// App Credentials
+var USERNAME = '';
+var PASSWORD = '';
 
 // Database 
-let DB_HOST = "localhost";
-let DB_NAME = "lm_superadmin"
-let DB_USERNAME = 'root';
-let DB_PASSWORD = '';
+var DB_HOST = "localhost";
+var DB_NAME = "lm_superadmin"
+var DB_USERNAME = 'root';
+var DB_PASSWORD = '';
 
 // Email
-let SMTP_FROM_EMAIL = "admin@meshguard.co";
-let SMTP_FROM_NAME = "SuperAdmin";
+var SMTP_FROM_EMAIL = "admin@meshguard.co";
+var SMTP_FROM_NAME = "SuperAdmin";
 
 // PGP Mail Server
-let PGP_SERVER_HOST = 'https://smail.lockmesh.com/'
-let PGP_SERVER_URL = PGP_SERVER_HOST + 'api/v1';
-let PGP_SERVER_KEY = 'Token 29bba6e2fef984ff98e568b602e4aef215dd4b3e';
+var PGP_SERVER_HOST = 'https://smail.lockmesh.com/'
+var PGP_SERVER_URL = PGP_SERVER_HOST + 'api/v1';
+var PGP_SERVER_KEY = 'Token 29bba6e2fef984ff98e568b602e4aef215dd4b3e';
 
+// Twilio account CREDENTIALS
+const accountSid = 'AC2383c4b776efb51c86cc6f9a5cdb4e89';
+const authToken = '8f09f2ebc98338bff27e0ac73ea71a23';
+var twilioClient = require('twilio')(accountSid, authToken);
 
 if (HOST_NAME) {
 	// APP_TITLE = HOST_NAME;
@@ -60,13 +66,24 @@ if (HOST_NAME) {
 			break;
 	}
 
+} else {
+	HOST_NAME = 'localhost',
+	APP_ENV = 'local'
 }
 
 module.exports = {
-	PROJECT_NAME: APP_TITLE,
+	APP_TITLE: APP_TITLE,
+	HOST_NAME: HOST_NAME,
+	APP_ENV: APP_ENV,
 	HOST: URL,
-	SECRET: 'kepitsecretwithauth!@#',
-	EXPIRES_IN: '86400s',
+	SECRET: 'keepItSecretWithAuth!@#',
+	// EXPIRES_IN: '86400s',
+	EXPIRES_IN: '10800s',
+	PORT: 8042,
+
+	// APP Credentials
+	USERNAME: USERNAME,
+	PASSWORD: PASSWORD,
 
 	// SMTP Constants
 	SMTP_HOST: 'smtp.office365.com',
