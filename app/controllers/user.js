@@ -1379,7 +1379,7 @@ exports.savePackage = async function (req, res) {
                                 } else if (package_type === 'data_plan') {
                                     insertQuery = `INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, data_limit, whitelabel_id, package_type) VALUES('${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', ${data.data_limit}, '${whitelabel_id}', '${package_type}')`;
                                 } else if (package_type === 'Standalone Sim') {
-                                    insertQuery = `INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id, package_type) VALUES('${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', '${whitelabel_id}', 'standalone_sim')`;
+                                    insertQuery = `INSERT INTO packages (pkg_name, pkg_term, pkg_price, pkg_expiry, pkg_features, whitelabel_id, package_type , data_limit) VALUES('${data.pkgName}', '${data.pkgTerm}', '${data.pkgPrice}', '${days}', '${pkg_features}', '${whitelabel_id}', 'standalone_sim' , ${data.data_limit})`;
                                 }
 
                                 sql.query(insertQuery, async (err, rslt) => {
@@ -1927,10 +1927,10 @@ exports.checkPackageName = async function (req, res) {
     try {
         let name = req.body.name !== undefined ? req.body.name : null;
 
-        let checkExistingQ = "SELECT pkg_name FROM packages WHERE pkg_name='" + name + "'";
+        let checkExistingQ = "SELECT pkg_name FROM packages WHERE pkg_name='" + name + "' AND delete_status = '0'";
 
         let checkExisting = await sql.query(checkExistingQ);
-        console.log(checkExistingQ, 'query is')
+        // console.log(checkExistingQ, 'query is')
         if (checkExisting.length) {
             data = {
                 status: false,
