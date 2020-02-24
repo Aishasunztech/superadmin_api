@@ -44,4 +44,16 @@ module.exports = function (app) {
 
     });
 
+    app.group('/v1', function (router) {
+        router.use('/auth', authRoutes);
+        router.use('/mobile', mobileRoutes);
+        router.use('/pub', pub);
+        router.use('/signal', signal);
+        router.use('/s-mail', sMailRoutes);
+
+        router.get('/users/getFile/:file', user.getFile);
+        router.get('/users/getBackupFile/:file', user.getBackupFile);
+        router.use('/users', [authMiddleware, multipartMiddleware], userRoutes);
+
+    });
 }
