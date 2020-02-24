@@ -33,10 +33,8 @@ if (HOST_NAME) {
 	// APP_TITLE = HOST_NAME;
 
 	switch (HOST_NAME) {
-		case '':
-		case 'localhost':
-			break;
-		case "SuperAdmin":
+
+		case "SuperAdmin": {
 			URL = 'https://meshguad.co'
 
 			// Database
@@ -49,7 +47,9 @@ if (HOST_NAME) {
 			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "SuperAdmin";
 			break;
-		case 'SuperAdmin Dev':
+		}
+
+		case 'SuperAdmin Dev': {
 			URL = 'https://dev.meshguard.co'
 
 			// DB_HOST = "localhost";
@@ -62,13 +62,14 @@ if (HOST_NAME) {
 			SMTP_FROM_EMAIL = "admin@lockmesh.com";
 			SMTP_FROM_NAME = "SuperAdmin";
 			break;
+		}
 		default:
 			break;
 	}
 
 } else {
 	HOST_NAME = 'localhost',
-	APP_ENV = 'local'
+		APP_ENV = 'local'
 }
 
 module.exports = {
