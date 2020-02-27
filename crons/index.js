@@ -1,14 +1,15 @@
+// Libraries
 var cron = require('node-cron');
 var { sql } = require('../config/database');
 var mysqldump = require('mysqldump')
-var empty = require('is-empty');
 var XLSX = require('xlsx');
 var path = require('path');
 var archiver = require('archiver');
 var fs = require("fs");
 var moment = require('moment-strftime');
-const fixer = require('../lib/fixer-api');
 
+// constants
+const fixer = require('../lib/fixer-api');
 const constants = require('../config/constants');
 const device_helpers = require('../helpers/device_helpers');
 const general_helpers = require('../helpers/general_helpers');
@@ -21,14 +22,14 @@ cron.schedule('0 0 0 * * Sunday', async () => {
         let dbUser = whiteLabels[index].db_user;
         let dbPass = whiteLabels[index].db_pass;
         let dbName = whiteLabels[index].db_name;
-        if (!empty(host) && !empty(dbUser) && !empty(dbPass) && !empty(dbName)) {
+        if (host && dbUser && dbPass && dbName) {
 
             let host_db_conn = await general_helpers.getDBCon(host, dbUser, dbPass, dbName);
             if (host_db_conn) {
                 // console.log(host_db_conn);
                 // console.log("Working");
-                let miliSeconds = Date.now();
-                let fileName = 'dump_' + dbName + '_' + miliSeconds
+                let milliSeconds = Date.now();
+                let fileName = 'dump_' + dbName + '_' + milliSeconds
                 // let filePath = path.join(__dirname, "../db_backup/"  + file_name);
                 let dumpFileName = fileName + '.sql';
 
@@ -143,7 +144,7 @@ cron.schedule("0 0 */12 * * *", async () => {
                     if (updateResult && updateResult.affectedRows) {
                         console.log("successfully updated record");
                     } else {
-                        
+
                         let insertCurrencyQ = `INSERT INTO currencies (base, data) VALUES ('${constants.BASE_CURRENCY}', '${JSON.stringify(data.rates)}')`;
                         sql.query(insertCurrencyQ, await function (error, insertResult) {
                             if (error) {
@@ -168,4 +169,120 @@ cron.schedule("0 0 */12 * * *", async () => {
     } catch (error) {
         console.log("api key error:", error.message);
     }
+})
+
+cron.schedule('0 0 0 * * *', async () => {
+
+
+
+    // =========== get usage records for accounts on daily basis
+    // constants.twilioClient.wireless.sims.list({
+    //     pageSize: 1
+    // }).then((sims) => {
+    //     if (sims && sims.length) {
+
+    //         console.log('sim data => ', sims)
+    //         // sims.forEach(sim => {
+    //         //     // sim.usageRecords.then((simUsageRecords)=>{
+    //         //     //     console.log('simUsageRecords => ', simUsageRecords)
+    //         //     // })
+    //         //     // sim.usageRecords().then((simUsage) => {
+    //         //     //     console.log(simUsage)
+    //         //     // }).catch(error=>{
+    //         //     //     console.log('error while getting usage record of sim: ', error)
+    //         //     // })
+    //         // })
+    //     }
+    // }).catch(error => {
+    //     console.log('error occurred while getting sims: ', error)
+    // })
+
+    //get each record... slower
+    constants.twilioClient.wireless.sims.each({
+        pageSize: 1
+    }, sim => {
+        try {
+            console.log(sim.sid);
+            sim.usageRecords().each(({
+                start: new Date()
+            }), (simUsageRecords) => {
+                // console.log(simUsageRecords)
+                // {
+                //     simSid: 'DE119ed7cbd13555e1371e8dfb3b1d2c9a',
+                //     accountSid: 'AC2383c4b776efb51c86cc6f9a5cdb4e89',
+                //     period: { start: '2020-02-25T00:00:00Z', end: '2020-02-26T00:00:00Z' },
+                //     commands: {
+                //         billing_units: 'USD',
+                //         from_sim: null,
+                //         to_sim: null,
+                //         national_roaming: {
+                //             billing_units: 'USD',
+                //             billed: 0,
+                //             total: 0,
+                //             from_sim: 0,
+                //             to_sim: 0
+                //         },
+                //         home: {
+                //             billing_units: 'USD',
+                //             billed: 0,
+                //             total: 0,
+                //             from_sim: 0,
+                //             to_sim: 0
+                //         },
+                //         international_roaming: [],
+                //         billed: 0,
+                //         total: null
+                //     },
+                //     data: {
+                //         billing_units: 'USD',
+                //         upload: 490053,
+                //         download: 766389,
+                //         national_roaming: {
+                //             billing_units: 'USD',
+                //             upload: 0,
+                //             download: 0,
+                //             units: 'bytes',
+                //             billed: 0,
+                //             total: 0
+                //         },
+                //         home: {
+                //             billing_units: 'USD',
+                //             upload: 0,
+                //             download: 0,
+                //             units: 'bytes',
+                //             billed: 0,
+                //             total: 0
+                //         },
+                //         units: 'bytes',
+                //         international_roaming: [[Object]],
+                //         billed: 0.0585,
+                //         total: 1256442
+                //     }
+                // }
+            })
+        } catch (error) {
+            console.log(error)
+        }
+    })
+
+    // constants.twilioClient.usage
+    //     .records
+    //     .daily
+    //     // .loadPage({category: 'wireless'})
+    //     // // .get
+    //     .page({
+    //         category:'wireless',
+    //         pageSize: 2
+    //     })
+    //     // .each((usageRecords) => {
+    //     //     console.log(usageRecords)
+    //     // })
+    //     .then((usageRecords) => {
+    //         // console.log("hello: ", h)
+    //         if(!usageRecords){
+
+    //         }
+
+    //     })
+
 })
