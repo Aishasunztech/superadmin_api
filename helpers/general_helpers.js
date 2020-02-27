@@ -796,8 +796,24 @@ module.exports = {
 	generatePgpEmail: async function (domain) {
 		let random_string = this.makePgp(10);
 		let pgp_email = random_string + '@' + domain
-		if (await this.checkUniquePgp(pgp_email)) {
-			if (this.validateEmail(pgp_email)) {
+
+		// if (await this.checkUniquePgp(pgp_email)) {
+		// 	if (this.validateEmail(pgp_email)) {
+		// 		return pgp_email
+		// 	} else {
+		// 		this.generatePgpEmail(domain)
+		// 	}
+		// } else {
+		// 	this.generatePgpEmail(domain)
+		// }
+		
+		/**
+		 * @author Usman Hafeez
+		 * @description checking unique pgp email and generate
+		 */
+
+		if (this.validateEmail(pgp_email)) {
+			if (this.checkUniquePgp(pgp_email)) {
 				return pgp_email
 			} else {
 				this.generatePgpEmail(domain)
@@ -805,6 +821,7 @@ module.exports = {
 		} else {
 			this.generatePgpEmail(domain)
 		}
+		
 	},
 
 	checkUniquePgp: async function (pgp_email) {
@@ -816,7 +833,21 @@ module.exports = {
 		if (result && result.length) {
 			return false
 		} else {
-			return true
+			// check pgp email on server also
+			// axios.post()
+			return axios.get(`${constants.PGP_SERVER_URL}/accounts?search=${pgp_email}`, {
+				headers: {
+					'Authorization': constants.PGP_SERVER_KEY,
+					'Content-Type': 'application/json',
+				}
+			}).then(function (emailData) {
+				if (emailData && emailData.data && emailData.data.length) {
+					return false
+				} else {
+					return true
+				}
+			})
+			// return true
 		}
 	},
 
@@ -831,10 +862,10 @@ module.exports = {
 	},
 
 	createPGPEmailAccountToServer: async function (mail, cb, catchCb) {
-		// axios.get('/accounts/exists')
+		console.log('creating pgp email on server:')
 		let email = mail;
 		let domain = extractDomain(email);
-		console.log(domain)
+		console.log("domain:", domain)
 
 		let domainData = {
 			name: domain,
@@ -866,6 +897,7 @@ module.exports = {
 			}
 		})
 	},
+
 	checkChatIDPrefix(ch, characters) {
 		if (ch == 0) {
 			return this.checkChatIDPrefix(characters.charAt(Math.floor(Math.random() * characters.length)), characters)
@@ -873,6 +905,7 @@ module.exports = {
 			return ch;
 		}
 	},
+
 	makeChat(length) {
 		var result = '';
 		var characters = '0123456789';
@@ -937,22 +970,23 @@ module.exports = {
 
 function createEmail(email, cb, catchCb) {
 	let data = {
-		"username": email,
-		"first_name": "",
-		"last_name": "",
-		"is_active": true,
-		"master_user": false,
-		"mailbox": {
-			"full_address": email,
-			"use_domain_quota": true,
-			"quota": 0
+		username: email,
+		first_name: "",
+		last_name: "",
+		is_active: true,
+		master_user: false,
+		mailbox: {
+			full_address: email,
+			use_domain_quota: true,
+			quota: 0
 		},
-		"role": "SimpleUsers",
-		"language": "en",
-		"phone_number": "",
-		"secondary_email": email,
-		"random_password": true,
-	};
+		role: "SimpleUsers",
+		language: "en",
+		phone_number: "",
+		secondary_email: email,
+		random_password: true,
+	}
+
 	axios.post(`${constants.PGP_SERVER_URL}/accounts/`, data, {
 		headers: {
 			"Authorization": constants.PGP_SERVER_KEY,
