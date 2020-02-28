@@ -201,68 +201,80 @@ cron.schedule('0 0 0 * * *', async () => {
     constants.twilioClient.wireless.sims.each({
         pageSize: 1
     }, sim => {
-        try {
-            console.log(sim.sid);
-            sim.usageRecords().each(({
-                start: new Date()
-            }), (simUsageRecords) => {
-                // console.log(simUsageRecords)
-                // {
-                //     simSid: 'DE119ed7cbd13555e1371e8dfb3b1d2c9a',
-                //     accountSid: 'AC2383c4b776efb51c86cc6f9a5cdb4e89',
-                //     period: { start: '2020-02-25T00:00:00Z', end: '2020-02-26T00:00:00Z' },
-                //     commands: {
-                //         billing_units: 'USD',
-                //         from_sim: null,
-                //         to_sim: null,
-                //         national_roaming: {
-                //             billing_units: 'USD',
-                //             billed: 0,
-                //             total: 0,
-                //             from_sim: 0,
-                //             to_sim: 0
-                //         },
-                //         home: {
-                //             billing_units: 'USD',
-                //             billed: 0,
-                //             total: 0,
-                //             from_sim: 0,
-                //             to_sim: 0
-                //         },
-                //         international_roaming: [],
-                //         billed: 0,
-                //         total: null
-                //     },
-                //     data: {
-                //         billing_units: 'USD',
-                //         upload: 490053,
-                //         download: 766389,
-                //         national_roaming: {
-                //             billing_units: 'USD',
-                //             upload: 0,
-                //             download: 0,
-                //             units: 'bytes',
-                //             billed: 0,
-                //             total: 0
-                //         },
-                //         home: {
-                //             billing_units: 'USD',
-                //             upload: 0,
-                //             download: 0,
-                //             units: 'bytes',
-                //             billed: 0,
-                //             total: 0
-                //         },
-                //         units: 'bytes',
-                //         international_roaming: [[Object]],
-                //         billed: 0.0585,
-                //         total: 1256442
-                //     }
-                // }
-            })
-        } catch (error) {
-            console.log(error)
-        }
+
+        console.log('sim.sid:', sim.sid);
+        sim.usageRecords().each(({
+            start: new Date()
+        }), (simUsageRecords) => {
+            console.log('simUsageRecords:', simUsageRecords)
+            // if (simUsageRecords && simUsageRecords.data) {
+            //     // console.log(simUsageRecords)
+            //     // {
+            //     //     simSid: 'DE119ed7cbd13555e1371e8dfb3b1d2c9a',
+            //     //     accountSid: 'AC2383c4b776efb51c86cc6f9a5cdb4e89',
+            //     //     period: { start: '2020-02-25T00:00:00Z', end: '2020-02-26T00:00:00Z' },
+            //     //     commands: {
+            //     //         billing_units: 'USD',
+            //     //         from_sim: null,
+            //     //         to_sim: null,
+            //     //         national_roaming: {
+            //     //             billing_units: 'USD',
+            //     //             billed: 0,
+            //     //             total: 0,
+            //     //             from_sim: 0,
+            //     //             to_sim: 0
+            //     //         },
+            //     //         home: {
+            //     //             billing_units: 'USD',
+            //     //             billed: 0,
+            //     //             total: 0,
+            //     //             from_sim: 0,
+            //     //             to_sim: 0
+            //     //         },
+            //     //         international_roaming: [],
+            //     //         billed: 0,
+            //     //         total: null
+            //     //     },
+            //     //     data: {
+            //     //         billing_units: 'USD',
+            //     //         upload: 490053,
+            //     //         download: 766389,
+            //     //         national_roaming: {
+            //     //             billing_units: 'USD',
+            //     //             upload: 0,
+            //     //             download: 0,
+            //     //             units: 'bytes',
+            //     //             billed: 0,
+            //     //             total: 0
+            //     //         },
+            //     //         home: {
+            //     //             billing_units: 'USD',
+            //     //             upload: 0,
+            //     //             download: 0,
+            //     //             units: 'bytes',
+            //     //             billed: 0,
+            //     //             total: 0
+            //     //         },
+            //     //         units: 'bytes',
+            //     //         international_roaming: [[Object]],
+            //     //         billed: 0.0585,
+            //     //         total: 1256442
+            //     //     }
+            //     // }
+            //     sql.query(`INSERT INTO sim_data_usage_history (unique_name, iccid, sid, sim_status, billing_unit, upload_data, download_data, total_data, billed, period_start, period_end, commands, data) 
+            //                 VALUE (?,?,?,?,?,?,?,?,?,?,?,?,?)`, [sim.uniqueName, sim.iccid, sim.sid, sim.status, simUsageRecords.data.billing_units, simUsageRecords.data.upload, simUsageRecords.data.download, simUsageRecords.data.total, simUsageRecords.data.billed, simUsageRecords.period.start, simUsageRecords.period.end, JSON.stringify(simUsageRecords.commands), JSON.stringify(simUsageRecords.data)], function (error, insertedHistory) {
+            //         if (error) {
+            //             console.log("error while inserting into sim history: ", error)
+            //         }
+            //         console.log('sim data inserted')
+
+            //     })
+            // } else {
+            //     console.log('sim usage record not found')
+            // }
+
+        })
+
     })
 
     // constants.twilioClient.usage
