@@ -35,7 +35,7 @@ if (HOST_NAME) {
 	switch (HOST_NAME) {
 
 		case "SuperAdmin": {
-			URL = 'https://meshguad.co'
+			URL = 'https://sa.lockmesh.com'
 
 			// Database
 			// DB_HOST = "localhost";
@@ -50,7 +50,7 @@ if (HOST_NAME) {
 		}
 
 		case 'SuperAdmin Dev': {
-			URL = 'https://dev.meshguard.co'
+			URL = 'https://devsa.lockmesh.com'
 
 			// DB_HOST = "localhost";
 			// DB_NAME = 'lockmesh_db'
