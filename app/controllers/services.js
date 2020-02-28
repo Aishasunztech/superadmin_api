@@ -9,7 +9,7 @@ const twilioClient = require('twilio')(accountSid, authToken);
 
 exports.createServiceProduct = async function (req, res) {
     try {
-        console.log("create service product: ", req.body);
+        // console.log("create service product: ", req.body);
         let type = req.body.type;
         let auto_generated = req.body.auto_generated;
         let product_data = req.body.product_data
@@ -20,22 +20,32 @@ exports.createServiceProduct = async function (req, res) {
                 let pgp_email = ''
 
                 if (auto_generated) {
+                    console.log('generating pgp email')
                     pgp_email = await general_helper.generatePgpEmail(product_data.domain)
                 } else {
+                    console.log('creating pgp email')
                     pgp_email = product_data.pgp_email;
-                    if (general_helper.validateEmail(pgp_email)) {
-                        if (! await general_helper.checkUniquePgp(pgp_email)) {
-                            return res.send({
-                                status: false,
-                                msg: "Username not available. Please choose another username."
-                            })
-                        }
-                    } else {
+
+                    /**
+                     * @author Usman Hafeez
+                     * @description pgp email checking fixes
+                     */
+                    if (!general_helper.validateEmail(pgp_email)) {
                         return res.send({
                             status: false,
                             msg: "Invalid username or domain."
                         })
                     }
+
+                    let checkPgpEmail = await general_helper.checkUniquePgp(pgp_email)
+                    console.log('checkPgpEmail: ', checkPgpEmail);
+                    if (!checkPgpEmail) {
+                        return res.send({
+                            status: false,
+                            msg: "Username not available. Please choose another username."
+                        })
+                    }
+
                 }
 
                 if (pgp_email) {
@@ -218,6 +228,7 @@ exports.checkUniquePgp = async function (req, res) {
         if (general_helper.validateEmail(pgp_email)) {
 
             let available = await general_helper.checkUniquePgp(req.body.pgp_email);
+            console.log("checkUniquePgp", available);
             return res.send({
                 status: true,
                 available: available
