@@ -49,6 +49,21 @@ if (HOST_NAME) {
 			break;
 		}
 
+		case "sunztech": {
+			URL = 'https://mdm-sa.sunztech.com'
+
+			// Database
+			// DB_HOST = "localhost";
+			// DB_NAME = 'lockmesh_db'
+			DB_USERNAME = "web";
+			DB_PASSWORD = 'Alibaba@9C#'
+
+			// Email
+			SMTP_FROM_EMAIL = "admin@lockmesh.com";
+			SMTP_FROM_NAME = "SuperAdmin";
+			break;
+		}
+
 		case 'SuperAdmin Dev': {
 			URL = 'https://devsa.lockmesh.com'
 

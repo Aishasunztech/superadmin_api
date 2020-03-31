@@ -12,6 +12,9 @@
             },
             "env_dev_superadmin": {
                 "HOST_NAME": "SuperAdmin Dev"
+            },
+            "env_sunztech": {
+                "HOST_NAME": "sunztech"
             }
        }
     ]
